@@ -5042,4 +5042,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String of_b319e7(String arg0, String arg1) {
     return ' ($arg0 of $arg1)';
   }
+
+  @override
+  String get mirrorCapabilitiesRefresh => 'Reload server settings';
+
+  @override
+  String get mirrorCapabilitiesUpdated => 'Mirror settings updated';
+
+  @override
+  String get mirrorCapabilitiesUnavailable =>
+      'Could not load settings. Using the last saved settings, if available.';
 }

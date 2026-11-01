@@ -8007,5 +8007,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "mirrorCapabilitiesRefresh": "Обновить настройки с сервера",
+  "mirrorCapabilitiesUpdated": "Настройки зеркала обновлены",
+  "mirrorCapabilitiesUnavailable": "Не удалось загрузить настройки. Используются последние сохранённые, если они есть."
 }

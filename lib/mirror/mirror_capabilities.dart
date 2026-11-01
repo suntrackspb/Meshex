@@ -11,7 +11,7 @@ class MirrorCapabilities {
     this.reports,
   });
 
-  /// Зеркало без ответа (старая версия или ошибка) — ничего не умеет.
+  /// Зеркало без ответа (старая версия или нет сохранённых настроек) — ничего не умеет.
   static const none = MirrorCapabilities();
 
   final String? name;
@@ -21,6 +21,29 @@ class MirrorCapabilities {
 
   final ImagesCapability? images;
   final ReportsCapability? reports;
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'operator': {'contact': contact},
+    'images': images == null
+        ? null
+        : {
+            'enabled': true,
+            'base_url': images!.baseUrl.toString(),
+            'public_key': base64.encode(images!.publicKey),
+            'max_bytes': images!.maxBytes,
+            'preview_hosts': images!.previewHosts.toList(),
+            'report': images!.report,
+            'delete': images!.delete,
+          },
+    'reports': reports == null
+        ? null
+        : {
+            'base_url': reports!.baseUrl.toString(),
+            'api_key': reports!.apiKey,
+            'notices': reports!.notices,
+          },
+  };
 
   static MirrorCapabilities parse(Object? j) {
     if (j is! Map) return none;

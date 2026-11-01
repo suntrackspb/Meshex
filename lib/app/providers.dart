@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../data/mirror_node_key.dart';
 import 'dart:io';
 import 'dart:typed_data';
@@ -283,19 +284,43 @@ final mirrorApiProvider = Provider<MirrorApi?>((ref) {
   return api;
 });
 
-/// Что объявило подключённое зеркало; null — зеркало не подключено.
-/// Ошибку сети считаем «ничего не умеет»: картинки и отчёты просто не появятся,
-/// а при следующем включении зеркала спросим снова.
+/// Свежие capabilities; при ошибке — последний успешный ответ этого зеркала.
+/// Общая база сохраняет их между запусками и переключениями нод.
+final mirrorCapabilitiesLoadProvider =
+    FutureProvider<({MirrorCapabilities? capabilities, bool refreshed})>((
+      ref,
+    ) async {
+      final api = ref.watch(mirrorApiProvider);
+      if (api == null) return (capabilities: null, refreshed: false);
+      final db = ref.watch(appDatabaseProvider);
+      final key = AppSettingKeys.mirrorCapabilities(api.baseUrl);
+      MirrorCapabilities capabilities;
+      try {
+        capabilities = await api.capabilities();
+      } catch (_) {
+        try {
+          final cached = await db.getSetting(key);
+          return (
+            capabilities: MirrorCapabilities.parse(
+              cached == null ? null : jsonDecode(cached),
+            ),
+            refreshed: false,
+          );
+        } catch (_) {
+          return (capabilities: MirrorCapabilities.none, refreshed: false);
+        }
+      }
+      // Сбой записи не отменяет успешно полученный ответ.
+      try {
+        await db.setSetting(key, jsonEncode(capabilities.toJson()));
+      } catch (_) {}
+      return (capabilities: capabilities, refreshed: true);
+    });
+
 final mirrorCapabilitiesProvider = FutureProvider<MirrorCapabilities?>((
   ref,
 ) async {
-  final api = ref.watch(mirrorApiProvider);
-  if (api == null) return null;
-  try {
-    return await api.capabilities();
-  } catch (_) {
-    return MirrorCapabilities.none;
-  }
+  return (await ref.watch(mirrorCapabilitiesLoadProvider.future)).capabilities;
 });
 
 /// Рамки аватаров из зеркала (топ болтливых, рамки из админки). Живут

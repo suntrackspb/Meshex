@@ -1529,5 +1529,8 @@
   "theRepairSendsTheCorrectMac_7391e0": "The repair sends the correct MAC to the node. No restart is required and no data will be lost.",
   "neitherTheApplicationNorTheMirror_04717d": "Neither the application nor the mirror knows the true MAC of this node. Restart the node. If its ID changes, return here: the repair will restore the previous ID without data loss.",
   "bluetoothDidNotCompleteTheOperation_65145b": "Bluetooth did not complete the operation. If the node uses a PIN, you may need to finish pairing in Linux. Disable auto-connect, select Disconnect, then run in a terminal:\n\nbluetoothctl\nremove {arg0}\nagent KeyboardOnly\ndefault-agent\npair {arg1}\ntrust {arg2}\ndisconnect {arg3}\nquit\n\nEnter the node PIN when prompted. The remove command deletes the old pairing. After pair succeeds, reconnect in the application. If already paired, check node power and availability.",
-  "of_b319e7": " ({arg0} of {arg1})"
+  "of_b319e7": " ({arg0} of {arg1})",
+  "mirrorCapabilitiesRefresh": "Reload server settings",
+  "mirrorCapabilitiesUpdated": "Mirror settings updated",
+  "mirrorCapabilitiesUnavailable": "Could not load settings. Using the last saved settings, if available."
 }

@@ -23,6 +23,7 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
   final _address = TextEditingController();
   bool _loaded = false;
   bool _checking = false;
+  bool _refreshing = false;
   String? _error;
   String? _ok;
 
@@ -64,6 +65,27 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
     } finally {
       api.close();
       if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  Future<void> _refreshCapabilities() async {
+    setState(() {
+      _refreshing = true;
+      _error = null;
+      _ok = null;
+    });
+    try {
+      final result = await ref.refresh(mirrorCapabilitiesLoadProvider.future);
+      if (!mounted) return;
+      setState(() {
+        if (result.refreshed) {
+          _ok = context.l10n.mirrorCapabilitiesUpdated;
+        } else {
+          _error = context.l10n.mirrorCapabilitiesUnavailable;
+        }
+      });
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
     }
   }
 
@@ -161,7 +183,15 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
                             : context.l10n.checkAndEnable_38d621,
                       ),
                     ),
-                    if (_checking)
+                    if (cfg?.active == true)
+                      OutlinedButton.icon(
+                        onPressed: _checking || _refreshing || changed
+                            ? null
+                            : _refreshCapabilities,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(context.l10n.mirrorCapabilitiesRefresh),
+                      ),
+                    if (_checking || _refreshing)
                       const SizedBox(
                         width: 20,
                         height: 20,

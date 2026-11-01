@@ -5044,4 +5044,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String of_b319e7(String arg0, String arg1) {
     return ' ($arg0 из $arg1)';
   }
+
+  @override
+  String get mirrorCapabilitiesRefresh => 'Обновить настройки с сервера';
+
+  @override
+  String get mirrorCapabilitiesUpdated => 'Настройки зеркала обновлены';
+
+  @override
+  String get mirrorCapabilitiesUnavailable =>
+      'Не удалось загрузить настройки. Используются последние сохранённые, если они есть.';
 }

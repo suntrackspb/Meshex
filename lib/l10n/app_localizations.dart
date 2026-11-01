@@ -8849,6 +8849,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **' ({arg0} из {arg1})'**
   String of_b319e7(String arg0, String arg1);
+
+  /// No description provided for @mirrorCapabilitiesRefresh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить настройки с сервера'**
+  String get mirrorCapabilitiesRefresh;
+
+  /// No description provided for @mirrorCapabilitiesUpdated.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки зеркала обновлены'**
+  String get mirrorCapabilitiesUpdated;
+
+  /// No description provided for @mirrorCapabilitiesUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить настройки. Используются последние сохранённые, если они есть.'**
+  String get mirrorCapabilitiesUnavailable;
 }
 
 class _AppLocalizationsDelegate

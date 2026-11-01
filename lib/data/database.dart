@@ -31,6 +31,10 @@ abstract final class AppSettingKeys {
 
   /// Адрес зеркала как ввёл пользователь; по умолчанию пусто.
   static const mirrorAddress = 'mirror.address';
+
+  /// Последний успешный ответ capabilities для нормализованного адреса.
+  static String mirrorCapabilities(Uri baseUrl) =>
+      'mirror.capabilities.$baseUrl';
   static const glyphZipLevel = 'chat.glyphZipLevel';
 
   /// Тема: 'system' / 'light' / 'dark' (по умолчанию — как в системе).

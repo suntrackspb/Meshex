@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-"""Выкладка релиза на meshex.ru/downloads: сервер сам качает файлы с GitHub.
+"""Скачать и проверить релиз GitHub в RELEASES_ROOT перед FTP-публикацией.
 
-На g4 лежит в /usr/local/bin/meshex-fetch-release (владелец root); ключ пользователя releases
-в authorized_keys привязан к нему (command=...), тег приходит в
-SSH_ORIGINAL_COMMAND. Вызов из .github/workflows/publish.yml:
-    ssh releases@192.168.1.10 v0.1.12
-Вручную на сервере:
-    sudo -u releases /usr/local/bin/meshex-fetch-release v0.1.12
-
-Порядок: файлы во временную папку → проверка размера и sha256 → папка
-версии → постоянные имена жёсткими ссылками → release.json последним.
-При любой ошибке текущие файлы сайта не меняются.
+Создаёт каталог версии и release.json с размерами и SHA-256.
+Также можно запускать отдельно для подготовки локальной копии загрузок.
 """
 
 from __future__ import annotations
@@ -90,6 +82,7 @@ def publish(tag: str) -> int:
         log(f"Не тег версии: {tag!r}")
         return 2
     version = m.group(1)
+    ROOT.mkdir(parents=True, exist_ok=True)
     rel = get_json(f"https://api.github.com/repos/{REPO}/releases/tags/{tag}")
     if rel.get("draft") or rel.get("prerelease"):
         log("Черновик или пре-релиз — не выкладываю")

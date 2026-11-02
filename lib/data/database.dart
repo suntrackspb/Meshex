@@ -44,6 +44,8 @@ abstract final class AppSettingKeys {
   static const locale = 'app.locale';
   static const accent = 'app.accent';
   static const mentionColor = 'app.mentionColor';
+  static const incomingColor = 'app.incomingColor';
+  static const messageInfoColor = 'app.messageInfoColor';
   static const orientation = 'app.orientation';
   static const nodeFilter = 'nodes.filter';
   static const nodeLayout = 'nodes.layout';

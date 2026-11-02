@@ -8010,5 +8010,9 @@
   },
   "mirrorCapabilitiesRefresh": "Обновить настройки с сервера",
   "mirrorCapabilitiesUpdated": "Настройки зеркала обновлены",
-  "mirrorCapabilitiesUnavailable": "Не удалось загрузить настройки. Используются последние сохранённые, если они есть."
+  "mirrorCapabilitiesUnavailable": "Не удалось загрузить настройки. Используются последние сохранённые, если они есть.",
+  "incomingMessageColor": "Цвет входящих сообщений",
+  "defaultMessageColor": "По умолчанию",
+  "messageInfoColor": "Цвет текста информации о сообщении",
+  "appColors": "Цвета приложения"
 }

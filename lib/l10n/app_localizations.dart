@@ -8867,6 +8867,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось загрузить настройки. Используются последние сохранённые, если они есть.'**
   String get mirrorCapabilitiesUnavailable;
+
+  /// No description provided for @incomingMessageColor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвет входящих сообщений'**
+  String get incomingMessageColor;
+
+  /// No description provided for @defaultMessageColor.
+  ///
+  /// In ru, this message translates to:
+  /// **'По умолчанию'**
+  String get defaultMessageColor;
+
+  /// No description provided for @messageInfoColor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвет текста информации о сообщении'**
+  String get messageInfoColor;
+
+  /// No description provided for @appColors.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвета приложения'**
+  String get appColors;
 }
 
 class _AppLocalizationsDelegate

@@ -943,6 +943,19 @@ final mentionColorProvider = StreamProvider<Accent?>(
   (ref) => _setting(ref, AppSettingKeys.mentionColor).map(parseMentionColor),
 );
 
+/// Цвет обычных входящих сообщений; null — стандартный фон темы.
+final incomingColorProvider = StreamProvider<Accent?>(
+  (ref) => _setting(ref, AppSettingKeys.incomingColor).map(parseIncomingColor),
+);
+
+/// Цвет текста информации под сообщением; null — стандартный цвет темы.
+final messageInfoColorProvider = StreamProvider<Accent?>(
+  (ref) => _setting(
+    ref,
+    AppSettingKeys.messageInfoColor,
+  ).map((id) => accents.where((a) => a.id == id).firstOrNull),
+);
+
 /// Ориентация экрана: авто (по датчику) или закреплённая.
 final screenOrientationProvider = StreamProvider<ScreenOrientation>(
   (ref) =>

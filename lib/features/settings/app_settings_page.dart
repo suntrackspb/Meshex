@@ -32,13 +32,8 @@ class AppSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(appThemeProvider).value ?? AppTheme.system;
-    final accent = ref.watch(accentProvider).value ?? accents.first;
     final orientation =
         ref.watch(screenOrientationProvider).value ?? ScreenOrientation.auto;
-    final mentionAv = ref.watch(mentionColorProvider);
-    final mention = mentionAv.hasValue
-        ? mentionAv.value
-        : parseMentionColor(null);
     final rotate = ref.watch(mapRotateProvider).value ?? false;
     final images = ref.watch(showImagesProvider).value ?? true;
     final areaOn = ref.watch(areaEnabledProvider).value ?? false;
@@ -120,65 +115,10 @@ class AppSettingsPage extends ConsumerWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Tokens.s16,
-                  0,
-                  Tokens.s16,
-                  Tokens.s16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.accentColor_ff9b5d,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: Tokens.s8),
-                    Wrap(
-                      spacing: Tokens.s8,
-                      runSpacing: Tokens.s8,
-                      children: [
-                        for (final a in accents)
-                          _AccentDot(
-                            accent: a,
-                            selected: a.id == accent.id,
-                            onTap: () => save(AppSettingKeys.accent, a.id),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: Tokens.s16),
-                    Text(
-                      context.l10n.mentionsAndReplies_209ee7,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      context.l10n.colorOfMessagesMentioningOrReplying_a39b9c,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: Tokens.s8),
-                    Wrap(
-                      spacing: Tokens.s8,
-                      runSpacing: Tokens.s8,
-                      children: [
-                        for (final a in accents)
-                          _AccentDot(
-                            accent: a,
-                            selected: a.id == mention?.id,
-                            onTap: () =>
-                                save(AppSettingKeys.mentionColor, a.id),
-                          ),
-                        _AccentDot(
-                          selected: mention == null,
-                          onTap: () =>
-                              save(AppSettingKeys.mentionColor, mentionOff),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              MeshTile(
+                title: context.l10n.appColors,
+                leading: const Icon(Icons.palette_outlined),
+                onTap: () => context.push('/settings/app/colors'),
               ),
             ],
           ),
@@ -396,63 +336,6 @@ class _ShareStatus extends ConsumerWidget {
             ),
           };
     return MeshTile(title: context.l10n.status_81e4bb, subtitle: text);
-  }
-}
-
-/// Кружок цвета; выбранный — с галочкой. Без [accent] — «без подсветки».
-class _AccentDot extends StatelessWidget {
-  const _AccentDot({this.accent, required this.selected, required this.onTap});
-
-  final Accent? accent;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final a = accent;
-    final scheme = Theme.of(context).colorScheme;
-    final title =
-        (a == null ? null : context.builtIn(a.title)) ??
-        context.l10n.noHighlight_14736b;
-    return Tooltip(
-      message: title,
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: title,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: a?.color,
-              shape: BoxShape.circle,
-              border: selected || a == null
-                  ? Border.all(
-                      color: selected ? scheme.onSurface : scheme.outline,
-                      width: selected ? 2 : 1,
-                    )
-                  : null,
-            ),
-            child: a == null
-                ? Icon(Icons.block, color: scheme.onSurfaceVariant, size: 20)
-                : selected
-                ? Icon(
-                    Icons.check,
-                    color:
-                        ThemeData.estimateBrightnessForColor(a.color) ==
-                            Brightness.light
-                        ? const Color(0xFF191D24)
-                        : Colors.white,
-                    size: 20,
-                  )
-                : null,
-          ),
-        ),
-      ),
-    );
   }
 }
 

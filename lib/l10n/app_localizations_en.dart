@@ -5052,4 +5052,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mirrorCapabilitiesUnavailable =>
       'Could not load settings. Using the last saved settings, if available.';
+
+  @override
+  String get incomingMessageColor => 'Incoming message color';
+
+  @override
+  String get defaultMessageColor => 'Default';
+
+  @override
+  String get messageInfoColor => 'Message information text color';
+
+  @override
+  String get appColors => 'App colors';
 }

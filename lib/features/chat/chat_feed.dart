@@ -658,6 +658,14 @@ class _MessageListState extends ConsumerState<_MessageList> {
       w.nodes,
     );
     final (canWrite, onReply) = (w.canWrite, w.onReply);
+    final infoAccent = ref.watch(messageInfoColorProvider).value;
+    final infoColor = infoAccent == null
+        ? null
+        : messageInfoTextColor(infoAccent.color, Theme.of(context).brightness);
+    final incoming = ref.watch(incomingColorProvider).value;
+    final incomingFill = incoming == null
+        ? null
+        : mentionBubble(incoming.color, Theme.of(context).brightness);
     final mentionColor = ref.watch(mentionColorProvider);
     final mc = mentionColor.hasValue
         ? mentionColor.value
@@ -743,6 +751,8 @@ class _MessageListState extends ConsumerState<_MessageList> {
             child: _Bubble(
               key: _keyFor(m.packetId),
               pos: positions[i],
+              incoming: incomingFill,
+              infoColor: infoColor,
               mention: !m.isOutgoing && _toMe(m, byPacket, me, myShort)
                   ? mentionFill
                   : null,
@@ -943,6 +953,8 @@ class _Bubble extends StatelessWidget {
     super.key,
     required this.pos,
     required this.mention,
+    required this.incoming,
+    required this.infoColor,
     required this.highlighted,
     this.filtered = false,
     this.ignored = false,
@@ -968,6 +980,8 @@ class _Bubble extends StatelessWidget {
   /// Обращено ко мне (упомянуто короткое имя своей ноды или ответ
   /// с цитатой на моё сообщение) — цвет пузыря; null — обычный.
   final Color? mention;
+  final Color? incoming;
+  final Color? infoColor;
   final String author;
   final String? shortName;
   final Message? quoted;
@@ -1035,7 +1049,7 @@ class _Bubble extends StatelessWidget {
             ? scheme.primaryContainer
             // Обращение ко мне — цветом пузыря, а не рамкой: рамка рвёт
             // склеенную серию.
-            : mention ?? scheme.surfaceContainerHigh,
+            : mention ?? incoming ?? scheme.surfaceContainerHigh,
         borderRadius: _radius(out),
       ),
       child: IntrinsicWidth(
@@ -1089,16 +1103,24 @@ class _Bubble extends StatelessWidget {
                   ),
                   const SizedBox(width: Tokens.s4),
                 ],
-                _SourceIcons(message: message, mirror: mirror),
+                _SourceIcons(
+                  message: message,
+                  mirror: mirror,
+                  color: infoColor,
+                ),
                 const Spacer(),
                 if (showRelays(message, mirror: mirror)) ...[
                   const SizedBox(width: Tokens.s8),
-                  RelayChip(count: message.relayCount, onTap: onOpenRelays),
+                  RelayChip(
+                    count: message.relayCount,
+                    onTap: onOpenRelays,
+                    color: infoColor,
+                  ),
                   const SizedBox(width: Tokens.s8),
                   const Spacer(),
                 ] else
                   const SizedBox(width: Tokens.s12),
-                Text(time, style: text.labelSmall),
+                Text(time, style: text.labelSmall?.copyWith(color: infoColor)),
                 if (out) ...[
                   const SizedBox(width: Tokens.s4),
                   _AckIcon(message),
@@ -1273,14 +1295,16 @@ class _AckIcon extends StatelessWidget {
 }
 
 class _SourceIcons extends StatelessWidget {
-  const _SourceIcons({required this.message, required this.mirror});
+  const _SourceIcons({required this.message, required this.mirror, this.color});
+
+  final Color? color;
 
   final Message message;
   final bool mirror;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.outline;
+    final color = this.color ?? Theme.of(context).colorScheme.outline;
     final style = Theme.of(
       context,
     ).textTheme.labelSmall?.copyWith(color: color);
@@ -1392,7 +1416,14 @@ class _FilterMenu extends StatelessWidget {
 
 /// Сколько шлюзов зеркала приняли сообщение; нажатие — карта ретрансляций.
 class RelayChip extends StatelessWidget {
-  const RelayChip({super.key, required this.count, required this.onTap});
+  const RelayChip({
+    super.key,
+    required this.count,
+    required this.onTap,
+    this.color,
+  });
+
+  final Color? color;
 
   final int count;
   final VoidCallback onTap;
@@ -1400,7 +1431,7 @@ class RelayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = scheme.outline;
+    final color = this.color ?? scheme.outline;
     return Tooltip(
       message: context.l10n.gatewaysShowOnMap_6e8104((count).toString()),
       child: InkWell(

@@ -1532,5 +1532,9 @@
   "of_b319e7": " ({arg0} of {arg1})",
   "mirrorCapabilitiesRefresh": "Reload server settings",
   "mirrorCapabilitiesUpdated": "Mirror settings updated",
-  "mirrorCapabilitiesUnavailable": "Could not load settings. Using the last saved settings, if available."
+  "mirrorCapabilitiesUnavailable": "Could not load settings. Using the last saved settings, if available.",
+  "incomingMessageColor": "Incoming message color",
+  "defaultMessageColor": "Default",
+  "messageInfoColor": "Message information text color",
+  "appColors": "App colors"
 }

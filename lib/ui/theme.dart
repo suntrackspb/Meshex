@@ -9,6 +9,10 @@ import 'tokens.dart';
 Color mentionBubble(Color color, Brightness brightness) =>
     _accentScheme(color, brightness).primaryContainer;
 
+/// Цвет мелкого текста метаданных, адаптированный к светлой и тёмной теме.
+Color messageInfoTextColor(Color color, Brightness brightness) =>
+    _accentScheme(color, brightness).primary;
+
 ColorScheme _accentScheme(Color seed, Brightness brightness) {
   final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
   if (seed != Tokens.seed) return scheme;

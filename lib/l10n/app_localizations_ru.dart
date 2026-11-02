@@ -5054,4 +5054,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get mirrorCapabilitiesUnavailable =>
       'Не удалось загрузить настройки. Используются последние сохранённые, если они есть.';
+
+  @override
+  String get incomingMessageColor => 'Цвет входящих сообщений';
+
+  @override
+  String get defaultMessageColor => 'По умолчанию';
+
+  @override
+  String get messageInfoColor => 'Цвет текста информации о сообщении';
+
+  @override
+  String get appColors => 'Цвета приложения';
 }

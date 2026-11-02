@@ -15,6 +15,7 @@ import '../features/nodes/node_detail_page.dart';
 import '../features/nodes/nodes_page.dart';
 import '../features/settings/data_settings_page.dart';
 import '../features/settings/app_settings_page.dart';
+import '../features/settings/app_colors_page.dart';
 import '../features/settings/area_picker_page.dart';
 import '../features/settings/mirror_settings_page.dart';
 import '../features/settings/radio/administration_page.dart';
@@ -91,6 +92,7 @@ final appRouter = GoRouter(
                   'app',
                   (_) => const AppSettingsPage(),
                   routes: [
+                    _route('colors', (_) => const AppColorsPage()),
                     // На экране — карта: её панорамирование важнее свайпа,
                     // «назад» только от края.
                     GoRoute(

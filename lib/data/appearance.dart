@@ -50,3 +50,7 @@ Accent? parseMentionColor(String? id) => id == mentionOff
 /// По умолчанию — фирменная палитра Meshex.
 Accent parseAccent(String? id) =>
     accents.where((a) => a.id == id).firstOrNull ?? accents.first;
+
+/// Цвет входящих сообщений; null — стандартный нейтральный фон темы.
+Accent? parseIncomingColor(String? id) =>
+    accents.where((a) => a.id == id).firstOrNull;

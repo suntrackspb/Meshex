@@ -8014,5 +8014,9 @@
   "incomingMessageColor": "Цвет входящих сообщений",
   "defaultMessageColor": "По умолчанию",
   "messageInfoColor": "Цвет текста информации о сообщении",
-  "appColors": "Цвета приложения"
+  "appColors": "Цвета приложения",
+  "colorPreviewIncoming": "Привет! Как слышно?",
+  "colorPreviewOutgoing": "Отлично, я на связи!",
+  "colorPreviewMention": "@Вы, сообщение дошло?",
+  "chatColorsPreview": "Предпросмотр чата"
 }

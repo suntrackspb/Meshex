@@ -7,6 +7,8 @@ import '../../data/appearance.dart';
 import '../../data/database.dart';
 import '../../l10n/l10n.dart';
 import '../../ui/kit/kit.dart';
+import 'chat_colors_preview.dart';
+import 'color_palette.dart';
 
 /// Цвета приложения и сообщений.
 class AppColorsPage extends ConsumerWidget {
@@ -31,6 +33,12 @@ class AppColorsPage extends ConsumerWidget {
       body: ListView(
         padding: pagePadding(context),
         children: [
+          ChatColorsPreview(
+            incoming: incoming,
+            mention: mention,
+            infoAccent: infoAccent,
+          ),
+          const SizedBox(height: Tokens.s16),
           SectionCard(
             title: context.l10n.appColors,
             children: [
@@ -49,17 +57,9 @@ class AppColorsPage extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: Tokens.s8),
-                    Wrap(
-                      spacing: Tokens.s8,
-                      runSpacing: Tokens.s8,
-                      children: [
-                        for (final a in accents)
-                          _AccentDot(
-                            accent: a,
-                            selected: a.id == accent.id,
-                            onTap: () => save(AppSettingKeys.accent, a.id),
-                          ),
-                      ],
+                    ColorPalette(
+                      selected: accent,
+                      onSelected: (a) => save(AppSettingKeys.accent, a!.id),
                     ),
                     const SizedBox(height: Tokens.s16),
                     Text(
@@ -67,24 +67,13 @@ class AppColorsPage extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: Tokens.s8),
-                    Wrap(
-                      spacing: Tokens.s8,
-                      runSpacing: Tokens.s8,
-                      children: [
-                        for (final a in accents)
-                          _AccentDot(
-                            accent: a,
-                            selected: a.id == incoming?.id,
-                            onTap: () =>
-                                save(AppSettingKeys.incomingColor, a.id),
-                          ),
-                        _AccentDot(
-                          label: context.l10n.defaultMessageColor,
-                          selected: incoming == null,
-                          onTap: () =>
-                              save(AppSettingKeys.incomingColor, 'default'),
-                        ),
-                      ],
+                    ColorPalette(
+                      selected: incoming,
+                      defaultLabel: context.l10n.defaultMessageColor,
+                      onSelected: (a) => save(
+                        AppSettingKeys.incomingColor,
+                        a?.id ?? 'default',
+                      ),
                     ),
                     const SizedBox(height: Tokens.s16),
                     Text(
@@ -92,24 +81,13 @@ class AppColorsPage extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: Tokens.s8),
-                    Wrap(
-                      spacing: Tokens.s8,
-                      runSpacing: Tokens.s8,
-                      children: [
-                        for (final a in accents)
-                          _AccentDot(
-                            accent: a,
-                            selected: a.id == infoAccent?.id,
-                            onTap: () =>
-                                save(AppSettingKeys.messageInfoColor, a.id),
-                          ),
-                        _AccentDot(
-                          label: context.l10n.defaultMessageColor,
-                          selected: infoAccent == null,
-                          onTap: () =>
-                              save(AppSettingKeys.messageInfoColor, 'default'),
-                        ),
-                      ],
+                    ColorPalette(
+                      selected: infoAccent,
+                      defaultLabel: context.l10n.defaultMessageColor,
+                      onSelected: (a) => save(
+                        AppSettingKeys.messageInfoColor,
+                        a?.id ?? 'default',
+                      ),
                     ),
                     const SizedBox(height: Tokens.s16),
                     Text(
@@ -123,23 +101,13 @@ class AppColorsPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: Tokens.s8),
-                    Wrap(
-                      spacing: Tokens.s8,
-                      runSpacing: Tokens.s8,
-                      children: [
-                        for (final a in accents)
-                          _AccentDot(
-                            accent: a,
-                            selected: a.id == mention?.id,
-                            onTap: () =>
-                                save(AppSettingKeys.mentionColor, a.id),
-                          ),
-                        _AccentDot(
-                          selected: mention == null,
-                          onTap: () =>
-                              save(AppSettingKeys.mentionColor, mentionOff),
-                        ),
-                      ],
+                    ColorPalette(
+                      selected: mention,
+                      defaultLabel: context.l10n.noHighlight_14736b,
+                      onSelected: (a) => save(
+                        AppSettingKeys.mentionColor,
+                        a?.id ?? mentionOff,
+                      ),
                     ),
                   ],
                 ),
@@ -147,71 +115,6 @@ class AppColorsPage extends ConsumerWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Кружок цвета; выбранный — с галочкой. Без [accent] — «без подсветки».
-class _AccentDot extends StatelessWidget {
-  const _AccentDot({
-    this.accent,
-    this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String? label;
-
-  final Accent? accent;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final a = accent;
-    final scheme = Theme.of(context).colorScheme;
-    final title =
-        label ??
-        (a == null ? null : context.builtIn(a.title)) ??
-        context.l10n.noHighlight_14736b;
-    return Tooltip(
-      message: title,
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: title,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: a?.color,
-              shape: BoxShape.circle,
-              border: selected || a == null
-                  ? Border.all(
-                      color: selected ? scheme.onSurface : scheme.outline,
-                      width: selected ? 2 : 1,
-                    )
-                  : null,
-            ),
-            child: a == null
-                ? Icon(Icons.block, color: scheme.onSurfaceVariant, size: 20)
-                : selected
-                ? Icon(
-                    Icons.check,
-                    color:
-                        ThemeData.estimateBrightnessForColor(a.color) ==
-                            Brightness.light
-                        ? const Color(0xFF191D24)
-                        : Colors.white,
-                    size: 20,
-                  )
-                : null,
-          ),
-        ),
       ),
     );
   }

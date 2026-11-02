@@ -5064,4 +5064,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appColors => 'App colors';
+
+  @override
+  String get colorPreviewIncoming => 'Hello! Can you hear me?';
+
+  @override
+  String get colorPreviewOutgoing => 'Loud and clear!';
+
+  @override
+  String get colorPreviewMention => '@You, did you get my message?';
+
+  @override
+  String get chatColorsPreview => 'Chat preview';
 }

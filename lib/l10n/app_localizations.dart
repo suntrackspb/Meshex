@@ -8891,6 +8891,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Цвета приложения'**
   String get appColors;
+
+  /// No description provided for @colorPreviewIncoming.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привет! Как слышно?'**
+  String get colorPreviewIncoming;
+
+  /// No description provided for @colorPreviewOutgoing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отлично, я на связи!'**
+  String get colorPreviewOutgoing;
+
+  /// No description provided for @colorPreviewMention.
+  ///
+  /// In ru, this message translates to:
+  /// **'@Вы, сообщение дошло?'**
+  String get colorPreviewMention;
+
+  /// No description provided for @chatColorsPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предпросмотр чата'**
+  String get chatColorsPreview;
 }
 
 class _AppLocalizationsDelegate

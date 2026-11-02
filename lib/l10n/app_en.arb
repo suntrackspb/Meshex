@@ -1536,5 +1536,9 @@
   "incomingMessageColor": "Incoming message color",
   "defaultMessageColor": "Default",
   "messageInfoColor": "Message information text color",
-  "appColors": "App colors"
+  "appColors": "App colors",
+  "colorPreviewIncoming": "Hello! Can you hear me?",
+  "colorPreviewOutgoing": "Loud and clear!",
+  "colorPreviewMention": "@You, did you get my message?",
+  "chatColorsPreview": "Chat preview"
 }

@@ -5066,4 +5066,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get appColors => 'Цвета приложения';
+
+  @override
+  String get colorPreviewIncoming => 'Привет! Как слышно?';
+
+  @override
+  String get colorPreviewOutgoing => 'Отлично, я на связи!';
+
+  @override
+  String get colorPreviewMention => '@Вы, сообщение дошло?';
+
+  @override
+  String get chatColorsPreview => 'Предпросмотр чата';
 }

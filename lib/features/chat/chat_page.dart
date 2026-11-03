@@ -8,6 +8,7 @@ import '../../core/proto/mesh.dart';
 import '../../data/database.dart';
 import '../../data/message_sender.dart';
 import '../../ui/kit/kit.dart';
+import '../../ui/meshex_wordmark.dart';
 import '../notices/notice_banner.dart';
 import 'chat_feed.dart';
 import '../../app/link_badge.dart';
@@ -38,7 +39,7 @@ class ChatPage extends ConsumerWidget {
     final list = Scaffold(
       // На широком экране список — левая панель, «назад» ему не нужен.
       appBar: AppBar(
-        title: Text(context.l10n.chat_8c77e4),
+        title: const MeshexWordmark(fontSize: 28),
         automaticallyImplyLeading: !wide,
         actions: const [LinkBadge()],
       ),

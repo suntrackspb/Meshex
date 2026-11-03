@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Website wordmark: Manrope ExtraBold with the three Meshex brand colors.
 class MeshexWordmark extends StatelessWidget {
-  const MeshexWordmark({super.key});
+  const MeshexWordmark({super.key, this.fontSize = 64});
+
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +27,11 @@ class MeshexWordmark extends StatelessWidget {
             ),
           ],
         ),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Manrope',
-          fontSize: 64,
+          fontSize: fontSize,
           fontWeight: FontWeight.w800,
-          letterSpacing: -4.8,
+          letterSpacing: -0.075 * fontSize,
           height: 1,
         ),
         semanticsLabel: 'Meshex',

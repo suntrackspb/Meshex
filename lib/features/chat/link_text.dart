@@ -16,6 +16,32 @@ class LinkText extends StatefulWidget {
 
 class _LinkTextState extends State<LinkText> {
   final _taps = <TapGestureRecognizer>[];
+  late List<TextPart> _parts;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateLinks();
+  }
+
+  @override
+  void didUpdateWidget(covariant LinkText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) _updateLinks();
+  }
+
+  void _updateLinks() {
+    _clear();
+    _parts = splitLinks(widget.text);
+    for (final part in _parts) {
+      final uri = part.link;
+      if (uri == null) continue;
+      _taps.add(
+        TapGestureRecognizer()
+          ..onTap = () => launchUrl(uri, mode: LaunchMode.externalApplication),
+      );
+    }
+  }
 
   void _clear() {
     for (final t in _taps) {
@@ -32,15 +58,16 @@ class _LinkTextState extends State<LinkText> {
 
   @override
   Widget build(BuildContext context) {
-    _clear();
-    final parts = splitLinks(widget.text);
-    if (parts.every((p) => p.link == null)) return Text(widget.text);
+    // Keep recognizers alive across feed/theme rebuilds: disposing one while
+    // the finger is down cancels the pending tap.
+    if (_taps.isEmpty) return Text(widget.text);
+    var linkIndex = 0;
     final color = Theme.of(context).colorScheme.primary;
     return Text.rich(
       TextSpan(
         children: [
-          for (final p in parts)
-            if (p.link case final uri?)
+          for (final p in _parts)
+            if (p.link != null)
               TextSpan(
                 text: p.text,
                 style: TextStyle(
@@ -48,25 +75,12 @@ class _LinkTextState extends State<LinkText> {
                   decoration: TextDecoration.underline,
                   decorationColor: color,
                 ),
-                recognizer:
-                    (TapGestureRecognizer()
-                          ..onTap = () => launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          ))
-                        .also(_taps.add),
+                recognizer: _taps[linkIndex++],
               )
             else
               TextSpan(text: p.text),
         ],
       ),
     );
-  }
-}
-
-extension<T> on T {
-  T also(void Function(T) f) {
-    f(this);
-    return this;
   }
 }

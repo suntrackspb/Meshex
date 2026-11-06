@@ -8018,5 +8018,11 @@
   "colorPreviewIncoming": "Привет! Как слышно?",
   "colorPreviewOutgoing": "Отлично, я на связи!",
   "colorPreviewMention": "@Вы, сообщение дошло?",
-  "chatColorsPreview": "Предпросмотр чата"
+  "chatColorsPreview": "Предпросмотр чата",
+  "stickersTitle": "Стикеры",
+  "stickerLabel": "Стикер",
+  "stickerPackMissing": "Этот стикер недоступен в установленных паках",
+  "stickerSendHint": "Нажмите на стикер, чтобы отправить",
+  "stickerAnimated": "Анимация",
+  "stickerStatic": "Статичные"
 }

@@ -29,6 +29,7 @@ Message msg({
   toNum: to,
   channel: channel,
   channelKey: channelKey,
+  portnum: 1,
   body: body,
   rxTime: rxTime ?? now,
   isOutgoing: outgoing,

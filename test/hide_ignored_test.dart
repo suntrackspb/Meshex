@@ -12,6 +12,7 @@ Message m(int id, int from, {int emoji = 0, bool out = false}) => Message(
   toNum: broadcastNum,
   channel: 0,
   channelKey: 'mediumfast',
+  portnum: 1,
   body: 'x',
   rxTime: t0.add(Duration(minutes: id)),
   replyId: emoji == 0 ? null : 1,

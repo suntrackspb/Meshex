@@ -5076,4 +5076,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatColorsPreview => 'Chat preview';
+
+  @override
+  String get stickersTitle => 'Stickers';
+
+  @override
+  String get stickerLabel => 'Sticker';
+
+  @override
+  String get stickerPackMissing =>
+      'This sticker is not available in the installed packs';
+
+  @override
+  String get stickerSendHint => 'Tap a sticker to send it';
+
+  @override
+  String get stickerAnimated => 'Animated';
+
+  @override
+  String get stickerStatic => 'Static';
 }

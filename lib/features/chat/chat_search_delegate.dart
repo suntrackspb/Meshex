@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/proto/mesh.dart';
 import '../../data/database.dart';
+import 'sticker_picker.dart';
 
 /// Поиск по ленте чата. Возвращает выбранное сообщение.
 class ChatSearchDelegate extends SearchDelegate<Message?> {
@@ -70,7 +71,11 @@ class ChatSearchDelegate extends SearchDelegate<Message?> {
                 '${context.dayLabel(t, now)}, ${t.hour.toString().padLeft(2, '0')}:'
                 '${t.minute.toString().padLeft(2, '0')}';
             return ListTile(
-              title: Text(m.body, maxLines: 3, overflow: TextOverflow.ellipsis),
+              title: Text(
+                messagePreview(context, m),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: Text('$author · $time', style: TextStyle(color: muted)),
               onTap: () => close(context, m),
             );

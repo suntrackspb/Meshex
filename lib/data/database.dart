@@ -271,6 +271,9 @@ class Messages extends Table {
   /// Имя канала в нижнем регистре — по нему лента и склейка с зеркалом.
   TextColumn get channelKey => text().withDefault(const Constant(''))();
   TextColumn get body => text()();
+
+  /// Порт сообщения: 1 — текст, 256 — приватный протокол стикеров Meshex.
+  IntColumn get portnum => integer().withDefault(const Constant(1))();
   DateTimeColumn get rxTime => dateTime()();
   BoolColumn get isOutgoing => boolean().withDefault(const Constant(false))();
   IntColumn get replyId => integer().nullable()();
@@ -457,7 +460,7 @@ class AppDatabase extends _$AppDatabase {
   final AppDatabase? settings;
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   // До первого релиза схема пересоздаётся целиком (данные — кэш с ноды).
   // После релиза — нормальные пошаговые миграции.
@@ -528,6 +531,7 @@ class AppDatabase extends _$AppDatabase {
       }
     },
     14: (m) => _addColumn(m, nodes, nodes.macaddr),
+    16: (m) => _addColumn(m, messages, messages.portnum),
     15: (m) async {
       await _addColumn(m, nodes, nodes.precisionBits);
       await _addColumn(m, nodes, nodes.mirrorPrecisionBits);

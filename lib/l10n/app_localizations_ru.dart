@@ -5078,4 +5078,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chatColorsPreview => 'Предпросмотр чата';
+
+  @override
+  String get stickersTitle => 'Стикеры';
+
+  @override
+  String get stickerLabel => 'Стикер';
+
+  @override
+  String get stickerPackMissing =>
+      'Этот стикер недоступен в установленных паках';
+
+  @override
+  String get stickerSendHint => 'Нажмите на стикер, чтобы отправить';
+
+  @override
+  String get stickerAnimated => 'Анимация';
+
+  @override
+  String get stickerStatic => 'Статичные';
 }

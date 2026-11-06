@@ -11,6 +11,7 @@ import '../../ui/kit/kit.dart';
 import '../../ui/meshex_wordmark.dart';
 import '../notices/notice_banner.dart';
 import 'chat_feed.dart';
+import 'sticker_picker.dart';
 import '../../app/link_badge.dart';
 
 /// Каналы и личные диалоги. Каналы — по имени: так эфир склеивается с зеркалом.
@@ -125,7 +126,8 @@ class _DirectTile extends ConsumerWidget {
     final last = conv.last;
     return MeshTile(
       title: name,
-      subtitle: '${last.isOutgoing ? context.l10n.youPrefix : ''}${last.body}',
+      subtitle:
+          '${last.isOutgoing ? context.l10n.youPrefix : ''}${messagePreview(context, last)}',
       leading: NodeAvatar(nodeNum: conv.peer, shortName: node?.shortName),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

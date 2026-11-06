@@ -8915,6 +8915,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Предпросмотр чата'**
   String get chatColorsPreview;
+
+  /// No description provided for @stickersTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стикеры'**
+  String get stickersTitle;
+
+  /// No description provided for @stickerLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стикер'**
+  String get stickerLabel;
+
+  /// No description provided for @stickerPackMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот стикер недоступен в установленных паках'**
+  String get stickerPackMissing;
+
+  /// No description provided for @stickerSendHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите на стикер, чтобы отправить'**
+  String get stickerSendHint;
+
+  /// No description provided for @stickerAnimated.
+  ///
+  /// In ru, this message translates to:
+  /// **'Анимация'**
+  String get stickerAnimated;
+
+  /// No description provided for @stickerStatic.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статичные'**
+  String get stickerStatic;
 }
 
 class _AppLocalizationsDelegate

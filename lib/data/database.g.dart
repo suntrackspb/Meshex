@@ -2436,6 +2436,18 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _portnumMeta = const VerificationMeta(
+    'portnum',
+  );
+  @override
+  late final GeneratedColumn<int> portnum = GeneratedColumn<int>(
+    'portnum',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _rxTimeMeta = const VerificationMeta('rxTime');
   @override
   late final GeneratedColumn<DateTime> rxTime = GeneratedColumn<DateTime>(
@@ -2674,6 +2686,7 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     channel,
     channelKey,
     body,
+    portnum,
     rxTime,
     isOutgoing,
     replyId,
@@ -2752,6 +2765,12 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
       );
     } else if (isInserting) {
       context.missing(_bodyMeta);
+    }
+    if (data.containsKey('portnum')) {
+      context.handle(
+        _portnumMeta,
+        portnum.isAcceptableOrUnknown(data['portnum']!, _portnumMeta),
+      );
     }
     if (data.containsKey('rx_time')) {
       context.handle(
@@ -2916,6 +2935,10 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
         DriftSqlType.string,
         data['${effectivePrefix}body'],
       )!,
+      portnum: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}portnum'],
+      )!,
       rxTime: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}rx_time'],
@@ -3020,6 +3043,9 @@ class Message extends DataClass implements Insertable<Message> {
   /// Имя канала в нижнем регистре — по нему лента и склейка с зеркалом.
   final String channelKey;
   final String body;
+
+  /// Порт сообщения: 1 — текст, 256 — приватный протокол стикеров Meshex.
+  final int portnum;
   final DateTime rxTime;
   final bool isOutgoing;
   final int? replyId;
@@ -3057,6 +3083,7 @@ class Message extends DataClass implements Insertable<Message> {
     this.channel,
     required this.channelKey,
     required this.body,
+    required this.portnum,
     required this.rxTime,
     required this.isOutgoing,
     this.replyId,
@@ -3089,6 +3116,7 @@ class Message extends DataClass implements Insertable<Message> {
     }
     map['channel_key'] = Variable<String>(channelKey);
     map['body'] = Variable<String>(body);
+    map['portnum'] = Variable<int>(portnum);
     map['rx_time'] = Variable<DateTime>(rxTime);
     map['is_outgoing'] = Variable<bool>(isOutgoing);
     if (!nullToAbsent || replyId != null) {
@@ -3142,6 +3170,7 @@ class Message extends DataClass implements Insertable<Message> {
           : Value(channel),
       channelKey: Value(channelKey),
       body: Value(body),
+      portnum: Value(portnum),
       rxTime: Value(rxTime),
       isOutgoing: Value(isOutgoing),
       replyId: replyId == null && nullToAbsent
@@ -3193,6 +3222,7 @@ class Message extends DataClass implements Insertable<Message> {
       channel: serializer.fromJson<int?>(json['channel']),
       channelKey: serializer.fromJson<String>(json['channelKey']),
       body: serializer.fromJson<String>(json['body']),
+      portnum: serializer.fromJson<int>(json['portnum']),
       rxTime: serializer.fromJson<DateTime>(json['rxTime']),
       isOutgoing: serializer.fromJson<bool>(json['isOutgoing']),
       replyId: serializer.fromJson<int?>(json['replyId']),
@@ -3227,6 +3257,7 @@ class Message extends DataClass implements Insertable<Message> {
       'channel': serializer.toJson<int?>(channel),
       'channelKey': serializer.toJson<String>(channelKey),
       'body': serializer.toJson<String>(body),
+      'portnum': serializer.toJson<int>(portnum),
       'rxTime': serializer.toJson<DateTime>(rxTime),
       'isOutgoing': serializer.toJson<bool>(isOutgoing),
       'replyId': serializer.toJson<int?>(replyId),
@@ -3259,6 +3290,7 @@ class Message extends DataClass implements Insertable<Message> {
     Value<int?> channel = const Value.absent(),
     String? channelKey,
     String? body,
+    int? portnum,
     DateTime? rxTime,
     bool? isOutgoing,
     Value<int?> replyId = const Value.absent(),
@@ -3286,6 +3318,7 @@ class Message extends DataClass implements Insertable<Message> {
     channel: channel.present ? channel.value : this.channel,
     channelKey: channelKey ?? this.channelKey,
     body: body ?? this.body,
+    portnum: portnum ?? this.portnum,
     rxTime: rxTime ?? this.rxTime,
     isOutgoing: isOutgoing ?? this.isOutgoing,
     replyId: replyId.present ? replyId.value : this.replyId,
@@ -3317,6 +3350,7 @@ class Message extends DataClass implements Insertable<Message> {
           ? data.channelKey.value
           : this.channelKey,
       body: data.body.present ? data.body.value : this.body,
+      portnum: data.portnum.present ? data.portnum.value : this.portnum,
       rxTime: data.rxTime.present ? data.rxTime.value : this.rxTime,
       isOutgoing: data.isOutgoing.present
           ? data.isOutgoing.value
@@ -3361,6 +3395,7 @@ class Message extends DataClass implements Insertable<Message> {
           ..write('channel: $channel, ')
           ..write('channelKey: $channelKey, ')
           ..write('body: $body, ')
+          ..write('portnum: $portnum, ')
           ..write('rxTime: $rxTime, ')
           ..write('isOutgoing: $isOutgoing, ')
           ..write('replyId: $replyId, ')
@@ -3393,6 +3428,7 @@ class Message extends DataClass implements Insertable<Message> {
     channel,
     channelKey,
     body,
+    portnum,
     rxTime,
     isOutgoing,
     replyId,
@@ -3424,6 +3460,7 @@ class Message extends DataClass implements Insertable<Message> {
           other.channel == this.channel &&
           other.channelKey == this.channelKey &&
           other.body == this.body &&
+          other.portnum == this.portnum &&
           other.rxTime == this.rxTime &&
           other.isOutgoing == this.isOutgoing &&
           other.replyId == this.replyId &&
@@ -3453,6 +3490,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   final Value<int?> channel;
   final Value<String> channelKey;
   final Value<String> body;
+  final Value<int> portnum;
   final Value<DateTime> rxTime;
   final Value<bool> isOutgoing;
   final Value<int?> replyId;
@@ -3480,6 +3518,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.channel = const Value.absent(),
     this.channelKey = const Value.absent(),
     this.body = const Value.absent(),
+    this.portnum = const Value.absent(),
     this.rxTime = const Value.absent(),
     this.isOutgoing = const Value.absent(),
     this.replyId = const Value.absent(),
@@ -3508,6 +3547,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.channel = const Value.absent(),
     this.channelKey = const Value.absent(),
     required String body,
+    this.portnum = const Value.absent(),
     required DateTime rxTime,
     this.isOutgoing = const Value.absent(),
     this.replyId = const Value.absent(),
@@ -3540,6 +3580,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Expression<int>? channel,
     Expression<String>? channelKey,
     Expression<String>? body,
+    Expression<int>? portnum,
     Expression<DateTime>? rxTime,
     Expression<bool>? isOutgoing,
     Expression<int>? replyId,
@@ -3568,6 +3609,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       if (channel != null) 'channel': channel,
       if (channelKey != null) 'channel_key': channelKey,
       if (body != null) 'body': body,
+      if (portnum != null) 'portnum': portnum,
       if (rxTime != null) 'rx_time': rxTime,
       if (isOutgoing != null) 'is_outgoing': isOutgoing,
       if (replyId != null) 'reply_id': replyId,
@@ -3598,6 +3640,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Value<int?>? channel,
     Value<String>? channelKey,
     Value<String>? body,
+    Value<int>? portnum,
     Value<DateTime>? rxTime,
     Value<bool>? isOutgoing,
     Value<int?>? replyId,
@@ -3626,6 +3669,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       channel: channel ?? this.channel,
       channelKey: channelKey ?? this.channelKey,
       body: body ?? this.body,
+      portnum: portnum ?? this.portnum,
       rxTime: rxTime ?? this.rxTime,
       isOutgoing: isOutgoing ?? this.isOutgoing,
       replyId: replyId ?? this.replyId,
@@ -3671,6 +3715,9 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     }
     if (body.present) {
       map['body'] = Variable<String>(body.value);
+    }
+    if (portnum.present) {
+      map['portnum'] = Variable<int>(portnum.value);
     }
     if (rxTime.present) {
       map['rx_time'] = Variable<DateTime>(rxTime.value);
@@ -3744,6 +3791,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
           ..write('channel: $channel, ')
           ..write('channelKey: $channelKey, ')
           ..write('body: $body, ')
+          ..write('portnum: $portnum, ')
           ..write('rxTime: $rxTime, ')
           ..write('isOutgoing: $isOutgoing, ')
           ..write('replyId: $replyId, ')
@@ -7795,6 +7843,7 @@ typedef $$MessagesTableCreateCompanionBuilder =
       Value<int?> channel,
       Value<String> channelKey,
       required String body,
+      Value<int> portnum,
       required DateTime rxTime,
       Value<bool> isOutgoing,
       Value<int?> replyId,
@@ -7824,6 +7873,7 @@ typedef $$MessagesTableUpdateCompanionBuilder =
       Value<int?> channel,
       Value<String> channelKey,
       Value<String> body,
+      Value<int> portnum,
       Value<DateTime> rxTime,
       Value<bool> isOutgoing,
       Value<int?> replyId,
@@ -7886,6 +7936,11 @@ class $$MessagesTableFilterComposer
 
   ColumnFilters<String> get body => $composableBuilder(
     column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get portnum => $composableBuilder(
+    column: $table.portnum,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8030,6 +8085,11 @@ class $$MessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get portnum => $composableBuilder(
+    column: $table.portnum,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get rxTime => $composableBuilder(
     column: $table.rxTime,
     builder: (column) => ColumnOrderings(column),
@@ -8158,6 +8218,9 @@ class $$MessagesTableAnnotationComposer
   GeneratedColumn<String> get body =>
       $composableBuilder(column: $table.body, builder: (column) => column);
 
+  GeneratedColumn<int> get portnum =>
+      $composableBuilder(column: $table.portnum, builder: (column) => column);
+
   GeneratedColumn<DateTime> get rxTime =>
       $composableBuilder(column: $table.rxTime, builder: (column) => column);
 
@@ -8263,6 +8326,7 @@ class $$MessagesTableTableManager
                 Value<int?> channel = const Value.absent(),
                 Value<String> channelKey = const Value.absent(),
                 Value<String> body = const Value.absent(),
+                Value<int> portnum = const Value.absent(),
                 Value<DateTime> rxTime = const Value.absent(),
                 Value<bool> isOutgoing = const Value.absent(),
                 Value<int?> replyId = const Value.absent(),
@@ -8290,6 +8354,7 @@ class $$MessagesTableTableManager
                 channel: channel,
                 channelKey: channelKey,
                 body: body,
+                portnum: portnum,
                 rxTime: rxTime,
                 isOutgoing: isOutgoing,
                 replyId: replyId,
@@ -8319,6 +8384,7 @@ class $$MessagesTableTableManager
                 Value<int?> channel = const Value.absent(),
                 Value<String> channelKey = const Value.absent(),
                 required String body,
+                Value<int> portnum = const Value.absent(),
                 required DateTime rxTime,
                 Value<bool> isOutgoing = const Value.absent(),
                 Value<int?> replyId = const Value.absent(),
@@ -8346,6 +8412,7 @@ class $$MessagesTableTableManager
                 channel: channel,
                 channelKey: channelKey,
                 body: body,
+                portnum: portnum,
                 rxTime: rxTime,
                 isOutgoing: isOutgoing,
                 replyId: replyId,

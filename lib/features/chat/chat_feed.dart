@@ -18,6 +18,7 @@ import '../../core/proto/mesh.dart';
 import '../../data/bubble_groups.dart';
 import '../../data/chat_days.dart';
 import '../../data/database.dart';
+import '../../data/stickers.dart';
 import '../../data/delivery.dart';
 import '../../data/message_filter.dart';
 import '../../data/message_meta.dart';
@@ -35,6 +36,7 @@ import '../../ui/kit/kit.dart';
 import '../nodes/open_node.dart';
 import '../../data/read_marker.dart';
 import 'chat_page.dart';
+import 'sticker_picker.dart';
 import 'chat_search_delegate.dart';
 import 'emoji_sheet.dart';
 import 'link_text.dart';
@@ -348,6 +350,18 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
                   ? null
                   : _authorName(nodes, _replyTo!.fromNum),
               onCancelReply: () => setState(() => _replyTo = null),
+              onSticker: (sticker) async {
+                final reply = _replyTo;
+                final sent = await _send(
+                  sticker.wire,
+                  replyTo: reply,
+                  sticker: sticker,
+                );
+                if (sent && mounted && _replyTo == reply) {
+                  setState(() => _replyTo = null);
+                }
+                return sent;
+              },
               onSend: (text, {required first}) async {
                 // Цитата — только у первой части. Следующие уходят с паузой,
                 // и за это время могли выбрать «ответить» на другое
@@ -435,6 +449,7 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
     String text, {
     Message? replyTo,
     bool emoji = false,
+    StickerRef? sticker,
   }) async {
     final sender = ref.read(messageSenderProvider);
     try {
@@ -449,20 +464,33 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
               .firstOrNull
               ?.index;
           if (index == null) return false;
-          sending = sender.sendToChannel(
-            channel: index,
-            channelKey: key,
-            text: text,
-            replyId: replyTo?.packetId,
-            emoji: emoji,
-          );
+          sending = sticker != null
+              ? sender.sendStickerToChannel(
+                  channel: index,
+                  channelKey: key,
+                  sticker: sticker,
+                  replyId: replyTo?.packetId,
+                )
+              : sender.sendToChannel(
+                  channel: index,
+                  channelKey: key,
+                  text: text,
+                  replyId: replyTo?.packetId,
+                  emoji: emoji,
+                );
         case DirectTarget(:final num):
-          sending = sender.sendDirect(
-            to: num,
-            text: text,
-            replyId: replyTo?.packetId,
-            emoji: emoji,
-          );
+          sending = sticker != null
+              ? sender.sendStickerDirect(
+                  to: num,
+                  sticker: sticker,
+                  replyId: replyTo?.packetId,
+                )
+              : sender.sendDirect(
+                  to: num,
+                  text: text,
+                  replyId: replyTo?.packetId,
+                  emoji: emoji,
+                );
       }
       sending.catchError((Object e) => _error(e));
       return true;
@@ -1032,6 +1060,9 @@ class _Bubble extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final out = message.isOutgoing;
+    final sticker = message.portnum == StickerProtocol.port.value
+        ? StickerProtocol.parse(message.body)
+        : null;
     final t = message.rxTime;
     final time =
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -1074,7 +1105,9 @@ class _Bubble extends StatelessWidget {
                 ),
               ),
             if (ignored)
-              _HiddenBody(message.body)
+              _HiddenBody(message)
+            else if (sticker != null)
+              StickerMessageBody(ref: sticker)
             else ...[
               LinkText(message.body),
               MessageImages(message.body),
@@ -1239,7 +1272,10 @@ class _DayChip extends StatelessWidget {
 /// Чужое сообщение обращено ко мне: упоминание короткого имени своей ноды
 /// (как для уведомлений) или ответ на моё сообщение.
 bool _toMe(Message m, Map<int, Message> byPacket, int? me, String myShort) {
-  if (MessageAlerts.mentions(m.body, myShort)) return true;
+  if (m.portnum != StickerProtocol.port.value &&
+      MessageAlerts.mentions(m.body, myShort)) {
+    return true;
+  }
   final q = m.replyId == null ? null : byPacket[m.replyId];
   return q != null && (q.isOutgoing || (me != null && q.fromNum == me));
 }
@@ -1263,7 +1299,7 @@ class _Quote extends StatelessWidget {
       child: Text(
         quoted == null
             ? context.l10n.replyToMessage_4e6ac3
-            : '${author ?? ''}: ${quoted!.body}',
+            : '${author ?? ''}: ${messagePreview(context, quoted!)}',
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -1533,7 +1569,10 @@ class _Composer extends ConsumerStatefulWidget {
     required this.replyAuthor,
     required this.onCancelReply,
     required this.onSend,
+    required this.onSticker,
   });
+
+  final Future<bool> Function(StickerRef sticker) onSticker;
 
   final String chatId;
   final Message? replyTo;
@@ -1632,6 +1671,14 @@ class _ComposerState extends ConsumerState<_Composer> {
     _focus.requestFocus();
   }
 
+  Future<void> _pickSticker() async {
+    if (_progress != null || !ref.read(canSendProvider)) return;
+    _focus.unfocus();
+    final sticker = await pickSticker(context);
+    if (!mounted || sticker == null || !ref.read(canSendProvider)) return;
+    await widget.onSticker(sticker);
+  }
+
   bool _uploading = false;
 
   /// Выбрать картинку, загрузить и вставить ссылку в поле.
@@ -1707,7 +1754,7 @@ class _ComposerState extends ConsumerState<_Composer> {
                     const SizedBox(width: Tokens.s8),
                     Expanded(
                       child: Text(
-                        '${widget.replyAuthor}: ${reply.body}',
+                        '${widget.replyAuthor}: ${messagePreview(context, reply)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1777,6 +1824,13 @@ class _ComposerState extends ConsumerState<_Composer> {
                         ),
                       ),
                     ),
+                  ),
+                  IconButton(
+                    tooltip: context.l10n.stickersTitle,
+                    icon: const Icon(Icons.sticky_note_2_outlined),
+                    onPressed: canSend && progress == null
+                        ? _pickSticker
+                        : null,
                   ),
                   if (images != null)
                     _uploading
@@ -1901,9 +1955,9 @@ class _PkiIcon extends StatelessWidget {
 
 /// Свёрнутое сообщение игнорируемой ноды; нажатие раскрывает текст.
 class _HiddenBody extends StatefulWidget {
-  const _HiddenBody(this.body);
+  const _HiddenBody(this.message);
 
-  final String body;
+  final Message message;
 
   @override
   State<_HiddenBody> createState() => _HiddenBodyState();
@@ -1914,7 +1968,15 @@ class _HiddenBodyState extends State<_HiddenBody> {
 
   @override
   Widget build(BuildContext context) {
-    if (_open) return LinkText(widget.body);
+    if (_open) {
+      final message = widget.message;
+      final sticker = message.portnum == StickerProtocol.port.value
+          ? StickerProtocol.parse(message.body)
+          : null;
+      return sticker == null
+          ? LinkText(message.body)
+          : StickerMessageBody(ref: sticker);
+    }
     final t = Theme.of(context);
     return InkWell(
       onTap: () => setState(() => _open = true),

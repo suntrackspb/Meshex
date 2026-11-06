@@ -14,14 +14,28 @@ void main() {
 
   setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
 
-  for (final from in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]) {
-    test('миграция $from → 15 даёт текущую схему', () async {
+  for (final from in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) {
+    test('миграция $from → 16 даёт текущую схему', () async {
       final schema = await verifier.schemaAt(from);
       final db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 15);
+      await verifier.migrateAndValidate(db, 16);
       await db.close();
     });
   }
+
+  test('15 → 16 сохраняет текстовую историю с портом 1', () async {
+    final schema = await verifier.schemaAt(15);
+    schema.rawDatabase.execute(
+      "INSERT INTO messages (packet_id, from_num, to_num, body, rx_time) "
+      "VALUES (7, 42, 4294967295, 'история', '2023-11-14T22:13:20.000Z')",
+    );
+    final db = AppDatabase(schema.newConnection());
+    await verifier.migrateAndValidate(db, 16);
+    final old = await db.select(db.messages).getSingle();
+    expect(old.body, 'история');
+    expect(old.portnum, 1);
+    await db.close();
+  });
 
   test('данные переживают миграцию 5 → текущая', () async {
     final schema = await verifier.schemaAt(5);
@@ -54,7 +68,7 @@ void main() {
       expect(cols, isNot(contains('rssi')));
 
       final db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 15);
+      await verifier.migrateAndValidate(db, 16);
       await db.close();
     },
   );
@@ -66,7 +80,7 @@ void main() {
       'ALTER TABLE nodes ADD COLUMN "macaddr" BLOB NULL',
     );
     final db = AppDatabase(schema.newConnection());
-    await verifier.migrateAndValidate(db, 15);
+    await verifier.migrateAndValidate(db, 16);
     await db.close();
   });
 

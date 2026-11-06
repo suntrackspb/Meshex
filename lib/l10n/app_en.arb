@@ -1540,5 +1540,11 @@
   "colorPreviewIncoming": "Hello! Can you hear me?",
   "colorPreviewOutgoing": "Loud and clear!",
   "colorPreviewMention": "@You, did you get my message?",
-  "chatColorsPreview": "Chat preview"
+  "chatColorsPreview": "Chat preview",
+  "stickersTitle": "Stickers",
+  "stickerLabel": "Sticker",
+  "stickerPackMissing": "This sticker is not available in the installed packs",
+  "stickerSendHint": "Tap a sticker to send it",
+  "stickerAnimated": "Animated",
+  "stickerStatic": "Static"
 }

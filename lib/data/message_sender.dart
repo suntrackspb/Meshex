@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../core/proto/mesh.dart';
 import '../core/radio/send_queue.dart';
 import 'database.dart';
+import 'stickers.dart';
 
 /// Лимит текста в байтах UTF-8 — как в официальном iOS-клиенте.
 const maxMessageBytes = 200;
@@ -29,7 +30,7 @@ DirectBlock? directBlock(Node? n) {
   return null;
 }
 
-/// Отправка текстовых сообщений: запись в БД сразу (статус «ждём»),
+/// Отправка текста и стикеров: запись в БД сразу (статус «ждём»),
 /// затем статус по итогу очереди отправки.
 class MessageSender {
   MessageSender(
@@ -72,6 +73,34 @@ class MessageSender {
     bool emoji = false,
   }) => _new(to: to, channel: 0, text: text, replyId: replyId, emoji: emoji);
 
+  Future<void> sendStickerToChannel({
+    required int channel,
+    required String channelKey,
+    required StickerRef sticker,
+    int? replyId,
+  }) => _new(
+    to: broadcastNum,
+    channel: channel,
+    channelKey: channelKey,
+    text: utf8.decode(sticker.encode()),
+    replyId: replyId,
+    emoji: false,
+    portnum: StickerProtocol.port,
+  );
+
+  Future<void> sendStickerDirect({
+    required int to,
+    required StickerRef sticker,
+    int? replyId,
+  }) => _new(
+    to: to,
+    channel: 0,
+    text: utf8.decode(sticker.encode()),
+    replyId: replyId,
+    emoji: false,
+    portnum: StickerProtocol.port,
+  );
+
   Future<void> _new({
     required int to,
     required int channel,
@@ -79,6 +108,7 @@ class MessageSender {
     required String text,
     int? replyId,
     required bool emoji,
+    PortNum portnum = PortNum.TEXT_MESSAGE_APP,
   }) async {
     final me = _myNum();
     if (me == null) throw StateError('нет соединения с нодой');
@@ -98,6 +128,7 @@ class MessageSender {
             channel: Value(channel),
             channelKey: Value(channelKey),
             body: text,
+            portnum: Value(portnum.value),
             rxTime: DateTime.now(),
             isOutgoing: const Value(true),
             replyId: Value(replyId),
@@ -106,7 +137,7 @@ class MessageSender {
             ackState: const Value(AckState.pending),
           ),
         );
-    await _transmit(id, to, channel, key, text, replyId, emoji);
+    await _transmit(id, to, channel, key, text, replyId, emoji, portnum);
   }
 
   /// Повторить неотправленное/неподтверждённое: новый id пакета, та же запись.
@@ -133,6 +164,7 @@ class MessageSender {
       m.body,
       m.replyId,
       m.emoji != 0,
+      PortNum.valueOf(m.portnum) ?? PortNum.TEXT_MESSAGE_APP,
     );
   }
 
@@ -160,6 +192,7 @@ class MessageSender {
     String text,
     int? replyId,
     bool emoji,
+    PortNum portnum,
   ) async {
     final r = await _send(
       MeshPacket(
@@ -170,7 +203,7 @@ class MessageSender {
         pkiEncrypted: publicKey != null,
         publicKey: publicKey,
         decoded: Data(
-          portnum: PortNum.TEXT_MESSAGE_APP,
+          portnum: portnum,
           payload: utf8.encode(text),
           replyId: replyId,
           emoji: emoji ? 1 : 0,

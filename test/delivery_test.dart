@@ -9,6 +9,7 @@ Message m(AckState s, [MeshPacket_AckProofStatus? proof]) => Message(
   fromNum: 1,
   toNum: 2,
   channelKey: '',
+  portnum: 1,
   body: '',
   rxTime: DateTime(2026),
   isOutgoing: true,

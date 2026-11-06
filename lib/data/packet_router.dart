@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import '../core/proto/channel_names.dart';
 import '../core/proto/mesh.dart';
 import 'database.dart';
+import 'stickers.dart';
 import 'jammer_zones.dart';
 import 'node_key.dart';
 import 'settings/node_text.dart';
@@ -189,6 +190,11 @@ class PacketRouter {
     switch (d.portnum) {
       case PortNum.TEXT_MESSAGE_APP:
         await _insertText(p, utf8.decode(d.payload, allowMalformed: true));
+      case PortNum.PRIVATE_APP:
+        final sticker = StickerProtocol.decode(d.payload);
+        if (sticker != null && d.emoji == 0) {
+          await _insertText(p, sticker.wire);
+        }
       case PortNum.POSITION_APP:
         await _onPosition(p.from, Position.fromBuffer(d.payload), _rxTime(p));
       case PortNum.TELEMETRY_APP:
@@ -430,6 +436,10 @@ class PacketRouter {
         : '';
     final radio = MessagesCompanion(
       channel: Value(p.channel),
+      body: p.decoded.portnum == StickerProtocol.port
+          ? Value(text)
+          : const Value.absent(),
+      portnum: Value(p.decoded.portnum.value),
       rxSnr: Value(p.rxSnr == 0 ? null : p.rxSnr),
       rxRssi: Value(p.rxRssi == 0 ? null : p.rxRssi),
       hopStart: Value(p.hopStart == 0 ? null : p.hopStart),
@@ -448,6 +458,7 @@ class PacketRouter {
             channel: Value(p.channel),
             channelKey: Value(key),
             body: text,
+            portnum: Value(p.decoded.portnum.value),
             rxTime: _time(_rxTime(p)),
             replyId: Value(p.decoded.replyId == 0 ? null : p.decoded.replyId),
             emoji: Value(p.decoded.emoji),

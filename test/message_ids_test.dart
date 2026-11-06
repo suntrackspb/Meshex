@@ -10,6 +10,7 @@ Message m(int packetId, {int? mirrorId}) => Message(
   toNum: broadcastNum,
   channel: 0,
   channelKey: 'mediumfast',
+  portnum: 1,
   body: 'x',
   rxTime: DateTime(2026, 10, 22),
   isOutgoing: false,

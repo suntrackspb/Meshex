@@ -12,6 +12,7 @@ Message m(int from, int minute, {bool out = false, DateTime? at}) => Message(
   toNum: broadcastNum,
   channel: 0,
   channelKey: 'mediumfast',
+  portnum: 1,
   body: 'x',
   rxTime: at ?? t0.add(Duration(minutes: minute)),
   isOutgoing: out,

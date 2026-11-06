@@ -19,6 +19,7 @@ Message r(
   fromNum: from,
   toNum: 0xffffffff,
   channelKey: 'ch:0',
+  portnum: 1,
   body: emoji,
   rxTime: DateTime(2026, 10, 21, 22, minute),
   isOutgoing: out,

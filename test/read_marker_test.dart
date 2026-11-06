@@ -13,6 +13,7 @@ Message m(int minute, {bool out = false}) => Message(
   toNum: broadcastNum,
   channel: 0,
   channelKey: 'mediumfast',
+  portnum: 1,
   body: 'x',
   rxTime: at(minute),
   isOutgoing: out,

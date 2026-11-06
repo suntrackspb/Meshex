@@ -1,5 +1,6 @@
 import '../../core/notify/notify_channels.dart';
 import '../database.dart';
+import '../stickers.dart';
 
 /// Повод уведомить о сообщении.
 enum AlertKind { direct, reaction, reply, mention }
@@ -74,7 +75,10 @@ abstract final class MessageAlerts {
     }
     if (direct) return AlertKind.direct;
     if (m.replyId != null && c.targetIsMine) return AlertKind.reply;
-    if (mentions(m.body, c.myShortName)) return AlertKind.mention;
+    if (m.portnum != StickerProtocol.port.value &&
+        mentions(m.body, c.myShortName)) {
+      return AlertKind.mention;
+    }
     return null;
   }
 
@@ -102,10 +106,12 @@ abstract final class MessageAlerts {
     String target = '',
     String Function(String)? replyTitle,
     String Function(String, String)? reactionBody,
+    String stickerLabel = 'Стикер',
   }) {
     final where = channel.isEmpty ? sender : '$sender · #$channel';
+    final body = StickerProtocol.preview(m.body, m.portnum, stickerLabel);
     return switch (k) {
-      AlertKind.direct => (title: sender, body: m.body),
+      AlertKind.direct => (title: sender, body: body),
       // Android: notification_reaction_to «%1$s к %2$s”».
       AlertKind.reaction => (
         title: where,
@@ -115,9 +121,9 @@ abstract final class MessageAlerts {
       ),
       AlertKind.reply => (
         title: replyTitle?.call(where) ?? '$where · ответ',
-        body: m.body,
+        body: body,
       ),
-      AlertKind.mention => (title: where, body: m.body),
+      AlertKind.mention => (title: where, body: body),
     };
   }
 

@@ -39,9 +39,9 @@ void main() {
     test('своё сообщение границей не считается', () {
       expect(firstUnreadIndex(feed, at(3)), 0);
     });
-    test('всё прочитано или чат не открывали — нет границы', () {
+    test('всё прочитано — нет границы', () {
       expect(firstUnreadIndex(feed, at(5)), isNull);
-      expect(firstUnreadIndex(feed, null), isNull);
+      expect(firstUnreadIndex(feed, null), 4);
     });
     test('все загруженные новые — самое старое из них', () {
       expect(firstUnreadIndex(feed, at(0)), 4);

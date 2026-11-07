@@ -12,14 +12,13 @@ int feedLimitForUnread(int current, int unread) {
 }
 
 /// Индекс самого старого непрочитанного входящего в [feed] (свежие первыми)
-/// — над ним разделитель «Новые сообщения». null — непрочитанных нет или
-/// переписку ещё не открывали ([mark] == null: не считаем всю историю новой).
+/// — над ним разделитель «Новые сообщения». null — непрочитанных нет.
+/// Без отметки вся загруженная входящая история непрочитана, как в счётчике.
 int? firstUnreadIndex(List<Message> feed, DateTime? mark) {
-  if (mark == null) return null;
   int? found;
   for (var i = 0; i < feed.length; i++) {
     final m = feed[i];
-    if (!m.rxTime.isAfter(mark)) break;
+    if (mark != null && !m.rxTime.isAfter(mark)) break;
     if (!m.isOutgoing) found = i;
   }
   return found;

@@ -96,9 +96,11 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
   Future<void> _enter() async {
     final id = widget.id;
     final mark = await ref.read(feedReadProvider(id).future);
+    if (!mounted || id != widget.id) return;
     final unread = await ref
         .read(unreadCountProvider(id).future)
         .timeout(const Duration(seconds: 3), onTimeout: () => 0);
+    if (!mounted || id != widget.id) return;
     final limit = ref.read(feedLimitProvider(id).notifier);
     final want = feedLimitForUnread(limit.state, unread);
     if (want != limit.state) {
@@ -591,8 +593,16 @@ class _MessageList extends ConsumerStatefulWidget {
   ConsumerState<_MessageList> createState() => _MessageListState();
 }
 
+// Позиции живут между открытиями чатов, отдельно для каждой базы ноды.
+final _chatPositionsProvider = Provider((ref) {
+  ref.watch(databaseProvider);
+  return <String, ({int packetId, double top})>{};
+});
+
 class _MessageListState extends ConsumerState<_MessageList> {
-  final _scroll = ScrollController();
+  late final _positions = ref.read(_chatPositionsProvider);
+  // Восстанавливаем по сообщению: пиксельный offset устаревает при новых данных.
+  final _scroll = ScrollController(keepScrollOffset: false);
   final _listKey = GlobalKey();
   final _keys = <int, GlobalKey>{};
   int? _highlight;
@@ -643,27 +653,75 @@ class _MessageListState extends ConsumerState<_MessageList> {
     if (!_settled || !mounted) return;
     final i = _newestOnScreen();
     if (i == null) return;
+    _rememberPosition();
     // Внизу — прочитано всё, вместе с реакциями (их нет среди пузырей).
     widget.onSeen(
       i == 0 ? readUpTo(widget.messages, 0) : readUpTo(_visible, i),
     );
   }
 
-  /// Открыть на первом непрочитанном: разделитель — вверху экрана.
+  void _rememberPosition() {
+    if (!_settled || !_scroll.hasClients) return;
+    if (_scroll.offset <= 1) {
+      _positions.remove(widget.feedId);
+      return;
+    }
+    final list = _listKey.currentContext?.findRenderObject() as RenderBox?;
+    if (list == null || !list.attached) return;
+    // Верхнее видимое сообщение — якорь, не зависящий от новых сообщений.
+    for (final m in _visible.reversed) {
+      final box =
+          _keys[m.packetId]?.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.attached) continue;
+      final top = box.localToGlobal(Offset.zero, ancestor: list).dy;
+      if (top < list.size.height && top + box.size.height > 0) {
+        _positions[widget.feedId] = (packetId: m.packetId, top: top);
+        return;
+      }
+    }
+  }
+
+  /// При возврате — место остановки, при первом входе — непрочитанные.
   Future<void> _position() async {
-    final i = firstUnreadIndex(_visible, widget.unreadAfter);
-    if (i != null && i > 0) {
+    if (!mounted) return;
+    final saved = _positions[widget.feedId];
+    final anchor = saved == null
+        ? -1
+        : _visible.indexWhere((m) => m.packetId == saved.packetId);
+    final i = anchor >= 0
+        ? anchor
+        : firstUnreadIndex(_visible, widget.unreadAfter);
+    if (i != null) {
       final list = _visible;
-      await scrollToItem(
+      final found = await scrollToItem(
         _scroll,
         i,
         list.length,
         (j) => _keyFor(list[j].packetId),
-        // Список перевёрнут: 1 — верх экрана; чуть ниже, чтобы был виден
-        // разделитель над сообщением.
         alignment: 0.9,
         duration: Duration.zero,
       );
+      // jumpTo меняет offset сразу, геометрию пузырей — на следующем кадре.
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      if (found && anchor >= 0) {
+        final viewport =
+            _listKey.currentContext?.findRenderObject() as RenderBox?;
+        final box =
+            _keys[saved!.packetId]?.currentContext?.findRenderObject()
+                as RenderBox?;
+        if (viewport != null && box != null && _scroll.hasClients) {
+          final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+          final p = _scroll.position;
+          _scroll.jumpTo(
+            (p.pixels + saved.top - top).clamp(
+              p.minScrollExtent,
+              p.maxScrollExtent,
+            ),
+          );
+          await WidgetsBinding.instance.endOfFrame;
+        }
+      }
     }
     if (!mounted) return;
     _settled = true;
@@ -771,7 +829,9 @@ class _MessageListState extends ConsumerState<_MessageList> {
     final list = NotificationListener<ScrollNotification>(
       // Долистали почти до верха (список перевёрнут — это конец) — подгружаем.
       onNotification: (n) {
-        if (n is ScrollEndNotification) _reportSeen();
+        if (n is ScrollEndNotification) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _reportSeen());
+        }
         if (canLoadMore &&
             !loadingMore &&
             n.metrics.extentAfter < 400 &&

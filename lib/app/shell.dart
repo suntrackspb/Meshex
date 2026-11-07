@@ -8,6 +8,7 @@ import '../ui/kit/kit.dart';
 import 'id_bug_providers.dart';
 import 'providers.dart';
 import 'router.dart';
+import 'sticker_providers.dart';
 
 /// Телефон — нижние вкладки; планшет/десктоп — боковая панель.
 class AdaptiveShell extends ConsumerWidget {
@@ -20,6 +21,7 @@ class AdaptiveShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(stickerSourceSyncProvider);
     final wide = MediaQuery.sizeOf(context).width >= Tokens.wideBreakpoint;
     final radio = ref.watch(radioProvider);
     final unread = ref.watch(totalUnreadProvider);

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:meshex/data/database.dart';
@@ -14,30 +17,30 @@ void main() {
 
   setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
 
-  for (final from in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]) {
-    test('миграция $from → 17 даёт текущую схему', () async {
+  for (final from in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]) {
+    test('миграция $from → 18 даёт текущую схему', () async {
       final schema = await verifier.schemaAt(from);
       final db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 17);
+      await verifier.migrateAndValidate(db, 18);
       await db.close();
     });
   }
 
-  test('15 → 17 сохраняет текстовую историю с портом 1', () async {
+  test('15 → 18 сохраняет текстовую историю с портом 1', () async {
     final schema = await verifier.schemaAt(15);
     schema.rawDatabase.execute(
       "INSERT INTO messages (packet_id, from_num, to_num, body, rx_time) "
       "VALUES (7, 42, 4294967295, 'история', '2023-11-14T22:13:20.000Z')",
     );
     final db = AppDatabase(schema.newConnection());
-    await verifier.migrateAndValidate(db, 17);
+    await verifier.migrateAndValidate(db, 18);
     final old = await db.select(db.messages).getSingle();
     expect(old.body, 'история');
     expect(old.portnum, 1);
     await db.close();
   });
 
-  test('16 → 17 сохраняет историю, ACK и настройки без sticker content', () async {
+  test('16 → 18 сохраняет историю, ACK и настройки без sticker content', () async {
     final schema = await verifier.schemaAt(16);
     schema.rawDatabase.execute(
       "INSERT INTO messages (packet_id, from_num, to_num, body, rx_time, ack_state, ack_proof) "
@@ -47,7 +50,7 @@ void main() {
       "INSERT INTO app_settings (key, value) VALUES ('app.theme', 'dark')",
     );
     final db = AppDatabase(schema.newConnection());
-    await verifier.migrateAndValidate(db, 17);
+    await verifier.migrateAndValidate(db, 18);
     final old = await db.select(db.messages).getSingle();
     expect(old.body, 'история v16');
     expect(old.portnum, 1);
@@ -56,6 +59,37 @@ void main() {
     expect(old.ackState, AckState.acked);
     expect(old.ackProof, 1);
     expect(await db.getSetting(AppSettingKeys.theme), 'dark');
+    await db.close();
+  });
+
+  test('17 → 18 сохраняет sticker bytes и structured content', () async {
+    final schema = await verifier.schemaAt(17);
+    final fixture =
+        jsonDecode(File('test/fixtures/stickers/wire.json').readAsStringSync())
+            as Map;
+    final content = jsonEncode({
+      'wire_version': 2,
+      'source_url': fixture['source_url'],
+      'pack_sha256': fixture['pack_sha256'],
+      'sticker_id': fixture['sticker_id'],
+    });
+    final hex = fixture['payload_hex'] as String;
+    schema.rawDatabase.execute(
+      "INSERT INTO messages (packet_id, from_num, to_num, body, rx_time, portnum, raw_payload, sticker_content) "
+      "VALUES (78, 42, 4294967295, '[Sticker]', '2023-11-14T22:13:20.000Z', 256, X'$hex', ?)",
+      [content],
+    );
+    final db = AppDatabase(schema.newConnection());
+    await verifier.migrateAndValidate(db, 18);
+    final old = await db.select(db.messages).getSingle();
+    expect(old.portnum, 256);
+    expect(old.stickerContent, content);
+    expect(
+      old.rawPayload!.map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      hex,
+    );
+    expect(await db.select(db.stickerSources).get(), isEmpty);
+    expect(await db.select(db.stickerSourceBindings).get(), isEmpty);
     await db.close();
   });
 
@@ -90,7 +124,7 @@ void main() {
       expect(cols, isNot(contains('rssi')));
 
       final db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 17);
+      await verifier.migrateAndValidate(db, 18);
       await db.close();
     },
   );
@@ -102,7 +136,7 @@ void main() {
       'ALTER TABLE nodes ADD COLUMN "macaddr" BLOB NULL',
     );
     final db = AppDatabase(schema.newConnection());
-    await verifier.migrateAndValidate(db, 17);
+    await verifier.migrateAndValidate(db, 18);
     await db.close();
   });
 

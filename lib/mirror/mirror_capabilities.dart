@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../core/stickers/wire_codec.dart';
+
 /// Что объявило подключённое зеркало (`GET /api/v1/capabilities`).
 /// Чего в ответе нет — того в клиенте нет: адреса и ключи сервисов в
 /// сборку не зашиваются, у каждого экземпляра свои.
@@ -9,6 +11,7 @@ class MirrorCapabilities {
     this.contact,
     this.images,
     this.reports,
+    this.stickers,
   });
 
   /// Зеркало без ответа (старая версия или нет сохранённых настроек) — ничего не умеет.
@@ -21,6 +24,7 @@ class MirrorCapabilities {
 
   final ImagesCapability? images;
   final ReportsCapability? reports;
+  final StickersCapability? stickers;
 
   Map<String, Object?> toJson() => {
     'name': name,
@@ -36,6 +40,7 @@ class MirrorCapabilities {
             'report': images!.report,
             'delete': images!.delete,
           },
+    'stickers': stickers?.toJson(),
     'reports': reports == null
         ? null
         : {
@@ -54,6 +59,7 @@ class MirrorCapabilities {
       contact: op is Map ? str(op['contact']) : null,
       images: ImagesCapability.tryParse(j['images']),
       reports: ReportsCapability.tryParse(j['reports']),
+      stickers: StickersCapability.tryParse(j['stickers']),
     );
   }
 }
@@ -143,6 +149,103 @@ class ReportsCapability {
           : base.replace(path: '${base.path}/'),
       apiKey: key is String ? key : '',
       notices: j['notices'] == true,
+    );
+  }
+}
+
+class StickerSourceAnnouncement {
+  const StickerSourceAnnouncement({required this.url, this.label});
+  final String url;
+  final String? label;
+}
+
+class StickerMessageApiCapability {
+  const StickerMessageApiCapability({
+    required this.history,
+    required this.realtime,
+  });
+  final bool history;
+  final bool realtime;
+}
+
+/// Independent capability: a source can exist without sticker history support.
+class StickersCapability {
+  StickersCapability._(
+    this.sourceSchemaVersions,
+    this.wireVersions,
+    this.sources,
+    this.messageApi,
+  );
+  final List<int> sourceSchemaVersions;
+  final List<int> wireVersions;
+  final List<StickerSourceAnnouncement> sources;
+  final StickerMessageApiCapability? messageApi;
+
+  Map<String, Object?> toJson() => {
+    'enabled': true,
+    'source_schema_versions': sourceSchemaVersions,
+    'wire_versions': wireVersions,
+    'sources': [
+      for (final source in sources)
+        {'url': source.url, if (source.label != null) 'label': source.label},
+    ],
+    if (messageApi != null)
+      'message_api': {
+        'version': 1,
+        'history': messageApi!.history,
+        'realtime': messageApi!.realtime,
+      },
+  };
+
+  static StickersCapability? tryParse(Object? value) {
+    if (value is! Map || value['enabled'] != true) return null;
+    List<int> versions(Object? v) => v is List
+        ? List.unmodifiable(v.whereType<int>().where((n) => n > 0).toSet())
+        : const [];
+    final schemas = versions(value['source_schema_versions']);
+    final wire = versions(value['wire_versions']);
+    if (!schemas.contains(1)) return null;
+    final raw = value['sources'];
+    if (raw is! List || raw.length > 16) return null;
+    final sources = <StickerSourceAnnouncement>[];
+    final urls = <String>{};
+    for (final item in raw) {
+      if (item is! Map || item['url'] is! String) continue;
+      try {
+        final url = normalizeSourceUrl(item['url'] as String);
+        if (!urls.add(url)) continue;
+        final label = item['label'];
+        sources.add(
+          StickerSourceAnnouncement(
+            url: url,
+            label:
+                label is String &&
+                    label.trim().isNotEmpty &&
+                    label.runes.length <= 160 &&
+                    !label.runes.any((c) => c < 32 || (c >= 127 && c <= 159))
+                ? label
+                : null,
+          ),
+        );
+      } on FormatException {
+        // A malformed declaration must not disable unrelated services/sources.
+      }
+    }
+    final api = value['message_api'];
+    return StickersCapability._(
+      schemas,
+      wire,
+      List.unmodifiable(sources),
+      api is Map &&
+              api['version'] is int &&
+              api['version'] == 1 &&
+              api['history'] is bool &&
+              api['realtime'] is bool
+          ? StickerMessageApiCapability(
+              history: api['history'] as bool,
+              realtime: api['realtime'] as bool,
+            )
+          : null,
     );
   }
 }

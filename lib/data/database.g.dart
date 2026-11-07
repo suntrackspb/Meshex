@@ -6935,6 +6935,933 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   }
 }
 
+class $StickerSourcesTable extends StickerSources
+    with TableInfo<$StickerSourcesTable, StickerSource> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StickerSourcesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sourceUrlMeta = const VerificationMeta(
+    'sourceUrl',
+  );
+  @override
+  late final GeneratedColumn<String> sourceUrl = GeneratedColumn<String>(
+    'source_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _manualEnabledMeta = const VerificationMeta(
+    'manualEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> manualEnabled = GeneratedColumn<bool>(
+    'manual_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("manual_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _blockedMeta = const VerificationMeta(
+    'blocked',
+  );
+  @override
+  late final GeneratedColumn<bool> blocked = GeneratedColumn<bool>(
+    'blocked',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("blocked" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _descriptorJsonMeta = const VerificationMeta(
+    'descriptorJson',
+  );
+  @override
+  late final GeneratedColumn<String> descriptorJson = GeneratedColumn<String>(
+    'descriptor_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _catalogJsonMeta = const VerificationMeta(
+    'catalogJson',
+  );
+  @override
+  late final GeneratedColumn<String> catalogJson = GeneratedColumn<String>(
+    'catalog_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _descriptorEtagMeta = const VerificationMeta(
+    'descriptorEtag',
+  );
+  @override
+  late final GeneratedColumn<String> descriptorEtag = GeneratedColumn<String>(
+    'descriptor_etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _catalogEtagMeta = const VerificationMeta(
+    'catalogEtag',
+  );
+  @override
+  late final GeneratedColumn<String> catalogEtag = GeneratedColumn<String>(
+    'catalog_etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastCheckedMeta = const VerificationMeta(
+    'lastChecked',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastChecked = GeneratedColumn<DateTime>(
+    'last_checked',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('unchecked'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sourceUrl,
+    manualEnabled,
+    blocked,
+    descriptorJson,
+    catalogJson,
+    descriptorEtag,
+    catalogEtag,
+    lastChecked,
+    status,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sticker_sources';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StickerSource> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('source_url')) {
+      context.handle(
+        _sourceUrlMeta,
+        sourceUrl.isAcceptableOrUnknown(data['source_url']!, _sourceUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceUrlMeta);
+    }
+    if (data.containsKey('manual_enabled')) {
+      context.handle(
+        _manualEnabledMeta,
+        manualEnabled.isAcceptableOrUnknown(
+          data['manual_enabled']!,
+          _manualEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('blocked')) {
+      context.handle(
+        _blockedMeta,
+        blocked.isAcceptableOrUnknown(data['blocked']!, _blockedMeta),
+      );
+    }
+    if (data.containsKey('descriptor_json')) {
+      context.handle(
+        _descriptorJsonMeta,
+        descriptorJson.isAcceptableOrUnknown(
+          data['descriptor_json']!,
+          _descriptorJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('catalog_json')) {
+      context.handle(
+        _catalogJsonMeta,
+        catalogJson.isAcceptableOrUnknown(
+          data['catalog_json']!,
+          _catalogJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('descriptor_etag')) {
+      context.handle(
+        _descriptorEtagMeta,
+        descriptorEtag.isAcceptableOrUnknown(
+          data['descriptor_etag']!,
+          _descriptorEtagMeta,
+        ),
+      );
+    }
+    if (data.containsKey('catalog_etag')) {
+      context.handle(
+        _catalogEtagMeta,
+        catalogEtag.isAcceptableOrUnknown(
+          data['catalog_etag']!,
+          _catalogEtagMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_checked')) {
+      context.handle(
+        _lastCheckedMeta,
+        lastChecked.isAcceptableOrUnknown(
+          data['last_checked']!,
+          _lastCheckedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sourceUrl};
+  @override
+  StickerSource map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StickerSource(
+      sourceUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_url'],
+      )!,
+      manualEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}manual_enabled'],
+      )!,
+      blocked: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}blocked'],
+      )!,
+      descriptorJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}descriptor_json'],
+      ),
+      catalogJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}catalog_json'],
+      ),
+      descriptorEtag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}descriptor_etag'],
+      ),
+      catalogEtag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}catalog_etag'],
+      ),
+      lastChecked: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_checked'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+    );
+  }
+
+  @override
+  $StickerSourcesTable createAlias(String alias) {
+    return $StickerSourcesTable(attachedDatabase, alias);
+  }
+}
+
+class StickerSource extends DataClass implements Insertable<StickerSource> {
+  final String sourceUrl;
+  final bool manualEnabled;
+  final bool blocked;
+  final String? descriptorJson;
+  final String? catalogJson;
+  final String? descriptorEtag;
+  final String? catalogEtag;
+  final DateTime? lastChecked;
+  final String status;
+  const StickerSource({
+    required this.sourceUrl,
+    required this.manualEnabled,
+    required this.blocked,
+    this.descriptorJson,
+    this.catalogJson,
+    this.descriptorEtag,
+    this.catalogEtag,
+    this.lastChecked,
+    required this.status,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['source_url'] = Variable<String>(sourceUrl);
+    map['manual_enabled'] = Variable<bool>(manualEnabled);
+    map['blocked'] = Variable<bool>(blocked);
+    if (!nullToAbsent || descriptorJson != null) {
+      map['descriptor_json'] = Variable<String>(descriptorJson);
+    }
+    if (!nullToAbsent || catalogJson != null) {
+      map['catalog_json'] = Variable<String>(catalogJson);
+    }
+    if (!nullToAbsent || descriptorEtag != null) {
+      map['descriptor_etag'] = Variable<String>(descriptorEtag);
+    }
+    if (!nullToAbsent || catalogEtag != null) {
+      map['catalog_etag'] = Variable<String>(catalogEtag);
+    }
+    if (!nullToAbsent || lastChecked != null) {
+      map['last_checked'] = Variable<DateTime>(lastChecked);
+    }
+    map['status'] = Variable<String>(status);
+    return map;
+  }
+
+  StickerSourcesCompanion toCompanion(bool nullToAbsent) {
+    return StickerSourcesCompanion(
+      sourceUrl: Value(sourceUrl),
+      manualEnabled: Value(manualEnabled),
+      blocked: Value(blocked),
+      descriptorJson: descriptorJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(descriptorJson),
+      catalogJson: catalogJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(catalogJson),
+      descriptorEtag: descriptorEtag == null && nullToAbsent
+          ? const Value.absent()
+          : Value(descriptorEtag),
+      catalogEtag: catalogEtag == null && nullToAbsent
+          ? const Value.absent()
+          : Value(catalogEtag),
+      lastChecked: lastChecked == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastChecked),
+      status: Value(status),
+    );
+  }
+
+  factory StickerSource.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StickerSource(
+      sourceUrl: serializer.fromJson<String>(json['sourceUrl']),
+      manualEnabled: serializer.fromJson<bool>(json['manualEnabled']),
+      blocked: serializer.fromJson<bool>(json['blocked']),
+      descriptorJson: serializer.fromJson<String?>(json['descriptorJson']),
+      catalogJson: serializer.fromJson<String?>(json['catalogJson']),
+      descriptorEtag: serializer.fromJson<String?>(json['descriptorEtag']),
+      catalogEtag: serializer.fromJson<String?>(json['catalogEtag']),
+      lastChecked: serializer.fromJson<DateTime?>(json['lastChecked']),
+      status: serializer.fromJson<String>(json['status']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sourceUrl': serializer.toJson<String>(sourceUrl),
+      'manualEnabled': serializer.toJson<bool>(manualEnabled),
+      'blocked': serializer.toJson<bool>(blocked),
+      'descriptorJson': serializer.toJson<String?>(descriptorJson),
+      'catalogJson': serializer.toJson<String?>(catalogJson),
+      'descriptorEtag': serializer.toJson<String?>(descriptorEtag),
+      'catalogEtag': serializer.toJson<String?>(catalogEtag),
+      'lastChecked': serializer.toJson<DateTime?>(lastChecked),
+      'status': serializer.toJson<String>(status),
+    };
+  }
+
+  StickerSource copyWith({
+    String? sourceUrl,
+    bool? manualEnabled,
+    bool? blocked,
+    Value<String?> descriptorJson = const Value.absent(),
+    Value<String?> catalogJson = const Value.absent(),
+    Value<String?> descriptorEtag = const Value.absent(),
+    Value<String?> catalogEtag = const Value.absent(),
+    Value<DateTime?> lastChecked = const Value.absent(),
+    String? status,
+  }) => StickerSource(
+    sourceUrl: sourceUrl ?? this.sourceUrl,
+    manualEnabled: manualEnabled ?? this.manualEnabled,
+    blocked: blocked ?? this.blocked,
+    descriptorJson: descriptorJson.present
+        ? descriptorJson.value
+        : this.descriptorJson,
+    catalogJson: catalogJson.present ? catalogJson.value : this.catalogJson,
+    descriptorEtag: descriptorEtag.present
+        ? descriptorEtag.value
+        : this.descriptorEtag,
+    catalogEtag: catalogEtag.present ? catalogEtag.value : this.catalogEtag,
+    lastChecked: lastChecked.present ? lastChecked.value : this.lastChecked,
+    status: status ?? this.status,
+  );
+  StickerSource copyWithCompanion(StickerSourcesCompanion data) {
+    return StickerSource(
+      sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
+      manualEnabled: data.manualEnabled.present
+          ? data.manualEnabled.value
+          : this.manualEnabled,
+      blocked: data.blocked.present ? data.blocked.value : this.blocked,
+      descriptorJson: data.descriptorJson.present
+          ? data.descriptorJson.value
+          : this.descriptorJson,
+      catalogJson: data.catalogJson.present
+          ? data.catalogJson.value
+          : this.catalogJson,
+      descriptorEtag: data.descriptorEtag.present
+          ? data.descriptorEtag.value
+          : this.descriptorEtag,
+      catalogEtag: data.catalogEtag.present
+          ? data.catalogEtag.value
+          : this.catalogEtag,
+      lastChecked: data.lastChecked.present
+          ? data.lastChecked.value
+          : this.lastChecked,
+      status: data.status.present ? data.status.value : this.status,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StickerSource(')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('manualEnabled: $manualEnabled, ')
+          ..write('blocked: $blocked, ')
+          ..write('descriptorJson: $descriptorJson, ')
+          ..write('catalogJson: $catalogJson, ')
+          ..write('descriptorEtag: $descriptorEtag, ')
+          ..write('catalogEtag: $catalogEtag, ')
+          ..write('lastChecked: $lastChecked, ')
+          ..write('status: $status')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sourceUrl,
+    manualEnabled,
+    blocked,
+    descriptorJson,
+    catalogJson,
+    descriptorEtag,
+    catalogEtag,
+    lastChecked,
+    status,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StickerSource &&
+          other.sourceUrl == this.sourceUrl &&
+          other.manualEnabled == this.manualEnabled &&
+          other.blocked == this.blocked &&
+          other.descriptorJson == this.descriptorJson &&
+          other.catalogJson == this.catalogJson &&
+          other.descriptorEtag == this.descriptorEtag &&
+          other.catalogEtag == this.catalogEtag &&
+          other.lastChecked == this.lastChecked &&
+          other.status == this.status);
+}
+
+class StickerSourcesCompanion extends UpdateCompanion<StickerSource> {
+  final Value<String> sourceUrl;
+  final Value<bool> manualEnabled;
+  final Value<bool> blocked;
+  final Value<String?> descriptorJson;
+  final Value<String?> catalogJson;
+  final Value<String?> descriptorEtag;
+  final Value<String?> catalogEtag;
+  final Value<DateTime?> lastChecked;
+  final Value<String> status;
+  final Value<int> rowid;
+  const StickerSourcesCompanion({
+    this.sourceUrl = const Value.absent(),
+    this.manualEnabled = const Value.absent(),
+    this.blocked = const Value.absent(),
+    this.descriptorJson = const Value.absent(),
+    this.catalogJson = const Value.absent(),
+    this.descriptorEtag = const Value.absent(),
+    this.catalogEtag = const Value.absent(),
+    this.lastChecked = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  StickerSourcesCompanion.insert({
+    required String sourceUrl,
+    this.manualEnabled = const Value.absent(),
+    this.blocked = const Value.absent(),
+    this.descriptorJson = const Value.absent(),
+    this.catalogJson = const Value.absent(),
+    this.descriptorEtag = const Value.absent(),
+    this.catalogEtag = const Value.absent(),
+    this.lastChecked = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : sourceUrl = Value(sourceUrl);
+  static Insertable<StickerSource> custom({
+    Expression<String>? sourceUrl,
+    Expression<bool>? manualEnabled,
+    Expression<bool>? blocked,
+    Expression<String>? descriptorJson,
+    Expression<String>? catalogJson,
+    Expression<String>? descriptorEtag,
+    Expression<String>? catalogEtag,
+    Expression<DateTime>? lastChecked,
+    Expression<String>? status,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sourceUrl != null) 'source_url': sourceUrl,
+      if (manualEnabled != null) 'manual_enabled': manualEnabled,
+      if (blocked != null) 'blocked': blocked,
+      if (descriptorJson != null) 'descriptor_json': descriptorJson,
+      if (catalogJson != null) 'catalog_json': catalogJson,
+      if (descriptorEtag != null) 'descriptor_etag': descriptorEtag,
+      if (catalogEtag != null) 'catalog_etag': catalogEtag,
+      if (lastChecked != null) 'last_checked': lastChecked,
+      if (status != null) 'status': status,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  StickerSourcesCompanion copyWith({
+    Value<String>? sourceUrl,
+    Value<bool>? manualEnabled,
+    Value<bool>? blocked,
+    Value<String?>? descriptorJson,
+    Value<String?>? catalogJson,
+    Value<String?>? descriptorEtag,
+    Value<String?>? catalogEtag,
+    Value<DateTime?>? lastChecked,
+    Value<String>? status,
+    Value<int>? rowid,
+  }) {
+    return StickerSourcesCompanion(
+      sourceUrl: sourceUrl ?? this.sourceUrl,
+      manualEnabled: manualEnabled ?? this.manualEnabled,
+      blocked: blocked ?? this.blocked,
+      descriptorJson: descriptorJson ?? this.descriptorJson,
+      catalogJson: catalogJson ?? this.catalogJson,
+      descriptorEtag: descriptorEtag ?? this.descriptorEtag,
+      catalogEtag: catalogEtag ?? this.catalogEtag,
+      lastChecked: lastChecked ?? this.lastChecked,
+      status: status ?? this.status,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sourceUrl.present) {
+      map['source_url'] = Variable<String>(sourceUrl.value);
+    }
+    if (manualEnabled.present) {
+      map['manual_enabled'] = Variable<bool>(manualEnabled.value);
+    }
+    if (blocked.present) {
+      map['blocked'] = Variable<bool>(blocked.value);
+    }
+    if (descriptorJson.present) {
+      map['descriptor_json'] = Variable<String>(descriptorJson.value);
+    }
+    if (catalogJson.present) {
+      map['catalog_json'] = Variable<String>(catalogJson.value);
+    }
+    if (descriptorEtag.present) {
+      map['descriptor_etag'] = Variable<String>(descriptorEtag.value);
+    }
+    if (catalogEtag.present) {
+      map['catalog_etag'] = Variable<String>(catalogEtag.value);
+    }
+    if (lastChecked.present) {
+      map['last_checked'] = Variable<DateTime>(lastChecked.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StickerSourcesCompanion(')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('manualEnabled: $manualEnabled, ')
+          ..write('blocked: $blocked, ')
+          ..write('descriptorJson: $descriptorJson, ')
+          ..write('catalogJson: $catalogJson, ')
+          ..write('descriptorEtag: $descriptorEtag, ')
+          ..write('catalogEtag: $catalogEtag, ')
+          ..write('lastChecked: $lastChecked, ')
+          ..write('status: $status, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $StickerSourceBindingsTable extends StickerSourceBindings
+    with TableInfo<$StickerSourceBindingsTable, StickerSourceBinding> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StickerSourceBindingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sourceUrlMeta = const VerificationMeta(
+    'sourceUrl',
+  );
+  @override
+  late final GeneratedColumn<String> sourceUrl = GeneratedColumn<String>(
+    'source_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mirrorBaseUrlMeta = const VerificationMeta(
+    'mirrorBaseUrl',
+  );
+  @override
+  late final GeneratedColumn<String> mirrorBaseUrl = GeneratedColumn<String>(
+    'mirror_base_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cachedMeta = const VerificationMeta('cached');
+  @override
+  late final GeneratedColumn<bool> cached = GeneratedColumn<bool>(
+    'cached',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("cached" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sourceUrl,
+    mirrorBaseUrl,
+    label,
+    cached,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sticker_source_bindings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StickerSourceBinding> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('source_url')) {
+      context.handle(
+        _sourceUrlMeta,
+        sourceUrl.isAcceptableOrUnknown(data['source_url']!, _sourceUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceUrlMeta);
+    }
+    if (data.containsKey('mirror_base_url')) {
+      context.handle(
+        _mirrorBaseUrlMeta,
+        mirrorBaseUrl.isAcceptableOrUnknown(
+          data['mirror_base_url']!,
+          _mirrorBaseUrlMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mirrorBaseUrlMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    }
+    if (data.containsKey('cached')) {
+      context.handle(
+        _cachedMeta,
+        cached.isAcceptableOrUnknown(data['cached']!, _cachedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sourceUrl, mirrorBaseUrl};
+  @override
+  StickerSourceBinding map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StickerSourceBinding(
+      sourceUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_url'],
+      )!,
+      mirrorBaseUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mirror_base_url'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      ),
+      cached: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}cached'],
+      )!,
+    );
+  }
+
+  @override
+  $StickerSourceBindingsTable createAlias(String alias) {
+    return $StickerSourceBindingsTable(attachedDatabase, alias);
+  }
+}
+
+class StickerSourceBinding extends DataClass
+    implements Insertable<StickerSourceBinding> {
+  final String sourceUrl;
+  final String mirrorBaseUrl;
+  final String? label;
+  final bool cached;
+  const StickerSourceBinding({
+    required this.sourceUrl,
+    required this.mirrorBaseUrl,
+    this.label,
+    required this.cached,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['source_url'] = Variable<String>(sourceUrl);
+    map['mirror_base_url'] = Variable<String>(mirrorBaseUrl);
+    if (!nullToAbsent || label != null) {
+      map['label'] = Variable<String>(label);
+    }
+    map['cached'] = Variable<bool>(cached);
+    return map;
+  }
+
+  StickerSourceBindingsCompanion toCompanion(bool nullToAbsent) {
+    return StickerSourceBindingsCompanion(
+      sourceUrl: Value(sourceUrl),
+      mirrorBaseUrl: Value(mirrorBaseUrl),
+      label: label == null && nullToAbsent
+          ? const Value.absent()
+          : Value(label),
+      cached: Value(cached),
+    );
+  }
+
+  factory StickerSourceBinding.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StickerSourceBinding(
+      sourceUrl: serializer.fromJson<String>(json['sourceUrl']),
+      mirrorBaseUrl: serializer.fromJson<String>(json['mirrorBaseUrl']),
+      label: serializer.fromJson<String?>(json['label']),
+      cached: serializer.fromJson<bool>(json['cached']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sourceUrl': serializer.toJson<String>(sourceUrl),
+      'mirrorBaseUrl': serializer.toJson<String>(mirrorBaseUrl),
+      'label': serializer.toJson<String?>(label),
+      'cached': serializer.toJson<bool>(cached),
+    };
+  }
+
+  StickerSourceBinding copyWith({
+    String? sourceUrl,
+    String? mirrorBaseUrl,
+    Value<String?> label = const Value.absent(),
+    bool? cached,
+  }) => StickerSourceBinding(
+    sourceUrl: sourceUrl ?? this.sourceUrl,
+    mirrorBaseUrl: mirrorBaseUrl ?? this.mirrorBaseUrl,
+    label: label.present ? label.value : this.label,
+    cached: cached ?? this.cached,
+  );
+  StickerSourceBinding copyWithCompanion(StickerSourceBindingsCompanion data) {
+    return StickerSourceBinding(
+      sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
+      mirrorBaseUrl: data.mirrorBaseUrl.present
+          ? data.mirrorBaseUrl.value
+          : this.mirrorBaseUrl,
+      label: data.label.present ? data.label.value : this.label,
+      cached: data.cached.present ? data.cached.value : this.cached,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StickerSourceBinding(')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('mirrorBaseUrl: $mirrorBaseUrl, ')
+          ..write('label: $label, ')
+          ..write('cached: $cached')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(sourceUrl, mirrorBaseUrl, label, cached);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StickerSourceBinding &&
+          other.sourceUrl == this.sourceUrl &&
+          other.mirrorBaseUrl == this.mirrorBaseUrl &&
+          other.label == this.label &&
+          other.cached == this.cached);
+}
+
+class StickerSourceBindingsCompanion
+    extends UpdateCompanion<StickerSourceBinding> {
+  final Value<String> sourceUrl;
+  final Value<String> mirrorBaseUrl;
+  final Value<String?> label;
+  final Value<bool> cached;
+  final Value<int> rowid;
+  const StickerSourceBindingsCompanion({
+    this.sourceUrl = const Value.absent(),
+    this.mirrorBaseUrl = const Value.absent(),
+    this.label = const Value.absent(),
+    this.cached = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  StickerSourceBindingsCompanion.insert({
+    required String sourceUrl,
+    required String mirrorBaseUrl,
+    this.label = const Value.absent(),
+    this.cached = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : sourceUrl = Value(sourceUrl),
+       mirrorBaseUrl = Value(mirrorBaseUrl);
+  static Insertable<StickerSourceBinding> custom({
+    Expression<String>? sourceUrl,
+    Expression<String>? mirrorBaseUrl,
+    Expression<String>? label,
+    Expression<bool>? cached,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sourceUrl != null) 'source_url': sourceUrl,
+      if (mirrorBaseUrl != null) 'mirror_base_url': mirrorBaseUrl,
+      if (label != null) 'label': label,
+      if (cached != null) 'cached': cached,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  StickerSourceBindingsCompanion copyWith({
+    Value<String>? sourceUrl,
+    Value<String>? mirrorBaseUrl,
+    Value<String?>? label,
+    Value<bool>? cached,
+    Value<int>? rowid,
+  }) {
+    return StickerSourceBindingsCompanion(
+      sourceUrl: sourceUrl ?? this.sourceUrl,
+      mirrorBaseUrl: mirrorBaseUrl ?? this.mirrorBaseUrl,
+      label: label ?? this.label,
+      cached: cached ?? this.cached,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sourceUrl.present) {
+      map['source_url'] = Variable<String>(sourceUrl.value);
+    }
+    if (mirrorBaseUrl.present) {
+      map['mirror_base_url'] = Variable<String>(mirrorBaseUrl.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (cached.present) {
+      map['cached'] = Variable<bool>(cached.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StickerSourceBindingsCompanion(')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('mirrorBaseUrl: $mirrorBaseUrl, ')
+          ..write('label: $label, ')
+          ..write('cached: $cached, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6950,6 +7877,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RecentConnectionsTable recentConnections =
       $RecentConnectionsTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $StickerSourcesTable stickerSources = $StickerSourcesTable(this);
+  late final $StickerSourceBindingsTable stickerSourceBindings =
+      $StickerSourceBindingsTable(this);
   late final Index messagesChannelTime = Index(
     'messages_channel_time',
     'CREATE INDEX messages_channel_time ON messages (channel_key, rx_time)',
@@ -6978,6 +7908,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     configBlobs,
     recentConnections,
     appSettings,
+    stickerSources,
+    stickerSourceBindings,
     messagesChannelTime,
     positionsNodeTime,
     telemetryNodeKindTime,
@@ -10401,6 +11333,519 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSetting,
       PrefetchHooks Function()
     >;
+typedef $$StickerSourcesTableCreateCompanionBuilder =
+    StickerSourcesCompanion Function({
+      required String sourceUrl,
+      Value<bool> manualEnabled,
+      Value<bool> blocked,
+      Value<String?> descriptorJson,
+      Value<String?> catalogJson,
+      Value<String?> descriptorEtag,
+      Value<String?> catalogEtag,
+      Value<DateTime?> lastChecked,
+      Value<String> status,
+      Value<int> rowid,
+    });
+typedef $$StickerSourcesTableUpdateCompanionBuilder =
+    StickerSourcesCompanion Function({
+      Value<String> sourceUrl,
+      Value<bool> manualEnabled,
+      Value<bool> blocked,
+      Value<String?> descriptorJson,
+      Value<String?> catalogJson,
+      Value<String?> descriptorEtag,
+      Value<String?> catalogEtag,
+      Value<DateTime?> lastChecked,
+      Value<String> status,
+      Value<int> rowid,
+    });
+
+class $$StickerSourcesTableFilterComposer
+    extends Composer<_$AppDatabase, $StickerSourcesTable> {
+  $$StickerSourcesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get sourceUrl => $composableBuilder(
+    column: $table.sourceUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get manualEnabled => $composableBuilder(
+    column: $table.manualEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get blocked => $composableBuilder(
+    column: $table.blocked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get descriptorJson => $composableBuilder(
+    column: $table.descriptorJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get catalogJson => $composableBuilder(
+    column: $table.catalogJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get descriptorEtag => $composableBuilder(
+    column: $table.descriptorEtag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get catalogEtag => $composableBuilder(
+    column: $table.catalogEtag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastChecked => $composableBuilder(
+    column: $table.lastChecked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StickerSourcesTableOrderingComposer
+    extends Composer<_$AppDatabase, $StickerSourcesTable> {
+  $$StickerSourcesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get sourceUrl => $composableBuilder(
+    column: $table.sourceUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get manualEnabled => $composableBuilder(
+    column: $table.manualEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get blocked => $composableBuilder(
+    column: $table.blocked,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get descriptorJson => $composableBuilder(
+    column: $table.descriptorJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get catalogJson => $composableBuilder(
+    column: $table.catalogJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get descriptorEtag => $composableBuilder(
+    column: $table.descriptorEtag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get catalogEtag => $composableBuilder(
+    column: $table.catalogEtag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastChecked => $composableBuilder(
+    column: $table.lastChecked,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StickerSourcesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StickerSourcesTable> {
+  $$StickerSourcesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get sourceUrl =>
+      $composableBuilder(column: $table.sourceUrl, builder: (column) => column);
+
+  GeneratedColumn<bool> get manualEnabled => $composableBuilder(
+    column: $table.manualEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get blocked =>
+      $composableBuilder(column: $table.blocked, builder: (column) => column);
+
+  GeneratedColumn<String> get descriptorJson => $composableBuilder(
+    column: $table.descriptorJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get catalogJson => $composableBuilder(
+    column: $table.catalogJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get descriptorEtag => $composableBuilder(
+    column: $table.descriptorEtag,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get catalogEtag => $composableBuilder(
+    column: $table.catalogEtag,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastChecked => $composableBuilder(
+    column: $table.lastChecked,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+}
+
+class $$StickerSourcesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StickerSourcesTable,
+          StickerSource,
+          $$StickerSourcesTableFilterComposer,
+          $$StickerSourcesTableOrderingComposer,
+          $$StickerSourcesTableAnnotationComposer,
+          $$StickerSourcesTableCreateCompanionBuilder,
+          $$StickerSourcesTableUpdateCompanionBuilder,
+          (
+            StickerSource,
+            BaseReferences<_$AppDatabase, $StickerSourcesTable, StickerSource>,
+          ),
+          StickerSource,
+          PrefetchHooks Function()
+        > {
+  $$StickerSourcesTableTableManager(
+    _$AppDatabase db,
+    $StickerSourcesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StickerSourcesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StickerSourcesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StickerSourcesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> sourceUrl = const Value.absent(),
+                Value<bool> manualEnabled = const Value.absent(),
+                Value<bool> blocked = const Value.absent(),
+                Value<String?> descriptorJson = const Value.absent(),
+                Value<String?> catalogJson = const Value.absent(),
+                Value<String?> descriptorEtag = const Value.absent(),
+                Value<String?> catalogEtag = const Value.absent(),
+                Value<DateTime?> lastChecked = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StickerSourcesCompanion(
+                sourceUrl: sourceUrl,
+                manualEnabled: manualEnabled,
+                blocked: blocked,
+                descriptorJson: descriptorJson,
+                catalogJson: catalogJson,
+                descriptorEtag: descriptorEtag,
+                catalogEtag: catalogEtag,
+                lastChecked: lastChecked,
+                status: status,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String sourceUrl,
+                Value<bool> manualEnabled = const Value.absent(),
+                Value<bool> blocked = const Value.absent(),
+                Value<String?> descriptorJson = const Value.absent(),
+                Value<String?> catalogJson = const Value.absent(),
+                Value<String?> descriptorEtag = const Value.absent(),
+                Value<String?> catalogEtag = const Value.absent(),
+                Value<DateTime?> lastChecked = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StickerSourcesCompanion.insert(
+                sourceUrl: sourceUrl,
+                manualEnabled: manualEnabled,
+                blocked: blocked,
+                descriptorJson: descriptorJson,
+                catalogJson: catalogJson,
+                descriptorEtag: descriptorEtag,
+                catalogEtag: catalogEtag,
+                lastChecked: lastChecked,
+                status: status,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$StickerSourcesTable, StickerSource>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $StickerSourcesTable,
+                    StickerSource
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StickerSourcesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StickerSourcesTable,
+      StickerSource,
+      $$StickerSourcesTableFilterComposer,
+      $$StickerSourcesTableOrderingComposer,
+      $$StickerSourcesTableAnnotationComposer,
+      $$StickerSourcesTableCreateCompanionBuilder,
+      $$StickerSourcesTableUpdateCompanionBuilder,
+      (
+        StickerSource,
+        BaseReferences<_$AppDatabase, $StickerSourcesTable, StickerSource>,
+      ),
+      StickerSource,
+      PrefetchHooks Function()
+    >;
+typedef $$StickerSourceBindingsTableCreateCompanionBuilder =
+    StickerSourceBindingsCompanion Function({
+      required String sourceUrl,
+      required String mirrorBaseUrl,
+      Value<String?> label,
+      Value<bool> cached,
+      Value<int> rowid,
+    });
+typedef $$StickerSourceBindingsTableUpdateCompanionBuilder =
+    StickerSourceBindingsCompanion Function({
+      Value<String> sourceUrl,
+      Value<String> mirrorBaseUrl,
+      Value<String?> label,
+      Value<bool> cached,
+      Value<int> rowid,
+    });
+
+class $$StickerSourceBindingsTableFilterComposer
+    extends Composer<_$AppDatabase, $StickerSourceBindingsTable> {
+  $$StickerSourceBindingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get sourceUrl => $composableBuilder(
+    column: $table.sourceUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mirrorBaseUrl => $composableBuilder(
+    column: $table.mirrorBaseUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get cached => $composableBuilder(
+    column: $table.cached,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StickerSourceBindingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StickerSourceBindingsTable> {
+  $$StickerSourceBindingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get sourceUrl => $composableBuilder(
+    column: $table.sourceUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mirrorBaseUrl => $composableBuilder(
+    column: $table.mirrorBaseUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get cached => $composableBuilder(
+    column: $table.cached,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StickerSourceBindingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StickerSourceBindingsTable> {
+  $$StickerSourceBindingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get sourceUrl =>
+      $composableBuilder(column: $table.sourceUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get mirrorBaseUrl => $composableBuilder(
+    column: $table.mirrorBaseUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<bool> get cached =>
+      $composableBuilder(column: $table.cached, builder: (column) => column);
+}
+
+class $$StickerSourceBindingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StickerSourceBindingsTable,
+          StickerSourceBinding,
+          $$StickerSourceBindingsTableFilterComposer,
+          $$StickerSourceBindingsTableOrderingComposer,
+          $$StickerSourceBindingsTableAnnotationComposer,
+          $$StickerSourceBindingsTableCreateCompanionBuilder,
+          $$StickerSourceBindingsTableUpdateCompanionBuilder,
+          (
+            StickerSourceBinding,
+            BaseReferences<
+              _$AppDatabase,
+              $StickerSourceBindingsTable,
+              StickerSourceBinding
+            >,
+          ),
+          StickerSourceBinding,
+          PrefetchHooks Function()
+        > {
+  $$StickerSourceBindingsTableTableManager(
+    _$AppDatabase db,
+    $StickerSourceBindingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StickerSourceBindingsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$StickerSourceBindingsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$StickerSourceBindingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> sourceUrl = const Value.absent(),
+                Value<String> mirrorBaseUrl = const Value.absent(),
+                Value<String?> label = const Value.absent(),
+                Value<bool> cached = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StickerSourceBindingsCompanion(
+                sourceUrl: sourceUrl,
+                mirrorBaseUrl: mirrorBaseUrl,
+                label: label,
+                cached: cached,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String sourceUrl,
+                required String mirrorBaseUrl,
+                Value<String?> label = const Value.absent(),
+                Value<bool> cached = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StickerSourceBindingsCompanion.insert(
+                sourceUrl: sourceUrl,
+                mirrorBaseUrl: mirrorBaseUrl,
+                label: label,
+                cached: cached,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $StickerSourceBindingsTable,
+                    StickerSourceBinding
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $StickerSourceBindingsTable,
+                    StickerSourceBinding
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StickerSourceBindingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StickerSourceBindingsTable,
+      StickerSourceBinding,
+      $$StickerSourceBindingsTableFilterComposer,
+      $$StickerSourceBindingsTableOrderingComposer,
+      $$StickerSourceBindingsTableAnnotationComposer,
+      $$StickerSourceBindingsTableCreateCompanionBuilder,
+      $$StickerSourceBindingsTableUpdateCompanionBuilder,
+      (
+        StickerSourceBinding,
+        BaseReferences<
+          _$AppDatabase,
+          $StickerSourceBindingsTable,
+          StickerSourceBinding
+        >,
+      ),
+      StickerSourceBinding,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10427,4 +11872,8 @@ class $AppDatabaseManager {
       $$RecentConnectionsTableTableManager(_db, _db.recentConnections);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$StickerSourcesTableTableManager get stickerSources =>
+      $$StickerSourcesTableTableManager(_db, _db.stickerSources);
+  $$StickerSourceBindingsTableTableManager get stickerSourceBindings =>
+      $$StickerSourceBindingsTableTableManager(_db, _db.stickerSourceBindings);
 }

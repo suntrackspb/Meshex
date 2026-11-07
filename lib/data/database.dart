@@ -436,6 +436,34 @@ class AppSettings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+/// Global sticker source registry. Access through the application database,
+/// never through the currently connected node's database.
+class StickerSources extends Table {
+  TextColumn get sourceUrl => text()();
+  BoolColumn get manualEnabled =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get blocked => boolean().withDefault(const Constant(false))();
+  TextColumn get descriptorJson => text().nullable()();
+  TextColumn get catalogJson => text().nullable()();
+  TextColumn get descriptorEtag => text().nullable()();
+  TextColumn get catalogEtag => text().nullable()();
+  DateTimeColumn get lastChecked => dateTime().nullable()();
+  TextColumn get status => text().withDefault(const Constant('unchecked'))();
+
+  @override
+  Set<Column> get primaryKey => {sourceUrl};
+}
+
+class StickerSourceBindings extends Table {
+  TextColumn get sourceUrl => text()();
+  TextColumn get mirrorBaseUrl => text()();
+  TextColumn get label => text().nullable()();
+  BoolColumn get cached => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {sourceUrl, mirrorBaseUrl};
+}
+
 @DriftDatabase(
   tables: [
     Nodes,
@@ -449,6 +477,8 @@ class AppSettings extends Table {
     ConfigBlobs,
     RecentConnections,
     AppSettings,
+    StickerSources,
+    StickerSourceBindings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -469,7 +499,7 @@ class AppDatabase extends _$AppDatabase {
   final AppDatabase? settings;
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   // До первого релиза схема пересоздаётся целиком (данные — кэш с ноды).
   // После релиза — нормальные пошаговые миграции.
@@ -540,6 +570,10 @@ class AppDatabase extends _$AppDatabase {
       }
     },
     14: (m) => _addColumn(m, nodes, nodes.macaddr),
+    18: (m) async {
+      await m.createTable(stickerSources);
+      await m.createTable(stickerSourceBindings);
+    },
     17: (m) async {
       await _addColumn(m, messages, messages.rawPayload);
       await _addColumn(m, messages, messages.stickerContent);

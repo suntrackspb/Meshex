@@ -52,5 +52,33 @@ MessageContent messageContent(Message message) {
 bool isTextMessage(Message message) =>
     message.portnum == PortNum.TEXT_MESSAGE_APP.value;
 
-String messageTextPreview(Message message, String unsupportedLabel) =>
-    isTextMessage(message) ? message.body : unsupportedLabel;
+bool isSupportedMessage(Message message) =>
+    messageContent(message) is! UnsupportedMessageContent;
+
+String messageTextPreview(
+  Message message,
+  String unsupportedLabel, {
+  String stickerLabel = 'Стикер',
+}) => switch (messageContent(message)) {
+  TextMessageContent(:final text) => text,
+  StickerMessageContent() => stickerLabel,
+  UnsupportedMessageContent() => unsupportedLabel,
+};
+
+/// Compare the actual content, not a mirror's optional/localized sticker fallback.
+/// Transport metadata can be merged separately without replacing the first content.
+bool messageContentMatches(
+  Message existing, {
+  required int toNum,
+  required int portnum,
+  required String body,
+  StickerEnvelope? sticker,
+}) =>
+    existing.toNum == toNum &&
+    switch (messageContent(existing)) {
+      TextMessageContent(:final text) =>
+        portnum == 1 && sticker == null && text == body,
+      StickerMessageContent(:final envelope) =>
+        portnum == StickerWireCodec.portnum && sticker == envelope,
+      UnsupportedMessageContent() => false,
+    };

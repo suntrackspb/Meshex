@@ -48,6 +48,16 @@ class StickerSourceRepository {
   static AppDatabase _global(AppDatabase db) =>
       db.settings == null ? db : _global(db.settings!);
 
+  /// Offline sends may retain an inactive or removed confirmed origin. A block
+  /// is stronger: it also prevents sending/retrying a reference to that source.
+  Future<void> checkSendAllowed(String sourceUrl) async {
+    validateSourceUrl(sourceUrl);
+    final source = await (db.select(
+      db.stickerSources,
+    )..where((s) => s.sourceUrl.equals(sourceUrl))).getSingleOrNull();
+    if (source?.blocked == true) throw StateError('Sticker source is blocked');
+  }
+
   Future<void> addManual(String input) async {
     final url = normalizeSourceUrl(input);
     await db

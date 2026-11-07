@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../core/proto/generated/meshtastic/config.pb.dart';
+import '../core/stickers/wire_codec.dart';
 import 'avatar_frames.dart';
 
 /// Модели API зеркала (`/api/nodes`, `/api/chat/history`, WS `/ws`).
@@ -11,7 +12,7 @@ class MirrorRelay {
   const MirrorRelay({this.nodeId, this.snr, this.rssi, this.hops});
 
   factory MirrorRelay.fromJson(Map<String, dynamic> j) => MirrorRelay(
-    nodeId: j['node_id'] as String?,
+    nodeId: _string(j['node_id']),
     snr: _double(j['snr']),
     rssi: _int(j['rssi']),
     hops: _int(j['hops']),
@@ -30,6 +31,9 @@ class MirrorMessage {
     this.packetId,
     this.toId,
     this.text,
+    this.kind = 'text',
+    this.portnum = 1,
+    this.sticker,
     this.replyToPacketId,
     this.emoji,
     this.snr,
@@ -43,26 +47,70 @@ class MirrorMessage {
     this.relays = const [],
   });
 
-  /// null — запись не сообщение (в ленте бывают `name_change` со строковым id).
+  /// Invalid content is skipped, never downgraded to the fallback text. A
+  /// malformed record must not prevent the next history/init row from parsing.
   static MirrorMessage? tryParse(Object? raw) {
-    if (raw is! Map<String, dynamic>) return null;
+    if (raw is! Map || raw['type'] == 'name_change') {
+      return null;
+    }
     final id = raw['id'], from = raw['from_id'];
-    if (id is! int || from is! String) return null;
+    if (id is! int || id <= 0 || from is! String) return null;
+    final kind = raw['kind'] ?? 'text';
+    if (kind is! String) return null;
+    final int portnum;
+    StickerEnvelope? sticker;
+    if (kind == 'sticker') {
+      if (raw['portnum'] is! int ||
+          raw['portnum'] != StickerWireCodec.portnum ||
+          raw['sticker'] is! Map ||
+          (raw['emoji'] != null &&
+              (raw['emoji'] is! int || raw['emoji'] != 0)) ||
+          !_packetNumber(raw['packet_id']) ||
+          !_packetNumber(raw['reply_to_packet_id'])) {
+        return null;
+      }
+      final to = raw['to_id'];
+      if (nodeNumFromId(from) == null ||
+          (to != null &&
+              (to is! String || (to != '^all' && nodeNumFromId(to) == null)))) {
+        return null;
+      }
+      try {
+        sticker = StickerEnvelope.fromJson(
+          (raw['sticker'] as Map).cast<String, dynamic>(),
+        );
+      } on FormatException {
+        return null;
+      }
+      portnum = StickerWireCodec.portnum;
+    } else if (kind == 'text') {
+      if ((raw['portnum'] != null &&
+              (raw['portnum'] is! int || raw['portnum'] != 1)) ||
+          raw['sticker'] != null) {
+        return null;
+      }
+      portnum = 1;
+    } else {
+      return null;
+    }
     return MirrorMessage(
       id: id,
       fromId: from,
+      kind: kind,
+      portnum: portnum,
+      sticker: sticker,
       packetId: _int(raw['packet_id']),
-      toId: raw['to_id'] as String?,
-      text: raw['text'] as String?,
+      toId: _string(raw['to_id']),
+      text: _string(raw['text']),
       replyToPacketId: _int(raw['reply_to_packet_id']),
       emoji: _int(raw['emoji']),
       snr: _double(raw['snr']),
       rssi: _int(raw['rssi']),
-      channel: raw['channel'] as String?,
-      receivedAt: parseMirrorDate(raw['received_at'] as String?),
-      sentAt: parseMirrorDate(raw['sent_at'] as String?),
-      shortName: raw['short_name'] as String?,
-      longName: raw['long_name'] as String?,
+      channel: _string(raw['channel']),
+      receivedAt: parseMirrorDate(_string(raw['received_at'])),
+      sentAt: parseMirrorDate(_string(raw['sent_at'])),
+      shortName: _string(raw['short_name']),
+      longName: _string(raw['long_name']),
       isBot: raw['is_bot'] == true,
       relays: [
         for (final r in _list(raw['relays']))
@@ -70,6 +118,24 @@ class MirrorMessage {
       ],
     );
   }
+
+  bool get isSticker => kind == 'sticker';
+  bool get hasValidContent => switch (kind) {
+    'text' => portnum == 1 && sticker == null,
+    'sticker' =>
+      portnum == StickerWireCodec.portnum &&
+          sticker != null &&
+          (emoji == null || emoji == 0) &&
+          nodeNumFromId(fromId) != null &&
+          (toId == null || toId == '^all' || nodeNumFromId(toId!) != null) &&
+          _packetNumber(packetId) &&
+          _packetNumber(replyToPacketId),
+    _ => false,
+  };
+
+  final String kind;
+  final int portnum;
+  final StickerEnvelope? sticker;
 
   final int id;
   final int? packetId;
@@ -320,11 +386,17 @@ DateTime? parseMirrorDate(String? s) {
 /// `!a1b2c3d4` → номер ноды.
 int? nodeNumFromId(String id) {
   final s = id.startsWith('!') ? id.substring(1) : id;
-  return s.length == 8 ? int.tryParse(s, radix: 16) : null;
+  return s.length == 8 && RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)
+      ? int.tryParse(s, radix: 16)
+      : null;
 }
 
-int? _int(Object? v) => v is int ? v : (v is num ? v.toInt() : null);
-double? _double(Object? v) => v is num ? v.toDouble() : null;
+String? _string(Object? v) => v is String ? v : null;
+bool _packetNumber(Object? v) =>
+    v == null || (v is int && v >= 0 && v <= 0xffffffff);
+int? _int(Object? v) =>
+    v is int ? v : (v is num && v.isFinite ? v.toInt() : null);
+double? _double(Object? v) => v is num && v.isFinite ? v.toDouble() : null;
 
 /// Список из JSON; realtime зеркала бывает присылает его строкой с JSON.
 List<Object?> _list(Object? v) {

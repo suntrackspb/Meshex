@@ -74,6 +74,17 @@ final stickerSourceSyncProvider = FutureProvider<void>((ref) async {
   );
 });
 
+/// Reads only local state. Rendering messages and opening the picker must not
+/// trigger even a capabilities request or DNS lookup.
+final stickerLocalSourcesProvider = StreamProvider<List<StickerSourceState>>((
+  ref,
+) {
+  final mirror = ref.watch(mirrorApiProvider)?.baseUrl;
+  return ref
+      .watch(stickerSourceRepositoryProvider)
+      .watchSources(currentMirror: mirror);
+});
+
 final stickerSourcesProvider = StreamProvider<List<StickerSourceState>>((ref) {
   ref.watch(stickerSourceSyncProvider);
   final mirror = ref.watch(mirrorApiProvider)?.baseUrl;

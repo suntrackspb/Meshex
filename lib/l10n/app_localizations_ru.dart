@@ -5218,4 +5218,53 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get stickerRemoveConfirm =>
       'Удалить скачанные файлы пака? Сообщения останутся в истории.';
+
+  @override
+  String get stickerManagePacks => 'Управление паками';
+
+  @override
+  String get stickerSourceAndPack => 'Источник и пак';
+
+  @override
+  String get stickerMissingPack => 'Пак не установлен';
+
+  @override
+  String get stickerMissingId => 'Стикер отсутствует в этой ревизии';
+
+  @override
+  String get stickerLocalError => 'Не удалось прочитать файлы стикера';
+
+  @override
+  String get stickerOpenSource => 'Открыть источник';
+
+  @override
+  String get stickerSourceConsent =>
+      'Источник указан в сообщении. Открытие загрузит сведения об операторе и точной ревизии пака. Сам просмотр не добавляет источник.';
+
+  @override
+  String get stickerAddAndInstall => 'Добавить источник и установить пак';
+
+  @override
+  String get stickerInstallExact => 'Установить эту ревизию';
+
+  @override
+  String get stickerSourceForSending => 'Источник для отправки';
+
+  @override
+  String get stickerConfirmedOrigins =>
+      'Можно выбрать только проверенную копию той же ревизии.';
+
+  @override
+  String get stickerShorterSource =>
+      'Ссылка на источник не помещается в радиопакет. Выберите более короткий адрес той же ревизии.';
+
+  @override
+  String get stickerSendingBlocked =>
+      'Источник заблокирован. Выберите другую проверенную копию пака или снимите блокировку в библиотеке.';
+
+  @override
+  String get stickerTrustedCopy => 'Другой разрешённый источник той же ревизии';
+
+  @override
+  String get stickerCheckingLocal => 'Проверяем локальные файлы';
 }

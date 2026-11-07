@@ -541,6 +541,54 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
     ],
   );
 
+  Widget _originPicker(InstalledStickerPack pack) {
+    final sources = ref.watch(stickerLocalSourcesProvider);
+    bool blocked(String url) =>
+        sources.value?.any((s) => s.url == url && s.record.blocked) == true;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (pack.origins.length > 1)
+            DropdownButtonFormField<String>(
+              key: ValueKey('${pack.hash}:${pack.preferredSourceUrl}'),
+              initialValue: pack.preferredSourceUrl,
+              decoration: InputDecoration(
+                labelText: context.l10n.stickerSourceForSending,
+              ),
+              isExpanded: true,
+              items: [
+                for (final url in pack.origins)
+                  DropdownMenuItem(
+                    value: url,
+                    enabled: !blocked(url),
+                    child: Text(url, overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged:
+                  _busy.contains(pack.hash) ||
+                      !sources.hasValue ||
+                      sources.hasError
+                  ? null
+                  : (url) {
+                      if (url != null) {
+                        _run(
+                          pack.hash,
+                          () => ref
+                              .read(stickerPackRepositoryProvider)
+                              .setPreferredSource(pack.hash, url),
+                        );
+                      }
+                    },
+            ),
+          if (blocked(pack.preferredSourceUrl))
+            Text(context.l10n.stickerSendingBlocked),
+        ],
+      ),
+    );
+  }
+
   Widget _installedPack(InstalledStickerPack pack) => ExpansionTile(
     key: ValueKey(pack.hash),
     title: Text(pack.manifest.title),
@@ -585,6 +633,7 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
           ],
         ),
       ),
+      _originPicker(pack),
       GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -682,6 +731,12 @@ class StickerImage extends ConsumerWidget {
         ),
     fit: BoxFit.contain,
     excludeFromSemantics: true,
-    errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined),
+    errorBuilder: (context, _, _) => Tooltip(
+      message: context.l10n.stickerLocalError,
+      child: Icon(
+        Icons.broken_image_outlined,
+        semanticLabel: context.l10n.stickerLocalError,
+      ),
+    ),
   );
 }

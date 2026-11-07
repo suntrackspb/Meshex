@@ -40,10 +40,12 @@ class MessageSender {
     this._myNum,
     this._nextId, {
     this.prepareDirect,
+    this.prepareSticker,
     this.stickerPayloadBudget,
   });
 
   final Future<void> Function(int)? prepareDirect;
+  final Future<void> Function(StickerEnvelope)? prepareSticker;
 
   /// Transport-specific limit (PKI/signing/firmware), rechecked on retry.
   /// Until measured for the connected transport, 200 is only a software cap.
@@ -140,6 +142,8 @@ class MessageSender {
     }
     final key = to == broadcastNum ? null : await _publicKey(to);
     if (_myNum() != me) throw StateError('соединение с нодой изменилось');
+    if (sticker != null) await prepareSticker?.call(sticker);
+    if (_myNum() != me) throw StateError('соединение с нодой изменилось');
     final id = _nextId();
     await db
         .into(db.messages)
@@ -194,6 +198,9 @@ class MessageSender {
     }
     // Ключ мог появиться (или смениться) с прошлой попытки.
     final key = m.toNum == broadcastNum ? null : await _publicKey(m.toNum);
+    if (content is StickerMessageContent) {
+      await prepareSticker?.call(content.envelope);
+    }
     final id = _nextId();
     await (db.update(db.messages)..where((r) => r.id.equals(m.id))).write(
       MessagesCompanion(

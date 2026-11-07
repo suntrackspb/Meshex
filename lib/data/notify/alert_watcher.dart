@@ -30,11 +30,13 @@ class AlertWatcher {
     this.replyTitle,
     this.reactionBody,
     this.unsupportedLabel,
+    this.stickerLabel,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
   final AppDatabase db;
   final String Function()? unsupportedLabel;
+  final String Function()? stickerLabel;
   final String Function(String)? replyTitle;
   final String Function(String, String)? reactionBody;
 
@@ -152,6 +154,7 @@ class AlertWatcher {
       reactionBody: reactionBody,
       unsupportedLabel:
           unsupportedLabel?.call() ?? 'Неподдерживаемое сообщение',
+      stickerLabel: stickerLabel?.call() ?? 'Стикер',
       sender: name,
       channel: direct
           ? ''
@@ -161,6 +164,7 @@ class AlertWatcher {
           : messageTextPreview(
               target,
               unsupportedLabel?.call() ?? 'Неподдерживаемое сообщение',
+              stickerLabel: stickerLabel?.call() ?? 'Стикер',
             ),
     );
     return (id: m.id, kind: kind, title: c.title, body: c.body, chat: chat);

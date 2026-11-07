@@ -45,6 +45,7 @@ class StickerPackRepository {
   final _installed = <String, InstalledStickerPack>{};
   final _damaged = <String>{};
   final _removing = <String>{};
+  final _preferences = <String>{};
   final _operations = <String, Future<void>>{};
   final _cancellations = <String, StickerCancellation>{};
   final _changes = StreamController<List<InstalledStickerPack>>.broadcast();
@@ -259,7 +260,7 @@ class StickerPackRepository {
     validateSourceUrl(sourceUrl);
     stickerHash(hash);
     if (_disposed) throw StateError('Sticker repository is disposed');
-    if (_removing.contains(hash)) {
+    if (_removing.contains(hash) || _preferences.contains(hash)) {
       throw StateError('Sticker operation in progress');
     }
     return _operations.putIfAbsent(hash, () {
@@ -419,9 +420,59 @@ class StickerPackRepository {
     }
   }
 
+  Future<StickerEnvelope> envelopeFor(String hash, String stickerId) async {
+    stickerHash(hash);
+    await initialize();
+    final pack = _installed[hash];
+    if (pack == null || !pack.manifest.stickers.any((s) => s.id == stickerId)) {
+      throw StateError('Sticker is not installed');
+    }
+    await client.sources.checkSendAllowed(pack.preferredSourceUrl);
+    return StickerEnvelope(
+      sourceUrl: pack.preferredSourceUrl,
+      packSha256: hash,
+      stickerId: stickerId,
+    );
+  }
+
+  /// Only an origin whose exact manifest was verified may become preferred.
+  Future<void> setPreferredSource(String hash, String sourceUrl) {
+    stickerHash(hash);
+    validateSourceUrl(sourceUrl);
+    if (_operations.containsKey(hash) ||
+        _removing.contains(hash) ||
+        !_preferences.add(hash)) {
+      throw StateError('Sticker operation in progress');
+    }
+    return _setPreferredSource(
+      hash,
+      sourceUrl,
+    ).whenComplete(() => _preferences.remove(hash));
+  }
+
+  Future<void> _setPreferredSource(String hash, String sourceUrl) async {
+    await initialize();
+    final pack = _installed[hash];
+    if (pack == null || !pack.origins.contains(sourceUrl)) {
+      throw StateError('Unconfirmed sticker origin');
+    }
+    await client.sources.checkSendAllowed(sourceUrl);
+    await (db.update(db.stickerInstalls)
+          ..where((r) => r.packSha256.equals(hash)))
+        .write(StickerInstallsCompanion(preferredSourceUrl: Value(sourceUrl)));
+    _installed[hash] = InstalledStickerPack(
+      pack.manifest,
+      pack.origins,
+      sourceUrl,
+    );
+    _emit();
+  }
+
   Future<void> remove(String hash) {
     stickerHash(hash);
-    if (_operations.containsKey(hash) || !_removing.add(hash)) {
+    if (_operations.containsKey(hash) ||
+        _preferences.contains(hash) ||
+        !_removing.add(hash)) {
       throw StateError('Sticker operation in progress');
     }
     return _remove(hash).whenComplete(() => _removing.remove(hash));

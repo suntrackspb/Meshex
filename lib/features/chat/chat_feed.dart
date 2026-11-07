@@ -36,7 +36,9 @@ import '../../ui/kit/kit.dart';
 import '../nodes/open_node.dart';
 import '../../data/read_marker.dart';
 import 'chat_page.dart';
-import '../stickers/sticker_library_page.dart';
+import 'sticker_picker.dart';
+import 'sticker_message.dart';
+import '../../app/sticker_providers.dart';
 import 'message_preview.dart';
 import 'chat_search_delegate.dart';
 import 'emoji_sheet.dart';
@@ -351,6 +353,7 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
                   ? null
                   : _authorName(nodes, _replyTo!.fromNum),
               onCancelReply: () => setState(() => _replyTo = null),
+              onSticker: _sendSticker,
               onSend: (text, {required first}) async {
                 // Цитата — только у первой части. Следующие уходят с паузой,
                 // и за это время могли выбрать «ответить» на другое
@@ -473,6 +476,56 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
       _error(e);
       return false;
     }
+  }
+
+  Future<bool> _sendSticker(StickerSelection selection) async {
+    try {
+      if (!ref.read(canSendProvider)) return false;
+      final feed = widget.id;
+      final reply = _replyTo;
+      final sticker = await ref
+          .read(stickerPackRepositoryProvider)
+          .envelopeFor(selection.packSha256, selection.stickerId);
+      if (!mounted || feed != widget.id || !ref.read(canSendProvider)) {
+        return false;
+      }
+      final sender = ref.read(messageSenderProvider);
+      final Future<void> sending;
+      switch (ChatTarget.parse(feed)) {
+        case ChannelTarget(:final key):
+          final channel = _channel(key);
+          if (channel?.index == null) return false;
+          sending = sender.sendStickerToChannel(
+            channel: channel!.index!,
+            channelKey: key,
+            sticker: sticker,
+            replyId: reply?.packetId,
+          );
+        case DirectTarget(:final num):
+          sending = sender.sendStickerDirect(
+            to: num,
+            sticker: sticker,
+            replyId: reply?.packetId,
+          );
+      }
+      sending.catchError((Object error) => _stickerError(error));
+      if (_replyTo == reply) setState(() => _replyTo = null);
+      return true;
+    } catch (error) {
+      _stickerError(error);
+      return false;
+    }
+  }
+
+  void _stickerError(Object error) {
+    if (!mounted) return;
+    toasts.error(
+      error is FormatException
+          ? context.l10n.stickerShorterSource
+          : error is StateError && error.message == 'Sticker source is blocked'
+          ? context.l10n.stickerSendingBlocked
+          : context.l10n.stickerOperationFailed,
+    );
   }
 
   void _error(Object e) {
@@ -840,7 +893,7 @@ class _MessageListState extends ConsumerState<_MessageList> {
       widget.onReact,
     );
     final failed =
-        isTextMessage(m) &&
+        isSupportedMessage(m) &&
         m.isOutgoing &&
         const [
           AckState.failed,
@@ -943,7 +996,18 @@ class _MessageListState extends ConsumerState<_MessageList> {
                   title: Text(context.l10n.sendAgain_625609),
                   onTap: () {
                     Navigator.pop(ctx);
-                    ref.read(messageSenderProvider).retry(m);
+                    final strings = context.l10n;
+                    ref
+                        .read(messageSenderProvider)
+                        .retry(m)
+                        .catchError(
+                          (Object error) => toasts.error(
+                            error is StateError &&
+                                    error.message == 'Sticker source is blocked'
+                                ? strings.stickerSendingBlocked
+                                : strings.stickerOperationFailed,
+                          ),
+                        );
                   },
                 ),
             ],
@@ -1081,6 +1145,10 @@ class _Bubble extends StatelessWidget {
               ),
             if (ignored)
               _HiddenBody(message)
+            else if (messageContent(message) case StickerMessageContent(
+              :final envelope,
+            ))
+              StickerMessageBody(envelope: envelope)
             else if (!isTextMessage(message))
               Text(context.l10n.unsupportedMessage)
             else ...[
@@ -1270,13 +1338,28 @@ class _Quote extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(left: BorderSide(color: scheme.primary, width: 3)),
       ),
-      child: Text(
-        quoted == null
-            ? context.l10n.replyToMessage_4e6ac3
-            : '${author ?? ''}: ${messagePreview(context, quoted!)}',
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (quoted != null)
+            if (messageContent(quoted!) case StickerMessageContent(
+              :final envelope,
+            ))
+              Padding(
+                padding: const EdgeInsets.only(right: Tokens.s8),
+                child: StickerMessageBody(envelope: envelope, compact: true),
+              ),
+          Flexible(
+            child: Text(
+              quoted == null
+                  ? context.l10n.replyToMessage_4e6ac3
+                  : '${author ?? ''}: ${messagePreview(context, quoted!)}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1543,8 +1626,10 @@ class _Composer extends ConsumerStatefulWidget {
     required this.replyAuthor,
     required this.onCancelReply,
     required this.onSend,
+    required this.onSticker,
   });
 
+  final Future<bool> Function(StickerSelection selection) onSticker;
   final String chatId;
   final Message? replyTo;
   final String? replyAuthor;
@@ -1611,11 +1696,15 @@ class _ComposerState extends ConsumerState<_Composer> {
 
   /// Идёт отправка частей: (отправлено, всего).
   (int, int)? _progress;
+  bool _pickingSticker = false;
 
   Future<void> _submit() async {
     final strings = context.l10n;
     final zip = _zip;
-    if (_progress != null || !_valid(zip) || !ref.read(canSendProvider)) {
+    if (_progress != null ||
+        _pickingSticker ||
+        !_valid(zip) ||
+        !ref.read(canSendProvider)) {
       return;
     }
     final text = _clean;
@@ -1642,9 +1731,23 @@ class _ComposerState extends ConsumerState<_Composer> {
     _focus.requestFocus();
   }
 
-  Future<void> _openStickerLibrary() async {
+  Future<void> _openStickerPicker() async {
+    if (_progress != null || _pickingSticker) return;
     _focus.unfocus();
-    await showStickerLibrary(context);
+    final chat = widget.chatId;
+    setState(() => _pickingSticker = true);
+    try {
+      final selection = await showStickerPicker(context);
+      if (selection != null &&
+          mounted &&
+          widget.chatId == chat &&
+          _progress == null &&
+          ref.read(canSendProvider)) {
+        await widget.onSticker(selection);
+      }
+    } finally {
+      if (mounted) setState(() => _pickingSticker = false);
+    }
   }
 
   bool _uploading = false;
@@ -1720,6 +1823,16 @@ class _ComposerState extends ConsumerState<_Composer> {
                   children: [
                     Icon(Icons.reply, size: 16, color: scheme.primary),
                     const SizedBox(width: Tokens.s8),
+                    if (messageContent(reply) case StickerMessageContent(
+                      :final envelope,
+                    ))
+                      Padding(
+                        padding: const EdgeInsets.only(right: Tokens.s8),
+                        child: StickerMessageBody(
+                          envelope: envelope,
+                          compact: true,
+                        ),
+                      ),
                     Expanded(
                       child: Text(
                         '${widget.replyAuthor}: ${messagePreview(context, reply)}',
@@ -1796,7 +1909,9 @@ class _ComposerState extends ConsumerState<_Composer> {
                   IconButton(
                     tooltip: context.l10n.stickersTitle,
                     icon: const Icon(Icons.sticky_note_2_outlined),
-                    onPressed: progress == null ? _openStickerLibrary : null,
+                    onPressed: progress == null && !_pickingSticker
+                        ? _openStickerPicker
+                        : null,
                   ),
                   if (images != null)
                     _uploading
@@ -1815,7 +1930,7 @@ class _ComposerState extends ConsumerState<_Composer> {
                         : IconButton(
                             tooltip: context.l10n.image_690092,
                             icon: const Icon(Icons.image_outlined),
-                            onPressed: canSend
+                            onPressed: canSend && !_pickingSticker
                                 ? () => _attachImage(images)
                                 : null,
                           ),
@@ -1838,7 +1953,9 @@ class _ComposerState extends ConsumerState<_Composer> {
                     IconButton(
                       tooltip: context.l10n.send_76dcf7,
                       icon: const Icon(Icons.send),
-                      onPressed: canSend && _valid(zip) ? _submit : null,
+                      onPressed: canSend && !_pickingSticker && _valid(zip)
+                          ? _submit
+                          : null,
                     ),
                 ],
               ),
@@ -1936,9 +2053,13 @@ class _HiddenBodyState extends State<_HiddenBody> {
   Widget build(BuildContext context) {
     if (_open) {
       final message = widget.message;
-      return isTextMessage(message)
-          ? LinkText(message.body)
-          : Text(context.l10n.unsupportedMessage);
+      return switch (messageContent(message)) {
+        TextMessageContent(:final text) => LinkText(text),
+        StickerMessageContent(:final envelope) => StickerMessageBody(
+          envelope: envelope,
+        ),
+        UnsupportedMessageContent() => Text(context.l10n.unsupportedMessage),
+      };
     }
     final t = Theme.of(context);
     return InkWell(

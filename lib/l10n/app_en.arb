@@ -1584,5 +1584,20 @@
   "stickerRefreshFirst": "Refresh this source to view its catalog.",
   "stickerRevision": "Revision",
   "stickerSourceDisabled": "Source disabled or blocked",
-  "stickerRemoveConfirm": "Remove the downloaded pack files? Messages will remain in history."
+  "stickerRemoveConfirm": "Remove the downloaded pack files? Messages will remain in history.",
+  "stickerManagePacks": "Manage packs",
+  "stickerSourceAndPack": "Source and pack",
+  "stickerMissingPack": "Pack not installed",
+  "stickerMissingId": "Sticker missing from this revision",
+  "stickerLocalError": "Could not read sticker files",
+  "stickerOpenSource": "Open source",
+  "stickerSourceConsent": "This source was referenced in a message. Opening it loads operator information and the exact pack revision. Previewing does not add the source.",
+  "stickerAddAndInstall": "Add source and install pack",
+  "stickerInstallExact": "Install this revision",
+  "stickerSourceForSending": "Source for sending",
+  "stickerConfirmedOrigins": "Choose a verified copy of the same revision.",
+  "stickerShorterSource": "The source URL exceeds the radio payload budget. Choose a shorter URL for this revision.",
+  "stickerSendingBlocked": "The source is blocked. Choose another verified copy or unblock it in the library.",
+  "stickerTrustedCopy": "Another allowed source for the same revision",
+  "stickerCheckingLocal": "Checking local files"
 }

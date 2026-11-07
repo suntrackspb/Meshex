@@ -5217,4 +5217,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get stickerRemoveConfirm =>
       'Remove the downloaded pack files? Messages will remain in history.';
+
+  @override
+  String get stickerManagePacks => 'Manage packs';
+
+  @override
+  String get stickerSourceAndPack => 'Source and pack';
+
+  @override
+  String get stickerMissingPack => 'Pack not installed';
+
+  @override
+  String get stickerMissingId => 'Sticker missing from this revision';
+
+  @override
+  String get stickerLocalError => 'Could not read sticker files';
+
+  @override
+  String get stickerOpenSource => 'Open source';
+
+  @override
+  String get stickerSourceConsent =>
+      'This source was referenced in a message. Opening it loads operator information and the exact pack revision. Previewing does not add the source.';
+
+  @override
+  String get stickerAddAndInstall => 'Add source and install pack';
+
+  @override
+  String get stickerInstallExact => 'Install this revision';
+
+  @override
+  String get stickerSourceForSending => 'Source for sending';
+
+  @override
+  String get stickerConfirmedOrigins =>
+      'Choose a verified copy of the same revision.';
+
+  @override
+  String get stickerShorterSource =>
+      'The source URL exceeds the radio payload budget. Choose a shorter URL for this revision.';
+
+  @override
+  String get stickerSendingBlocked =>
+      'The source is blocked. Choose another verified copy or unblock it in the library.';
+
+  @override
+  String get stickerTrustedCopy =>
+      'Another allowed source for the same revision';
+
+  @override
+  String get stickerCheckingLocal => 'Checking local files';
 }

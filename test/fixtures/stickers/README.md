@@ -23,3 +23,11 @@ and physical-radio budgets remain separate acceptance work. The codec does no
 DNS or HTTP; public-address enforcement on actual connections belongs to the
 future source fetcher. ASCII URL normalization is provided; Unicode host input
 still requires IDNA conversion in the source input layer.
+
+`mirror-message.json` is the additive message API example used by the current
+`mesh-mirror-v2` implementation: `kind=sticker`, `portnum=256`, and the same
+`sticker` object in HTTP history, WS init/live, and SSE JSON data. The server
+excludes raw `payload`; the client reconstructs canonical wire bytes without
+HTTP/DNS access to the source. Python's mirror encoder and the client's shared
+vector/manifest were compared byte for byte during C5 implementation. Client CI
+uses its local fixtures and does not require a checkout or deployment of the mirror.

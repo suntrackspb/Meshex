@@ -8,6 +8,7 @@ import '../core/proto/channel_names.dart';
 import '../core/proto/mesh.dart';
 import '../core/stickers/wire_codec.dart';
 import 'database.dart';
+import 'message_content.dart';
 import 'jammer_zones.dart';
 import 'node_key.dart';
 import 'settings/node_text.dart';
@@ -434,7 +435,7 @@ class PacketRouter {
     MeshPacket p,
     String text, {
     StickerEnvelope? sticker,
-  }) async {
+  }) => db.transaction(() async {
     // Личные сообщения — по собеседнику, ключ канала им не нужен.
     final key = p.to == broadcastNum
         ? channelKey(await _channelName(p.channel))
@@ -444,11 +445,16 @@ class PacketRouter {
               db.messages,
             )..where((m) => m.packetId.equals(p.id) & m.fromNum.equals(p.from)))
             .getSingleOrNull();
-    if (existing != null &&
-        (existing.portnum != p.decoded.portnum.value ||
-            existing.body != text ||
-            existing.stickerContent !=
-                (sticker == null ? null : jsonEncode(sticker.toJson())))) {
+    final sameContent =
+        existing == null ||
+        messageContentMatches(
+          existing,
+          toNum: p.to,
+          portnum: p.decoded.portnum.value,
+          body: text,
+          sticker: sticker,
+        );
+    if (!sameContent) {
       // Preserve the first content; merge radio metadata below. Do not log URLs
       // or private message bodies in diagnostics.
       developer.log(
@@ -457,13 +463,38 @@ class PacketRouter {
       );
     }
     final radio = MessagesCompanion(
-      channel: Value(p.channel),
+      channel: existing?.isOutgoing == true
+          ? const Value.absent()
+          : Value(p.channel),
+      // Fill metadata absent from older mirrors, but never change the content
+      // or a radio/outgoing message's established reply/reaction semantics.
+      replyId:
+          sameContent &&
+              existing != null &&
+              !existing.heardOnRadio &&
+              !existing.isOutgoing &&
+              existing.replyId == null &&
+              p.decoded.replyId != 0
+          ? Value(p.decoded.replyId)
+          : const Value.absent(),
+      emoji:
+          sameContent &&
+              existing != null &&
+              !existing.heardOnRadio &&
+              !existing.isOutgoing
+          ? Value(sticker == null ? p.decoded.emoji : 0)
+          : const Value.absent(),
+      pkiEncrypted: Value(
+        (existing?.pkiEncrypted ?? false) || (sameContent && p.pkiEncrypted),
+      ),
       rxSnr: Value(p.rxSnr == 0 ? null : p.rxSnr),
       rxRssi: Value(p.rxRssi == 0 ? null : p.rxRssi),
       hopStart: Value(p.hopStart == 0 ? null : p.hopStart),
       hopLimit: Value(p.hopLimit),
       viaMqtt: Value(p.viaMqtt),
-      xeddsaSigned: Value(p.xeddsaSigned),
+      xeddsaSigned: Value(
+        (existing?.xeddsaSigned ?? false) || (sameContent && p.xeddsaSigned),
+      ),
       heardOnRadio: const Value(true),
     );
     await db
@@ -507,7 +538,7 @@ class PacketRouter {
         const NodesCompanion(hasXeddsaSigned: Value(true)),
       );
     }
-  }
+  });
 
   /// Имя канала по индексу на своей ноде; безымянный основной — имя пресета.
   Future<String> _channelName(int index) async {

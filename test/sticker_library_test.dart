@@ -51,6 +51,9 @@ void main() {
       mirrorApiProvider.overrideWithValue(null),
       stickerPackRepositoryProvider.overrideWithValue(store),
       stickerSourcesProvider.overrideWith((_) => Stream.value(sourceStates)),
+      stickerLocalSourcesProvider.overrideWith(
+        (_) => Stream.value(sourceStates),
+      ),
       stickerQuotaProvider.overrideWith((_) => Stream.value(200 * 1024 * 1024)),
     ],
     child: MaterialApp(

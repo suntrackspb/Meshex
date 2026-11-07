@@ -64,19 +64,21 @@ abstract final class MessageAlerts {
   static const maxAge = Duration(minutes: 10);
 
   static AlertKind? classify(Message m, AlertContext c) {
-    if (!isTextMessage(m)) return null;
+    final content = messageContent(m);
+    if (content is UnsupportedMessageContent) return null;
     if (m.isOutgoing || m.fromNum == c.me || c.senderIgnored || c.senderMuted) {
       return null;
     }
     final direct = m.toNum == c.me;
     // Личка от этого не «замолкает»: mute — настройка канала.
     if (!direct && c.channelMuted) return null;
-    if (m.emoji != 0) {
+    if (content is TextMessageContent && m.emoji != 0) {
       return m.replyId != null && c.targetIsMine ? AlertKind.reaction : null;
     }
     if (direct) return AlertKind.direct;
     if (m.replyId != null && c.targetIsMine) return AlertKind.reply;
-    if (mentions(m.body, c.myShortName)) {
+    if (content is TextMessageContent &&
+        mentions(content.text, c.myShortName)) {
       return AlertKind.mention;
     }
     return null;
@@ -107,9 +109,14 @@ abstract final class MessageAlerts {
     String Function(String)? replyTitle,
     String Function(String, String)? reactionBody,
     String unsupportedLabel = 'Неподдерживаемое сообщение',
+    String stickerLabel = 'Стикер',
   }) {
     final where = channel.isEmpty ? sender : '$sender · #$channel';
-    final body = messageTextPreview(m, unsupportedLabel);
+    final body = messageTextPreview(
+      m,
+      unsupportedLabel,
+      stickerLabel: stickerLabel,
+    );
     return switch (k) {
       AlertKind.direct => (title: sender, body: body),
       // Android: notification_reaction_to «%1$s к %2$s”».

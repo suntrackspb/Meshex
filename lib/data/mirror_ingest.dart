@@ -1,9 +1,14 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+
 import 'package:drift/drift.dart';
 
 import '../core/proto/channel_names.dart';
 import '../core/proto/mesh.dart';
+import '../core/stickers/wire_codec.dart';
 import '../mirror/mirror_models.dart';
 import 'database.dart';
+import 'message_content.dart';
 
 /// Складывает данные зеркала в ту же БД, что и эфир.
 /// Склейка сообщений — по (packetId, fromNum), как в iOS-клиенте; данные эфира
@@ -21,7 +26,9 @@ class MirrorIngest {
   Future<void> messages(List<MirrorMessage> batch, {bool live = false}) async {
     final hidden = await db.hiddenChannels();
     for (final m in batch) {
-      final text = m.text, ch = m.channel;
+      if (!m.hasValidContent || m.id <= 0) continue;
+      final text = m.isSticker ? '[Sticker]' : m.text;
+      final ch = m.channel;
       final from = nodeNumFromId(m.fromId);
       if (text == null || text.isEmpty || ch == null || from == null) continue;
       // Скрытый пользователем канал зеркала — не подтягиваем снова.
@@ -34,58 +41,130 @@ class MirrorIngest {
           ? broadcastNum
           : (nodeNumFromId(m.toId!) ?? broadcastNum);
 
-      final relays = (_relays[m.id] ??= {})
-        ..addAll([for (final r in m.relays) ?r.nodeId]);
-      await db
-          .into(db.messages)
-          .insert(
-            MessagesCompanion.insert(
-              // Без packet_id склеивать не с чем — уникальный отрицательный ключ.
-              packetId: m.packetId ?? -m.id,
-              fromNum: from,
-              toNum: to,
-              channelKey: Value(channelKey(ch)),
-              body: text,
-              rxTime: time,
-              replyId: Value(m.replyToPacketId),
-              emoji: Value(m.emoji ?? 0),
-              rxSnr: Value(m.snr),
-              rxRssi: Value(m.rssi),
-              heardOnMirror: const Value(true),
-              mirrorId: Value(m.id),
-              relayCount: Value(relays.length),
-              isBot: Value(m.isBot),
-            ),
-            onConflict: DoUpdate.withExcluded(
-              (old, ex) => MessagesCompanion.custom(
-                heardOnMirror: const Constant(true),
-                mirrorId: ex.mirrorId,
-                isBot: ex.isBot,
-                // Список из зеркала — полный: он и есть ответ. По WS
-                // новое сообщение приходит без шлюзов — не обнуляем.
-                relayCount: live
-                    ? _max(old.relayCount, ex.relayCount)
-                    : ex.relayCount,
-                // Флаг реакции из эфира не затираем нулём из старого зеркала.
-                emoji: _max(old.emoji, ex.emoji),
-                // Лента из зеркала без эфира — выравниваем по времени сервера;
-                // своё исходящее и услышанное в эфире — время наше.
-                rxTime: live
-                    ? old.rxTime
-                    : CaseWhenExpression(
-                        cases: [
-                          CaseWhen(
-                            old.heardOnRadio | old.isOutgoing,
-                            then: old.rxTime,
-                          ),
-                        ],
-                        orElse: ex.rxTime,
-                      ),
-              ),
-              target: [db.messages.packetId, db.messages.fromNum],
-            ),
+      await db.transaction(() async {
+        final packetId = m.packetId ?? -m.id;
+        final idOwner = await (db.select(
+          db.messages,
+        )..where((row) => row.mirrorId.equals(m.id))).getSingleOrNull();
+        if (idOwner != null &&
+            (idOwner.packetId != packetId || idOwner.fromNum != from)) {
+          developer.log(
+            'Conflicting mirror record id ${m.id}; packet $packetId from $from skipped',
+            name: 'MirrorIngest',
           );
-      await _nodeFromMessage(from, m);
+          return;
+        }
+        final existing =
+            await (db.select(db.messages)..where(
+                  (row) =>
+                      row.packetId.equals(packetId) & row.fromNum.equals(from),
+                ))
+                .getSingleOrNull();
+        final sameContent =
+            existing == null ||
+            messageContentMatches(
+              existing,
+              toNum: to,
+              portnum: m.portnum,
+              body: text,
+              sticker: m.sticker,
+            );
+        if (!sameContent) {
+          developer.log(
+            'Conflicting mirror content for packet $packetId from $from',
+            name: 'MirrorIngest',
+          );
+        }
+        final rawPayload = m.sticker == null
+            ? null
+            : StickerWireCodec.encode(m.sticker!);
+        if (existing == null && rawPayload != null) {
+          developer.log(
+            'Reconstructed v2 payload from mirror fields for packet $packetId from $from',
+            name: 'MirrorIngest',
+          );
+        }
+        final relays = (_relays[m.id] ??= {})
+          ..addAll([for (final r in m.relays) ?r.nodeId]);
+        await db
+            .into(db.messages)
+            .insert(
+              MessagesCompanion.insert(
+                // Без packet_id склеивать не с чем — уникальный отрицательный ключ.
+                packetId: packetId,
+                fromNum: from,
+                toNum: to,
+                channelKey: Value(channelKey(ch)),
+                body: text,
+                portnum: Value(m.portnum),
+                rawPayload: Value(rawPayload),
+                stickerContent: Value(
+                  m.sticker == null ? null : jsonEncode(m.sticker!.toJson()),
+                ),
+                rxTime: time,
+                replyId: Value(
+                  m.replyToPacketId == 0 ? null : m.replyToPacketId,
+                ),
+                emoji: Value(m.emoji ?? 0),
+                rxSnr: Value(m.snr),
+                rxRssi: Value(m.rssi),
+                heardOnMirror: const Value(true),
+                mirrorId: Value(m.id),
+                relayCount: Value(relays.length),
+                isBot: Value(m.isBot),
+              ),
+              onConflict: DoUpdate.withExcluded(
+                (old, ex) => MessagesCompanion.custom(
+                  heardOnMirror: const Constant(true),
+                  mirrorId: ex.mirrorId,
+                  isBot: ex.isBot,
+                  // History/reconnect can contain an older relay snapshot. Never
+                  // reduce a count already learned from live relay updates.
+                  relayCount: _max(old.relayCount, ex.relayCount),
+                  // Флаг реакции из эфира не затираем нулём из старого зеркала.
+                  emoji: !sameContent || m.isSticker
+                      ? old.emoji
+                      : CaseWhenExpression(
+                          cases: [
+                            CaseWhen(
+                              old.heardOnRadio | old.isOutgoing,
+                              then: old.emoji,
+                            ),
+                          ],
+                          orElse: _max(old.emoji, ex.emoji),
+                        ),
+                  replyId: !sameContent
+                      ? old.replyId
+                      : CaseWhenExpression(
+                          cases: [
+                            CaseWhen(
+                              old.heardOnRadio |
+                                  old.isOutgoing |
+                                  old.replyId.isNotNull(),
+                              then: old.replyId,
+                            ),
+                          ],
+                          orElse: ex.replyId,
+                        ),
+                  // Лента из зеркала без эфира — выравниваем по времени сервера;
+                  // своё исходящее и услышанное в эфире — время наше.
+                  rxTime: live
+                      ? old.rxTime
+                      : CaseWhenExpression(
+                          cases: [
+                            CaseWhen(
+                              old.heardOnRadio | old.isOutgoing,
+                              then: old.rxTime,
+                            ),
+                          ],
+                          orElse: ex.rxTime,
+                        ),
+                ),
+                target: [db.messages.packetId, db.messages.fromNum],
+              ),
+            );
+        await _nodeFromMessage(from, m);
+      });
     }
   }
 

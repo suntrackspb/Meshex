@@ -19,6 +19,15 @@ class StickerEnvelope {
   final String packSha256;
   final String stickerId;
 
+  @override
+  bool operator ==(Object other) =>
+      other is StickerEnvelope &&
+      sourceUrl == other.sourceUrl &&
+      packSha256 == other.packSha256 &&
+      stickerId == other.stickerId;
+  @override
+  int get hashCode => Object.hash(sourceUrl, packSha256, stickerId);
+
   Map<String, Object> toJson() => {
     'wire_version': 2,
     'source_url': sourceUrl,

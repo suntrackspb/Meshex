@@ -5,4 +5,8 @@ import '../../data/message_content.dart';
 import '../../l10n/l10n.dart';
 
 String messagePreview(BuildContext context, Message message) =>
-    messageTextPreview(message, context.l10n.unsupportedMessage);
+    messageTextPreview(
+      message,
+      context.l10n.unsupportedMessage,
+      stickerLabel: context.l10n.stickerLabel,
+    );

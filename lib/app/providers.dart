@@ -1,3 +1,4 @@
+import '../data/stickers/source_repository.dart';
 import 'dart:convert';
 import '../data/mirror_node_key.dart';
 import 'dart:io';
@@ -730,6 +731,7 @@ final messageSenderProvider = Provider<MessageSender>((ref) {
     radio.sendPacket,
     () => radio.state == RadioState.ready ? radio.myNodeNum : null,
     radio.queue.nextId,
+    prepareSticker: (sticker) => StickerSourceRepository(ref.read(appDatabaseProvider)).checkSendAllowed(sticker.sourceUrl),
     prepareDirect: (peer) async {
       final api = ref.read(mirrorApiProvider);
       final actions = ref.read(nodeActionsProvider);

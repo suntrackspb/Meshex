@@ -1,0 +1,20 @@
+{
+  "id": 123,
+  "packet_id": 456,
+  "from_id": "!12345678",
+  "to_id": "^all",
+  "channel": "MediumFast",
+  "received_at": "2026-11-06T00:00:00Z",
+  "kind": "sticker",
+  "portnum": 256,
+  "text": "[Sticker]",
+  "reply_to_packet_id": null,
+  "emoji": 0,
+  "sticker": {
+    "pack_sha256": "d2431a467ff3f617bf814ee3b2fddb976eba91ecbfe9a08650e84bd2cb5817d3",
+    "source_url": "https://s.example/stickers/source.json",
+    "sticker_id": "blue",
+    "wire_version": 2
+  },
+  "relays": []
+}

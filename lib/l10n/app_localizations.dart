@@ -9179,6 +9179,96 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Удалить скачанные файлы пака? Сообщения останутся в истории.'**
   String get stickerRemoveConfirm;
+
+  /// No description provided for @stickerManagePacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Управление паками'**
+  String get stickerManagePacks;
+
+  /// No description provided for @stickerSourceAndPack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник и пак'**
+  String get stickerSourceAndPack;
+
+  /// No description provided for @stickerMissingPack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пак не установлен'**
+  String get stickerMissingPack;
+
+  /// No description provided for @stickerMissingId.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стикер отсутствует в этой ревизии'**
+  String get stickerMissingId;
+
+  /// No description provided for @stickerLocalError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось прочитать файлы стикера'**
+  String get stickerLocalError;
+
+  /// No description provided for @stickerOpenSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть источник'**
+  String get stickerOpenSource;
+
+  /// No description provided for @stickerSourceConsent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник указан в сообщении. Открытие загрузит сведения об операторе и точной ревизии пака. Сам просмотр не добавляет источник.'**
+  String get stickerSourceConsent;
+
+  /// No description provided for @stickerAddAndInstall.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить источник и установить пак'**
+  String get stickerAddAndInstall;
+
+  /// No description provided for @stickerInstallExact.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установить эту ревизию'**
+  String get stickerInstallExact;
+
+  /// No description provided for @stickerSourceForSending.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник для отправки'**
+  String get stickerSourceForSending;
+
+  /// No description provided for @stickerConfirmedOrigins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно выбрать только проверенную копию той же ревизии.'**
+  String get stickerConfirmedOrigins;
+
+  /// No description provided for @stickerShorterSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ссылка на источник не помещается в радиопакет. Выберите более короткий адрес той же ревизии.'**
+  String get stickerShorterSource;
+
+  /// No description provided for @stickerSendingBlocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник заблокирован. Выберите другую проверенную копию пака или снимите блокировку в библиотеке.'**
+  String get stickerSendingBlocked;
+
+  /// No description provided for @stickerTrustedCopy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другой разрешённый источник той же ревизии'**
+  String get stickerTrustedCopy;
+
+  /// No description provided for @stickerCheckingLocal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверяем локальные файлы'**
+  String get stickerCheckingLocal;
 }
 
 class _AppLocalizationsDelegate

@@ -82,8 +82,8 @@ flutter:
 flutter_launcher_icons:
   image_path: assets/icon/app_icon.png
   android: true
-  # Сплошной фон (BG в tool/make_icons.py), рисунок — в переднем слое.
-  adaptive_icon_background: "#FFFFFF"
+  # Android требует сплошной адаптивный фон: средний цвет градиента.
+  adaptive_icon_background: "#202020"
   adaptive_icon_foreground: assets/icon/android_foreground.png
   ios: true
   remove_alpha_ios: true

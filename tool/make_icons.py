@@ -1,8 +1,10 @@
 """Иконки из SVG-исходников assets/icon/src: app.svg — приложение,
 tray.svg (монохромная) — трей. Рендер — headless Chrome (sips рисует SVG
 с ошибками), масштаб — sips. Нужен macOS с Google Chrome; запускать при
-смене исходников, затем `dart run flutter_launcher_icons`."""
-import pathlib, struct, subprocess, tempfile
+смене исходников, затем `dart run flutter_launcher_icons`.
+Флаг --app-only сохраняет файлы трея без изменений."""
+import pathlib, struct, subprocess, tempfile, sys
+import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "assets/icon/src"
@@ -10,17 +12,25 @@ ICON = ROOT / "assets/icon"
 TRAY = ROOT / "assets/tray"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SIZE = 1024
-BG = "#FFFFFF"
+BG = "linear-gradient(to bottom, #303030, #111111)"
 
 
 def render(svg: pathlib.Path, out: pathlib.Path, scale: float, bg: str | None):
     """SVG по центру холста SIZE×SIZE, занимает долю scale; фон bg или прозрачный."""
     side = round(SIZE * scale)
+    # Фон исходника заполняет весь холст, рисунок масштабируется отдельно.
+    source = ET.parse(svg)
+    for element in list(source.getroot()):
+        if element.get("id") == "app-background":
+            source.getroot().remove(element)
     html = (f'<html><body style="margin:0;width:{SIZE}px;height:{SIZE}px;'
             f'display:flex;align-items:center;justify-content:center;'
             f'background:{bg or "transparent"}">'
             f'<img src="{svg.as_uri()}" width="{side}" height="{side}"></body></html>')
     with tempfile.TemporaryDirectory() as d:
+        foreground = pathlib.Path(d) / "foreground.svg"
+        source.write(foreground, encoding="utf-8", xml_declaration=True)
+        html = html.replace(svg.as_uri(), foreground.as_uri())
         page = pathlib.Path(d) / "i.html"
         page.write_text(html)
         subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars",
@@ -53,11 +63,13 @@ TRAY.mkdir(parents=True, exist_ok=True)
 app = ICON / "app_icon.png"
 # iOS не допускает прозрачности: фон сплошной, вокруг рисунка поля.
 render(SRC / "app.svg", app, 0.82, BG)
-# Адаптивная иконка Android: фон — цвет BG (pubspec), рисунок в безопасной
+# Адаптивная иконка Android: сплошной фон из pubspec, рисунок в безопасной
 # зоне маски (круг ~66% холста).
 render(SRC / "app.svg", ICON / "android_foreground.png", 0.6, None)
 # Иконка окна Linux (у Flutter-шаблона её нет).
 (ICON / "window.png").write_bytes(scaled(app, 256))
+if "--app-only" in sys.argv:
+    sys.exit(0)
 with tempfile.TemporaryDirectory() as d:
     tray = pathlib.Path(d) / "tray.png"
     render(SRC / "tray.svg", tray, 1.0, None)

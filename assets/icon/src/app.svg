@@ -34,7 +34,7 @@
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer4" /><defs
-     id="defs34"><linearGradient
+     id="defs34"><linearGradient id="appBackground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#303030"/><stop offset="1" stop-color="#111111"/></linearGradient><linearGradient
        inkscape:collect="always"
        id="linearGradient12950"><stop
          style="stop-color:#ffffff;stop-opacity:1;"
@@ -77,21 +77,21 @@
        cy="349.04211"
        fx="61.52306"
        fy="349.04211"
-       r="72.240494" /></defs><g
+       r="72.240494" /></defs><rect id="app-background" width="1024" height="1024" fill="url(#appBackground)"/><g
      inkscape:label="Слой 1"
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(1.2354871,1.2354871)"><path
        id="path153"
-       style="fill:#67ea94;fill-opacity:1;fill-rule:nonzero;stroke:#333333;stroke-width:7.637;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#8848db;fill-opacity:1;fill-rule:nonzero;stroke:#333333;stroke-width:7.637;stroke-dasharray:none;stroke-opacity:1"
        d="M 621.59015,427.23766 C 621.59014,579.01895 497.26203,702.062 343.89552,702.062 190.52901,702.062 66.200892,579.01895 66.200886,427.23766 66.20088,275.45636 190.52901,152.4133 343.89552,152.4133 c 153.36651,0 277.69464,123.04306 277.69463,274.82436 z"
        sodipodi:nodetypes="sssss"
        inkscape:label="path153" /><path
        id="circle263"
-       style="fill:#67ea94;fill-opacity:1;fill-rule:nonzero;stroke:#333333;stroke-width:7.637;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#227df3;fill-opacity:1;fill-rule:nonzero;stroke:#333333;stroke-width:7.637;stroke-dasharray:none;stroke-opacity:1"
        d="M 985.00748,766.43034 A 192.25476,192.25476 0 0 1 792.75272,958.6851 192.25476,192.25476 0 0 1 600.49796,766.43034 192.25476,192.25476 0 0 1 792.75272,574.17558 192.25476,192.25476 0 0 1 985.00748,766.43034 Z" /><path
        id="circle265"
-       style="fill:#67ea94;fill-opacity:1;stroke:#333333;stroke-width:7.537;stroke-dasharray:none;paint-order:stroke markers fill;stroke-opacity:1"
+       style="fill:#cf3e83;fill-opacity:1;stroke:#333333;stroke-width:7.537;stroke-dasharray:none;paint-order:stroke markers fill;stroke-opacity:1"
        d="M 910.36121,194.03769 A 125.19991,125.19991 0 0 1 785.16129,319.2376 125.19991,125.19991 0 0 1 659.96138,194.03769 125.19991,125.19991 0 0 1 785.16129,68.837775 125.19991,125.19991 0 0 1 910.36121,194.03769 Z" /></g><g
      inkscape:groupmode="layer"
      id="layer2"

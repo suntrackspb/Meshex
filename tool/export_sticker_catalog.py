@@ -215,7 +215,8 @@ def main():
         parser.error('Output must be outside the input pack directories')
     if not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z', args.published_at):
         parser.error('published-at must be UTC')
-    datetime.fromisoformat(args.published_at)
+    # Python 3.10 does not accept the UTC Z suffix (supported since 3.11).
+    datetime.fromisoformat(args.published_at[:-1] + '+00:00')
     descriptor = {'schema': 'meshex.stickers.source', 'version': 1,
                   'canonical_url': args.source_url, 'catalog_url': 'catalog.json',
                   'name': text(args.name, 160),

@@ -1,0 +1,2 @@
+# Sticker fixture hashes depend on exact bytes, including line endings.
+/test/fixtures/stickers/** -text

@@ -5084,22 +5084,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stickerLabel => 'Sticker';
 
   @override
-  String get stickerServer => 'Sticker server';
-
-  @override
-  String get stickerCatalogAddress => 'Catalog address';
-
-  @override
-  String get stickerInvalidUrl => 'Enter a full HTTPS URL';
+  String get stickerInvalidUrl =>
+      'Enter an HTTPS source.json URL with an ASCII domain';
 
   @override
   String get stickerSave => 'Save';
 
   @override
   String get stickerMyPacks => 'My packs';
-
-  @override
-  String get stickerCatalog => 'Catalog';
 
   @override
   String get stickerRefresh => 'Refresh';
@@ -5116,10 +5108,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get stickerNoInstalled =>
       'No packs installed yet. Add them from the catalog to use them offline.';
-
-  @override
-  String get stickerConfigureHint =>
-      'Enter a sticker catalog address. It can be hosted on the app website or a mirror server.';
 
   @override
   String get stickerCatalogEmpty => 'No packs available in this catalog';
@@ -5141,6 +5129,92 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unsupportedMessage => 'Unsupported message';
 
   @override
-  String get stickerPreviewHint =>
-      'Tap a sticker to preview it. Sending is not available yet.';
+  String get stickerSources => 'Sources';
+
+  @override
+  String get stickerCatalogs => 'Catalogs';
+
+  @override
+  String get stickerAddSource => 'Add source';
+
+  @override
+  String get stickerSourceAddress => 'Source URL';
+
+  @override
+  String get stickerSourceHint =>
+      'Add a source or enable a mirror that announces stickers. Refresh sources manually.';
+
+  @override
+  String get stickerSourceEnabled => 'Manually enabled';
+
+  @override
+  String get stickerSourceBlocked => 'Blocked';
+
+  @override
+  String get stickerMirrorSource => 'Announced by current mirror';
+
+  @override
+  String get stickerFormerSource => 'Previously announced by a mirror';
+
+  @override
+  String get stickerCachedSource => 'Cached mirror announcement';
+
+  @override
+  String get stickerDeleteSource => 'Remove source';
+
+  @override
+  String get stickerDeleteSourceHint =>
+      'Installed packs and message history will be kept.';
+
+  @override
+  String get stickerOperationFailed =>
+      'Could not complete the operation. Check the source and connection, then retry.';
+
+  @override
+  String get stickerInvalidData => 'Source data failed validation.';
+
+  @override
+  String get stickerWithdrawn =>
+      'This revision is not available for installation.';
+
+  @override
+  String get stickerDetails => 'Pack details';
+
+  @override
+  String get stickerQuota => 'Sticker storage limit, MB';
+
+  @override
+  String get stickerQuotaExceeded =>
+      'Sticker storage limit reached. Remove a pack or increase the limit.';
+
+  @override
+  String get stickerNoSources => 'No sources yet';
+
+  @override
+  String get stickerUnchecked => 'Not checked yet';
+
+  @override
+  String get stickerReady => 'Ready';
+
+  @override
+  String get stickerOffline => 'Offline';
+
+  @override
+  String get stickerIncompatible => 'Incompatible version';
+
+  @override
+  String get stickerInvalid => 'Invalid data';
+
+  @override
+  String get stickerRefreshFirst => 'Refresh this source to view its catalog.';
+
+  @override
+  String get stickerRevision => 'Revision';
+
+  @override
+  String get stickerSourceDisabled => 'Source disabled or blocked';
+
+  @override
+  String get stickerRemoveConfirm =>
+      'Remove the downloaded pack files? Messages will remain in history.';
 }

@@ -1231,6 +1231,7 @@ String localizeBuiltInText(AppLocalizations l10n, String source) {
       l10n.nodesYouHaveConnectedToWill_436ad0,
     "Зеленый" => l10n.green_6989f8,
     "Зелёный" => l10n.green_a0f667,
+    "Стикеры" => l10n.stickersTitle,
     "Зеркало" => l10n.mirror_66ace6,
     "Зеркало: зоны глушилок не загружены" =>
       l10n.mirrorInterferenceZonesCouldNotBe_7b5b5d,

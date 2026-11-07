@@ -36,7 +36,7 @@ import '../../ui/kit/kit.dart';
 import '../nodes/open_node.dart';
 import '../../data/read_marker.dart';
 import 'chat_page.dart';
-import 'sticker_library.dart';
+import '../stickers/sticker_library_page.dart';
 import 'message_preview.dart';
 import 'chat_search_delegate.dart';
 import 'emoji_sheet.dart';

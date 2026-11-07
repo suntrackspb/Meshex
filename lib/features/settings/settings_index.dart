@@ -12,6 +12,7 @@ const _pages = [
   ('Приложение', 'app'),
   ('Данные', 'data'),
   ('Зеркало', 'mirror'),
+  ('Стикеры', 'stickers'),
   ('Фильтр сообщений', 'message-filter'),
   ('LoRa', 'lora'),
   ('Каналы', 'channels'),
@@ -142,7 +143,13 @@ class SettingsSearchResults extends StatelessWidget {
             title: e.title,
             subtitle: e.section,
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.go('/settings/${e.route}'),
+            onTap: () {
+              if (e.route == 'stickers') {
+                context.push('/stickers');
+              } else {
+                context.go('/settings/${e.route}');
+              }
+            },
           ),
       ],
     );

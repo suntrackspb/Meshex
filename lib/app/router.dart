@@ -30,6 +30,7 @@ import '../features/settings/message_filter_page.dart';
 import '../features/settings/settings_page.dart';
 import '../ui/kit/kit.dart';
 import 'shell.dart';
+import '../features/stickers/sticker_library_page.dart';
 
 /// Корневой навигатор — для диалогов не из виджетов (вопрос при закрытии).
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -38,6 +39,7 @@ final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: '/connection',
   routes: [
+    _route('/stickers', (_) => const StickerLibraryPage()),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => AdaptiveShell(shell: shell),
       branches: [

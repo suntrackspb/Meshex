@@ -10,7 +10,7 @@ class SettingsEntry {
   /// Подпись поля или название раздела.
   final String title;
 
-  /// Куда вести: путь под `/settings/`.
+  /// Ключ раздела: обычно под `/settings/`; stickers открывает `/stickers`.
   final String route;
 
   /// Раздел (и группа внутри него) — для подписи результата; null — сам раздел.

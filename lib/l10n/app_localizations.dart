@@ -8928,22 +8928,10 @@ abstract class AppLocalizations {
   /// **'Стикер'**
   String get stickerLabel;
 
-  /// No description provided for @stickerServer.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сервер стикеров'**
-  String get stickerServer;
-
-  /// No description provided for @stickerCatalogAddress.
-  ///
-  /// In ru, this message translates to:
-  /// **'Адрес каталога'**
-  String get stickerCatalogAddress;
-
   /// No description provided for @stickerInvalidUrl.
   ///
   /// In ru, this message translates to:
-  /// **'Введите полный HTTPS-адрес'**
+  /// **'Введите HTTPS-адрес source.json с доменом латиницей'**
   String get stickerInvalidUrl;
 
   /// No description provided for @stickerSave.
@@ -8957,12 +8945,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Мои паки'**
   String get stickerMyPacks;
-
-  /// No description provided for @stickerCatalog.
-  ///
-  /// In ru, this message translates to:
-  /// **'Каталог'**
-  String get stickerCatalog;
 
   /// No description provided for @stickerRefresh.
   ///
@@ -8993,12 +8975,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Установленных паков пока нет. Добавьте их из каталога — после загрузки они работают без интернета.'**
   String get stickerNoInstalled;
-
-  /// No description provided for @stickerConfigureHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Укажите адрес каталога стикеров. Он может находиться на сайте приложения или на сервере зеркала.'**
-  String get stickerConfigureHint;
 
   /// No description provided for @stickerCatalogEmpty.
   ///
@@ -9036,11 +9012,173 @@ abstract class AppLocalizations {
   /// **'Неподдерживаемое сообщение'**
   String get unsupportedMessage;
 
-  /// No description provided for @stickerPreviewHint.
+  /// No description provided for @stickerSources.
   ///
   /// In ru, this message translates to:
-  /// **'Нажмите на стикер для просмотра. Отправка пока недоступна.'**
-  String get stickerPreviewHint;
+  /// **'Источники'**
+  String get stickerSources;
+
+  /// No description provided for @stickerCatalogs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каталоги'**
+  String get stickerCatalogs;
+
+  /// No description provided for @stickerAddSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить источник'**
+  String get stickerAddSource;
+
+  /// No description provided for @stickerSourceAddress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Адрес источника'**
+  String get stickerSourceAddress;
+
+  /// No description provided for @stickerSourceHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте источник или включите зеркало, которое объявляет стикеры. Обновление запускается вручную.'**
+  String get stickerSourceHint;
+
+  /// No description provided for @stickerSourceEnabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешён вручную'**
+  String get stickerSourceEnabled;
+
+  /// No description provided for @stickerSourceBlocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокирован'**
+  String get stickerSourceBlocked;
+
+  /// No description provided for @stickerMirrorSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявлен текущим зеркалом'**
+  String get stickerMirrorSource;
+
+  /// No description provided for @stickerFormerSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ранее объявлен зеркалом'**
+  String get stickerFormerSource;
+
+  /// No description provided for @stickerCachedSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённое объявление зеркала'**
+  String get stickerCachedSource;
+
+  /// No description provided for @stickerDeleteSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить источник'**
+  String get stickerDeleteSource;
+
+  /// No description provided for @stickerDeleteSourceHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установленные паки и история сохранятся.'**
+  String get stickerDeleteSourceHint;
+
+  /// No description provided for @stickerOperationFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось завершить операцию. Проверьте источник и соединение, затем повторите.'**
+  String get stickerOperationFailed;
+
+  /// No description provided for @stickerInvalidData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные источника не прошли проверку.'**
+  String get stickerInvalidData;
+
+  /// No description provided for @stickerWithdrawn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эта ревизия недоступна для установки.'**
+  String get stickerWithdrawn;
+
+  /// No description provided for @stickerDetails.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сведения о паке'**
+  String get stickerDetails;
+
+  /// No description provided for @stickerQuota.
+  ///
+  /// In ru, this message translates to:
+  /// **'Место для стикеров, МБ'**
+  String get stickerQuota;
+
+  /// No description provided for @stickerQuotaExceeded.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недостаточно места для стикеров. Удалите пак или увеличьте лимит.'**
+  String get stickerQuotaExceeded;
+
+  /// No description provided for @stickerNoSources.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источников пока нет'**
+  String get stickerNoSources;
+
+  /// No description provided for @stickerUnchecked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё не проверен'**
+  String get stickerUnchecked;
+
+  /// No description provided for @stickerReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступен'**
+  String get stickerReady;
+
+  /// No description provided for @stickerOffline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет соединения'**
+  String get stickerOffline;
+
+  /// No description provided for @stickerIncompatible.
+  ///
+  /// In ru, this message translates to:
+  /// **'Несовместимая версия'**
+  String get stickerIncompatible;
+
+  /// No description provided for @stickerInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка проверки данных'**
+  String get stickerInvalid;
+
+  /// No description provided for @stickerRefreshFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновите источник, чтобы увидеть каталог.'**
+  String get stickerRefreshFirst;
+
+  /// No description provided for @stickerRevision.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ревизия'**
+  String get stickerRevision;
+
+  /// No description provided for @stickerSourceDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник отключён или заблокирован'**
+  String get stickerSourceDisabled;
+
+  /// No description provided for @stickerRemoveConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить скачанные файлы пака? Сообщения останутся в истории.'**
+  String get stickerRemoveConfirm;
 }
 
 class _AppLocalizationsDelegate

@@ -97,8 +97,8 @@ abstract final class AppSettingKeys {
   /// по умолчанию — да).
   static const showImages = 'chat.showImages';
 
-  /// HTTPS URL of the optional sticker catalog; no default server.
-  static const stickerCatalogUrl = 'stickers.catalogUrl';
+  /// Global sticker file quota in bytes; defaults to 200 MiB.
+  static const stickerQuotaBytes = 'stickers.quotaBytes';
 
   /// Свои загруженные картинки: JSON-список (id, url, токен удаления, срок).
   static const imageUploads = 'images.uploads';
@@ -464,6 +464,19 @@ class StickerSourceBindings extends Table {
   Set<Column> get primaryKey => {sourceUrl, mirrorBaseUrl};
 }
 
+class StickerInstalls extends Table {
+  TextColumn get packSha256 => text()();
+  BlobColumn get manifestBytes => blob()();
+  TextColumn get originsJson => text()();
+  TextColumn get preferredSourceUrl => text()();
+  IntColumn get bytes => integer()();
+  DateTimeColumn get installedAt => dateTime()();
+  TextColumn get status => text().withDefault(const Constant('ready'))();
+
+  @override
+  Set<Column> get primaryKey => {packSha256};
+}
+
 @DriftDatabase(
   tables: [
     Nodes,
@@ -479,6 +492,7 @@ class StickerSourceBindings extends Table {
     AppSettings,
     StickerSources,
     StickerSourceBindings,
+    StickerInstalls,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -499,7 +513,7 @@ class AppDatabase extends _$AppDatabase {
   final AppDatabase? settings;
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   // До первого релиза схема пересоздаётся целиком (данные — кэш с ноды).
   // После релиза — нормальные пошаговые миграции.
@@ -570,6 +584,12 @@ class AppDatabase extends _$AppDatabase {
       }
     },
     14: (m) => _addColumn(m, nodes, nodes.macaddr),
+    19: (m) async {
+      await m.createTable(stickerInstalls);
+      await (delete(
+        appSettings,
+      )..where((s) => s.key.equals('stickers.catalogUrl'))).go();
+    },
     18: (m) async {
       await m.createTable(stickerSources);
       await m.createTable(stickerSourceBindings);

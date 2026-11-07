@@ -55,11 +55,15 @@ List<dynamic> _list(Object? value, int max, {bool nonempty = false}) {
   return value;
 }
 
+class StickerSchemaException extends FormatException {
+  const StickerSchemaException() : super('Unsupported sticker schema');
+}
+
 void _schema(Map<String, dynamic> j, String type) {
   if (j['schema'] != 'meshex.stickers.$type' ||
       j['version'] is! int ||
       j['version'] != 1) {
-    throw const FormatException('Unsupported sticker schema');
+    throw const StickerSchemaException();
   }
 }
 

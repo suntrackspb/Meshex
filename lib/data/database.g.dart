@@ -7862,6 +7862,495 @@ class StickerSourceBindingsCompanion
   }
 }
 
+class $StickerInstallsTable extends StickerInstalls
+    with TableInfo<$StickerInstallsTable, StickerInstall> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StickerInstallsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _packSha256Meta = const VerificationMeta(
+    'packSha256',
+  );
+  @override
+  late final GeneratedColumn<String> packSha256 = GeneratedColumn<String>(
+    'pack_sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _manifestBytesMeta = const VerificationMeta(
+    'manifestBytes',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> manifestBytes =
+      GeneratedColumn<Uint8List>(
+        'manifest_bytes',
+        aliasedName,
+        false,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _originsJsonMeta = const VerificationMeta(
+    'originsJson',
+  );
+  @override
+  late final GeneratedColumn<String> originsJson = GeneratedColumn<String>(
+    'origins_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _preferredSourceUrlMeta =
+      const VerificationMeta('preferredSourceUrl');
+  @override
+  late final GeneratedColumn<String> preferredSourceUrl =
+      GeneratedColumn<String>(
+        'preferred_source_url',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _bytesMeta = const VerificationMeta('bytes');
+  @override
+  late final GeneratedColumn<int> bytes = GeneratedColumn<int>(
+    'bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _installedAtMeta = const VerificationMeta(
+    'installedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> installedAt = GeneratedColumn<DateTime>(
+    'installed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('ready'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    packSha256,
+    manifestBytes,
+    originsJson,
+    preferredSourceUrl,
+    bytes,
+    installedAt,
+    status,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sticker_installs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StickerInstall> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pack_sha256')) {
+      context.handle(
+        _packSha256Meta,
+        packSha256.isAcceptableOrUnknown(data['pack_sha256']!, _packSha256Meta),
+      );
+    } else if (isInserting) {
+      context.missing(_packSha256Meta);
+    }
+    if (data.containsKey('manifest_bytes')) {
+      context.handle(
+        _manifestBytesMeta,
+        manifestBytes.isAcceptableOrUnknown(
+          data['manifest_bytes']!,
+          _manifestBytesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_manifestBytesMeta);
+    }
+    if (data.containsKey('origins_json')) {
+      context.handle(
+        _originsJsonMeta,
+        originsJson.isAcceptableOrUnknown(
+          data['origins_json']!,
+          _originsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originsJsonMeta);
+    }
+    if (data.containsKey('preferred_source_url')) {
+      context.handle(
+        _preferredSourceUrlMeta,
+        preferredSourceUrl.isAcceptableOrUnknown(
+          data['preferred_source_url']!,
+          _preferredSourceUrlMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_preferredSourceUrlMeta);
+    }
+    if (data.containsKey('bytes')) {
+      context.handle(
+        _bytesMeta,
+        bytes.isAcceptableOrUnknown(data['bytes']!, _bytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bytesMeta);
+    }
+    if (data.containsKey('installed_at')) {
+      context.handle(
+        _installedAtMeta,
+        installedAt.isAcceptableOrUnknown(
+          data['installed_at']!,
+          _installedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_installedAtMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {packSha256};
+  @override
+  StickerInstall map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StickerInstall(
+      packSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pack_sha256'],
+      )!,
+      manifestBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}manifest_bytes'],
+      )!,
+      originsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}origins_json'],
+      )!,
+      preferredSourceUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_source_url'],
+      )!,
+      bytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes'],
+      )!,
+      installedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}installed_at'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+    );
+  }
+
+  @override
+  $StickerInstallsTable createAlias(String alias) {
+    return $StickerInstallsTable(attachedDatabase, alias);
+  }
+}
+
+class StickerInstall extends DataClass implements Insertable<StickerInstall> {
+  final String packSha256;
+  final Uint8List manifestBytes;
+  final String originsJson;
+  final String preferredSourceUrl;
+  final int bytes;
+  final DateTime installedAt;
+  final String status;
+  const StickerInstall({
+    required this.packSha256,
+    required this.manifestBytes,
+    required this.originsJson,
+    required this.preferredSourceUrl,
+    required this.bytes,
+    required this.installedAt,
+    required this.status,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pack_sha256'] = Variable<String>(packSha256);
+    map['manifest_bytes'] = Variable<Uint8List>(manifestBytes);
+    map['origins_json'] = Variable<String>(originsJson);
+    map['preferred_source_url'] = Variable<String>(preferredSourceUrl);
+    map['bytes'] = Variable<int>(bytes);
+    map['installed_at'] = Variable<DateTime>(installedAt);
+    map['status'] = Variable<String>(status);
+    return map;
+  }
+
+  StickerInstallsCompanion toCompanion(bool nullToAbsent) {
+    return StickerInstallsCompanion(
+      packSha256: Value(packSha256),
+      manifestBytes: Value(manifestBytes),
+      originsJson: Value(originsJson),
+      preferredSourceUrl: Value(preferredSourceUrl),
+      bytes: Value(bytes),
+      installedAt: Value(installedAt),
+      status: Value(status),
+    );
+  }
+
+  factory StickerInstall.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StickerInstall(
+      packSha256: serializer.fromJson<String>(json['packSha256']),
+      manifestBytes: serializer.fromJson<Uint8List>(json['manifestBytes']),
+      originsJson: serializer.fromJson<String>(json['originsJson']),
+      preferredSourceUrl: serializer.fromJson<String>(
+        json['preferredSourceUrl'],
+      ),
+      bytes: serializer.fromJson<int>(json['bytes']),
+      installedAt: serializer.fromJson<DateTime>(json['installedAt']),
+      status: serializer.fromJson<String>(json['status']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'packSha256': serializer.toJson<String>(packSha256),
+      'manifestBytes': serializer.toJson<Uint8List>(manifestBytes),
+      'originsJson': serializer.toJson<String>(originsJson),
+      'preferredSourceUrl': serializer.toJson<String>(preferredSourceUrl),
+      'bytes': serializer.toJson<int>(bytes),
+      'installedAt': serializer.toJson<DateTime>(installedAt),
+      'status': serializer.toJson<String>(status),
+    };
+  }
+
+  StickerInstall copyWith({
+    String? packSha256,
+    Uint8List? manifestBytes,
+    String? originsJson,
+    String? preferredSourceUrl,
+    int? bytes,
+    DateTime? installedAt,
+    String? status,
+  }) => StickerInstall(
+    packSha256: packSha256 ?? this.packSha256,
+    manifestBytes: manifestBytes ?? this.manifestBytes,
+    originsJson: originsJson ?? this.originsJson,
+    preferredSourceUrl: preferredSourceUrl ?? this.preferredSourceUrl,
+    bytes: bytes ?? this.bytes,
+    installedAt: installedAt ?? this.installedAt,
+    status: status ?? this.status,
+  );
+  StickerInstall copyWithCompanion(StickerInstallsCompanion data) {
+    return StickerInstall(
+      packSha256: data.packSha256.present
+          ? data.packSha256.value
+          : this.packSha256,
+      manifestBytes: data.manifestBytes.present
+          ? data.manifestBytes.value
+          : this.manifestBytes,
+      originsJson: data.originsJson.present
+          ? data.originsJson.value
+          : this.originsJson,
+      preferredSourceUrl: data.preferredSourceUrl.present
+          ? data.preferredSourceUrl.value
+          : this.preferredSourceUrl,
+      bytes: data.bytes.present ? data.bytes.value : this.bytes,
+      installedAt: data.installedAt.present
+          ? data.installedAt.value
+          : this.installedAt,
+      status: data.status.present ? data.status.value : this.status,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StickerInstall(')
+          ..write('packSha256: $packSha256, ')
+          ..write('manifestBytes: $manifestBytes, ')
+          ..write('originsJson: $originsJson, ')
+          ..write('preferredSourceUrl: $preferredSourceUrl, ')
+          ..write('bytes: $bytes, ')
+          ..write('installedAt: $installedAt, ')
+          ..write('status: $status')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    packSha256,
+    $driftBlobEquality.hash(manifestBytes),
+    originsJson,
+    preferredSourceUrl,
+    bytes,
+    installedAt,
+    status,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StickerInstall &&
+          other.packSha256 == this.packSha256 &&
+          $driftBlobEquality.equals(other.manifestBytes, this.manifestBytes) &&
+          other.originsJson == this.originsJson &&
+          other.preferredSourceUrl == this.preferredSourceUrl &&
+          other.bytes == this.bytes &&
+          other.installedAt == this.installedAt &&
+          other.status == this.status);
+}
+
+class StickerInstallsCompanion extends UpdateCompanion<StickerInstall> {
+  final Value<String> packSha256;
+  final Value<Uint8List> manifestBytes;
+  final Value<String> originsJson;
+  final Value<String> preferredSourceUrl;
+  final Value<int> bytes;
+  final Value<DateTime> installedAt;
+  final Value<String> status;
+  final Value<int> rowid;
+  const StickerInstallsCompanion({
+    this.packSha256 = const Value.absent(),
+    this.manifestBytes = const Value.absent(),
+    this.originsJson = const Value.absent(),
+    this.preferredSourceUrl = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.installedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  StickerInstallsCompanion.insert({
+    required String packSha256,
+    required Uint8List manifestBytes,
+    required String originsJson,
+    required String preferredSourceUrl,
+    required int bytes,
+    required DateTime installedAt,
+    this.status = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : packSha256 = Value(packSha256),
+       manifestBytes = Value(manifestBytes),
+       originsJson = Value(originsJson),
+       preferredSourceUrl = Value(preferredSourceUrl),
+       bytes = Value(bytes),
+       installedAt = Value(installedAt);
+  static Insertable<StickerInstall> custom({
+    Expression<String>? packSha256,
+    Expression<Uint8List>? manifestBytes,
+    Expression<String>? originsJson,
+    Expression<String>? preferredSourceUrl,
+    Expression<int>? bytes,
+    Expression<DateTime>? installedAt,
+    Expression<String>? status,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (packSha256 != null) 'pack_sha256': packSha256,
+      if (manifestBytes != null) 'manifest_bytes': manifestBytes,
+      if (originsJson != null) 'origins_json': originsJson,
+      if (preferredSourceUrl != null)
+        'preferred_source_url': preferredSourceUrl,
+      if (bytes != null) 'bytes': bytes,
+      if (installedAt != null) 'installed_at': installedAt,
+      if (status != null) 'status': status,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  StickerInstallsCompanion copyWith({
+    Value<String>? packSha256,
+    Value<Uint8List>? manifestBytes,
+    Value<String>? originsJson,
+    Value<String>? preferredSourceUrl,
+    Value<int>? bytes,
+    Value<DateTime>? installedAt,
+    Value<String>? status,
+    Value<int>? rowid,
+  }) {
+    return StickerInstallsCompanion(
+      packSha256: packSha256 ?? this.packSha256,
+      manifestBytes: manifestBytes ?? this.manifestBytes,
+      originsJson: originsJson ?? this.originsJson,
+      preferredSourceUrl: preferredSourceUrl ?? this.preferredSourceUrl,
+      bytes: bytes ?? this.bytes,
+      installedAt: installedAt ?? this.installedAt,
+      status: status ?? this.status,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (packSha256.present) {
+      map['pack_sha256'] = Variable<String>(packSha256.value);
+    }
+    if (manifestBytes.present) {
+      map['manifest_bytes'] = Variable<Uint8List>(manifestBytes.value);
+    }
+    if (originsJson.present) {
+      map['origins_json'] = Variable<String>(originsJson.value);
+    }
+    if (preferredSourceUrl.present) {
+      map['preferred_source_url'] = Variable<String>(preferredSourceUrl.value);
+    }
+    if (bytes.present) {
+      map['bytes'] = Variable<int>(bytes.value);
+    }
+    if (installedAt.present) {
+      map['installed_at'] = Variable<DateTime>(installedAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StickerInstallsCompanion(')
+          ..write('packSha256: $packSha256, ')
+          ..write('manifestBytes: $manifestBytes, ')
+          ..write('originsJson: $originsJson, ')
+          ..write('preferredSourceUrl: $preferredSourceUrl, ')
+          ..write('bytes: $bytes, ')
+          ..write('installedAt: $installedAt, ')
+          ..write('status: $status, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7880,6 +8369,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $StickerSourcesTable stickerSources = $StickerSourcesTable(this);
   late final $StickerSourceBindingsTable stickerSourceBindings =
       $StickerSourceBindingsTable(this);
+  late final $StickerInstallsTable stickerInstalls = $StickerInstallsTable(
+    this,
+  );
   late final Index messagesChannelTime = Index(
     'messages_channel_time',
     'CREATE INDEX messages_channel_time ON messages (channel_key, rx_time)',
@@ -7910,6 +8402,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     appSettings,
     stickerSources,
     stickerSourceBindings,
+    stickerInstalls,
     messagesChannelTime,
     positionsNodeTime,
     telemetryNodeKindTime,
@@ -11846,6 +12339,269 @@ typedef $$StickerSourceBindingsTableProcessedTableManager =
       StickerSourceBinding,
       PrefetchHooks Function()
     >;
+typedef $$StickerInstallsTableCreateCompanionBuilder =
+    StickerInstallsCompanion Function({
+      required String packSha256,
+      required Uint8List manifestBytes,
+      required String originsJson,
+      required String preferredSourceUrl,
+      required int bytes,
+      required DateTime installedAt,
+      Value<String> status,
+      Value<int> rowid,
+    });
+typedef $$StickerInstallsTableUpdateCompanionBuilder =
+    StickerInstallsCompanion Function({
+      Value<String> packSha256,
+      Value<Uint8List> manifestBytes,
+      Value<String> originsJson,
+      Value<String> preferredSourceUrl,
+      Value<int> bytes,
+      Value<DateTime> installedAt,
+      Value<String> status,
+      Value<int> rowid,
+    });
+
+class $$StickerInstallsTableFilterComposer
+    extends Composer<_$AppDatabase, $StickerInstallsTable> {
+  $$StickerInstallsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get packSha256 => $composableBuilder(
+    column: $table.packSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get manifestBytes => $composableBuilder(
+    column: $table.manifestBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originsJson => $composableBuilder(
+    column: $table.originsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredSourceUrl => $composableBuilder(
+    column: $table.preferredSourceUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get installedAt => $composableBuilder(
+    column: $table.installedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StickerInstallsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StickerInstallsTable> {
+  $$StickerInstallsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get packSha256 => $composableBuilder(
+    column: $table.packSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get manifestBytes => $composableBuilder(
+    column: $table.manifestBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originsJson => $composableBuilder(
+    column: $table.originsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferredSourceUrl => $composableBuilder(
+    column: $table.preferredSourceUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get installedAt => $composableBuilder(
+    column: $table.installedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StickerInstallsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StickerInstallsTable> {
+  $$StickerInstallsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get packSha256 => $composableBuilder(
+    column: $table.packSha256,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get manifestBytes => $composableBuilder(
+    column: $table.manifestBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originsJson => $composableBuilder(
+    column: $table.originsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredSourceUrl => $composableBuilder(
+    column: $table.preferredSourceUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bytes =>
+      $composableBuilder(column: $table.bytes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get installedAt => $composableBuilder(
+    column: $table.installedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+}
+
+class $$StickerInstallsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StickerInstallsTable,
+          StickerInstall,
+          $$StickerInstallsTableFilterComposer,
+          $$StickerInstallsTableOrderingComposer,
+          $$StickerInstallsTableAnnotationComposer,
+          $$StickerInstallsTableCreateCompanionBuilder,
+          $$StickerInstallsTableUpdateCompanionBuilder,
+          (
+            StickerInstall,
+            BaseReferences<
+              _$AppDatabase,
+              $StickerInstallsTable,
+              StickerInstall
+            >,
+          ),
+          StickerInstall,
+          PrefetchHooks Function()
+        > {
+  $$StickerInstallsTableTableManager(
+    _$AppDatabase db,
+    $StickerInstallsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StickerInstallsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StickerInstallsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StickerInstallsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> packSha256 = const Value.absent(),
+                Value<Uint8List> manifestBytes = const Value.absent(),
+                Value<String> originsJson = const Value.absent(),
+                Value<String> preferredSourceUrl = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<DateTime> installedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StickerInstallsCompanion(
+                packSha256: packSha256,
+                manifestBytes: manifestBytes,
+                originsJson: originsJson,
+                preferredSourceUrl: preferredSourceUrl,
+                bytes: bytes,
+                installedAt: installedAt,
+                status: status,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String packSha256,
+                required Uint8List manifestBytes,
+                required String originsJson,
+                required String preferredSourceUrl,
+                required int bytes,
+                required DateTime installedAt,
+                Value<String> status = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StickerInstallsCompanion.insert(
+                packSha256: packSha256,
+                manifestBytes: manifestBytes,
+                originsJson: originsJson,
+                preferredSourceUrl: preferredSourceUrl,
+                bytes: bytes,
+                installedAt: installedAt,
+                status: status,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$StickerInstallsTable, StickerInstall>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $StickerInstallsTable,
+                    StickerInstall
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StickerInstallsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StickerInstallsTable,
+      StickerInstall,
+      $$StickerInstallsTableFilterComposer,
+      $$StickerInstallsTableOrderingComposer,
+      $$StickerInstallsTableAnnotationComposer,
+      $$StickerInstallsTableCreateCompanionBuilder,
+      $$StickerInstallsTableUpdateCompanionBuilder,
+      (
+        StickerInstall,
+        BaseReferences<_$AppDatabase, $StickerInstallsTable, StickerInstall>,
+      ),
+      StickerInstall,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11876,4 +12632,6 @@ class $AppDatabaseManager {
       $$StickerSourcesTableTableManager(_db, _db.stickerSources);
   $$StickerSourceBindingsTableTableManager get stickerSourceBindings =>
       $$StickerSourceBindingsTableTableManager(_db, _db.stickerSourceBindings);
+  $$StickerInstallsTableTableManager get stickerInstalls =>
+      $$StickerInstallsTableTableManager(_db, _db.stickerInstalls);
 }

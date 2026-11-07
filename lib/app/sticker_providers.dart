@@ -4,31 +4,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../data/database.dart';
-import '../data/sticker_store.dart';
-import '../data/stickers.dart';
+import '../data/stickers/pack_repository.dart';
+import '../data/stickers/source_client.dart';
+import '../data/stickers/sticker_http.dart';
 import '../data/stickers/source_repository.dart';
 import 'providers.dart';
 
-final stickerStoreProvider = Provider<StickerStore>((ref) {
-  final store = StickerStore(
-    directory: () async {
-      final support = await getApplicationSupportDirectory();
-      return Directory('${support.path}/stickers-v1');
-    },
+final stickerHttpProvider = Provider<StickerHttp>((ref) => NativeStickerHttp());
+
+final stickerSourceClientProvider = Provider<StickerSourceClient>((ref) {
+  return StickerSourceClient(
+    ref.watch(stickerSourceRepositoryProvider),
+    ref.watch(stickerHttpProvider),
+    currentMirror: () => ref.read(mirrorApiProvider)?.baseUrl,
   );
-  ref.onDispose(store.dispose);
-  return store;
 });
 
-final installedStickersProvider = StreamProvider<List<StickerPack>>(
-  (ref) => ref.watch(stickerStoreProvider).watchInstalled(),
+final stickerPackRepositoryProvider = Provider<StickerPackRepository>((ref) {
+  final repository = StickerPackRepository(
+    client: ref.watch(stickerSourceClientProvider),
+    directory: () async {
+      final support = await getApplicationSupportDirectory();
+      // The one-device prototype is not migrated into the public format.
+      final prototype = Directory('${support.path}/stickers-v1');
+      if (await FileSystemEntity.type(prototype.path, followLinks: false) ==
+          FileSystemEntityType.directory) {
+        await prototype.delete(recursive: true);
+      }
+      return Directory('${support.path}/stickers-v2');
+    },
+  );
+  ref.onDispose(repository.dispose);
+  return repository;
+});
+
+final installedStickersProvider = StreamProvider<List<InstalledStickerPack>>(
+  (ref) => ref.watch(stickerPackRepositoryProvider).watchInstalled(),
 );
 
-final stickerCatalogUrlProvider = StreamProvider<String>(
+final stickerInstallProgressProvider = StreamProvider<StickerInstallProgress>(
+  (ref) => ref.watch(stickerPackRepositoryProvider).progress,
+);
+
+final stickerQuotaProvider = StreamProvider<int>(
   (ref) => ref
       .watch(appDatabaseProvider)
-      .watchSetting(AppSettingKeys.stickerCatalogUrl)
-      .map((url) => url ?? const String.fromEnvironment('STICKER_CATALOG_URL')),
+      .watchSetting(AppSettingKeys.stickerQuotaBytes)
+      .map(
+        (v) => int.tryParse(v ?? '') ?? StickerPackRepository.defaultQuotaBytes,
+      ),
 );
 
 /// Global registry; never depends on databaseProvider (the current node).

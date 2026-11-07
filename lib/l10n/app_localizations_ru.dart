@@ -5086,22 +5086,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stickerLabel => 'Стикер';
 
   @override
-  String get stickerServer => 'Сервер стикеров';
-
-  @override
-  String get stickerCatalogAddress => 'Адрес каталога';
-
-  @override
-  String get stickerInvalidUrl => 'Введите полный HTTPS-адрес';
+  String get stickerInvalidUrl =>
+      'Введите HTTPS-адрес source.json с доменом латиницей';
 
   @override
   String get stickerSave => 'Сохранить';
 
   @override
   String get stickerMyPacks => 'Мои паки';
-
-  @override
-  String get stickerCatalog => 'Каталог';
 
   @override
   String get stickerRefresh => 'Обновить';
@@ -5118,10 +5110,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get stickerNoInstalled =>
       'Установленных паков пока нет. Добавьте их из каталога — после загрузки они работают без интернета.';
-
-  @override
-  String get stickerConfigureHint =>
-      'Укажите адрес каталога стикеров. Он может находиться на сайте приложения или на сервере зеркала.';
 
   @override
   String get stickerCatalogEmpty => 'В каталоге нет доступных паков';
@@ -5143,6 +5131,91 @@ class AppLocalizationsRu extends AppLocalizations {
   String get unsupportedMessage => 'Неподдерживаемое сообщение';
 
   @override
-  String get stickerPreviewHint =>
-      'Нажмите на стикер для просмотра. Отправка пока недоступна.';
+  String get stickerSources => 'Источники';
+
+  @override
+  String get stickerCatalogs => 'Каталоги';
+
+  @override
+  String get stickerAddSource => 'Добавить источник';
+
+  @override
+  String get stickerSourceAddress => 'Адрес источника';
+
+  @override
+  String get stickerSourceHint =>
+      'Добавьте источник или включите зеркало, которое объявляет стикеры. Обновление запускается вручную.';
+
+  @override
+  String get stickerSourceEnabled => 'Разрешён вручную';
+
+  @override
+  String get stickerSourceBlocked => 'Заблокирован';
+
+  @override
+  String get stickerMirrorSource => 'Объявлен текущим зеркалом';
+
+  @override
+  String get stickerFormerSource => 'Ранее объявлен зеркалом';
+
+  @override
+  String get stickerCachedSource => 'Сохранённое объявление зеркала';
+
+  @override
+  String get stickerDeleteSource => 'Удалить источник';
+
+  @override
+  String get stickerDeleteSourceHint =>
+      'Установленные паки и история сохранятся.';
+
+  @override
+  String get stickerOperationFailed =>
+      'Не удалось завершить операцию. Проверьте источник и соединение, затем повторите.';
+
+  @override
+  String get stickerInvalidData => 'Данные источника не прошли проверку.';
+
+  @override
+  String get stickerWithdrawn => 'Эта ревизия недоступна для установки.';
+
+  @override
+  String get stickerDetails => 'Сведения о паке';
+
+  @override
+  String get stickerQuota => 'Место для стикеров, МБ';
+
+  @override
+  String get stickerQuotaExceeded =>
+      'Недостаточно места для стикеров. Удалите пак или увеличьте лимит.';
+
+  @override
+  String get stickerNoSources => 'Источников пока нет';
+
+  @override
+  String get stickerUnchecked => 'Ещё не проверен';
+
+  @override
+  String get stickerReady => 'Доступен';
+
+  @override
+  String get stickerOffline => 'Нет соединения';
+
+  @override
+  String get stickerIncompatible => 'Несовместимая версия';
+
+  @override
+  String get stickerInvalid => 'Ошибка проверки данных';
+
+  @override
+  String get stickerRefreshFirst => 'Обновите источник, чтобы увидеть каталог.';
+
+  @override
+  String get stickerRevision => 'Ревизия';
+
+  @override
+  String get stickerSourceDisabled => 'Источник отключён или заблокирован';
+
+  @override
+  String get stickerRemoveConfirm =>
+      'Удалить скачанные файлы пака? Сообщения останутся в истории.';
 }

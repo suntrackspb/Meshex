@@ -87,6 +87,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   onTap: () => context.go('/settings/message-filter'),
                 ),
                 MeshTile(
+                  title: context.l10n.stickersTitle,
+                  leading: const Icon(Icons.sticky_note_2_outlined),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/stickers'),
+                ),
+                MeshTile(
                   title: context.l10n.mirror_66ace6,
                   leading: const Icon(Icons.public),
                   trailing: Text(

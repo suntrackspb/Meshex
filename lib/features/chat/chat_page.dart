@@ -11,7 +11,7 @@ import '../../ui/kit/kit.dart';
 import '../../ui/meshex_wordmark.dart';
 import '../notices/notice_banner.dart';
 import 'chat_feed.dart';
-import 'sticker_picker.dart';
+import 'message_preview.dart';
 import '../../app/link_badge.dart';
 
 /// Каналы и личные диалоги. Каналы — по имени: так эфир склеивается с зеркалом.

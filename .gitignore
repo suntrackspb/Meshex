@@ -29,6 +29,5 @@ dart_defines.json
 # Python
 __pycache__/
 
-# Local sticker media; keep pack manifests in Git.
-/assets/stickers/**/*.webp
-/assets/stickers/**/*.png
+# Sticker media is downloaded at runtime, never bundled.
+/assets/stickers/

@@ -4,7 +4,7 @@
   "CARTO_KEY": "",
   "REPORT_URL": "",
   "REPORT_KEY": "",
-  "RELEASES_REPO": "suntrackspb/Etohost-Mesh-Client",
+  "RELEASES_REPO": "suntrackspb/meshex",
   "OFFLINE_MAP_URL": "https://meshex.ru/maps/spb-20261029.pmtiles",
   "TILE_PROXY_URL": ""
 }

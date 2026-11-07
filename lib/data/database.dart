@@ -97,6 +97,9 @@ abstract final class AppSettingKeys {
   /// по умолчанию — да).
   static const showImages = 'chat.showImages';
 
+  /// HTTPS URL of the optional sticker catalog; no default server.
+  static const stickerCatalogUrl = 'stickers.catalogUrl';
+
   /// Свои загруженные картинки: JSON-список (id, url, токен удаления, срок).
   static const imageUploads = 'images.uploads';
 

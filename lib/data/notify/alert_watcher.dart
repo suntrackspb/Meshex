@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../../core/proto/mesh.dart';
 import '../database.dart';
-import '../stickers.dart';
+import '../message_content.dart';
 import 'message_alerts.dart';
 
 /// Готовое уведомление: [chat] — id чата для перехода по нажатию.
@@ -29,12 +29,12 @@ class AlertWatcher {
     this.isFiltered,
     this.replyTitle,
     this.reactionBody,
-    this.stickerLabel,
+    this.unsupportedLabel,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
   final AppDatabase db;
-  final String Function()? stickerLabel;
+  final String Function()? unsupportedLabel;
   final String Function(String)? replyTitle;
   final String Function(String, String)? reactionBody;
 
@@ -150,17 +150,17 @@ class AlertWatcher {
       m,
       replyTitle: replyTitle,
       reactionBody: reactionBody,
-      stickerLabel: stickerLabel?.call() ?? 'Стикер',
+      unsupportedLabel:
+          unsupportedLabel?.call() ?? 'Неподдерживаемое сообщение',
       sender: name,
       channel: direct
           ? ''
           : (channel?.name.isNotEmpty == true ? channel!.name : m.channelKey),
       target: target == null
           ? ''
-          : StickerProtocol.preview(
-              target.body,
-              target.portnum,
-              stickerLabel?.call() ?? 'Стикер',
+          : messageTextPreview(
+              target,
+              unsupportedLabel?.call() ?? 'Неподдерживаемое сообщение',
             ),
     );
     return (id: m.id, kind: kind, title: c.title, body: c.body, chat: chat);

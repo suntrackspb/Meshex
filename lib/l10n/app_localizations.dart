@@ -8928,29 +8928,119 @@ abstract class AppLocalizations {
   /// **'Стикер'**
   String get stickerLabel;
 
-  /// No description provided for @stickerPackMissing.
+  /// No description provided for @stickerServer.
   ///
   /// In ru, this message translates to:
-  /// **'Этот стикер недоступен в установленных паках'**
-  String get stickerPackMissing;
+  /// **'Сервер стикеров'**
+  String get stickerServer;
 
-  /// No description provided for @stickerSendHint.
+  /// No description provided for @stickerCatalogAddress.
   ///
   /// In ru, this message translates to:
-  /// **'Нажмите на стикер, чтобы отправить'**
-  String get stickerSendHint;
+  /// **'Адрес каталога'**
+  String get stickerCatalogAddress;
 
-  /// No description provided for @stickerAnimated.
+  /// No description provided for @stickerInvalidUrl.
   ///
   /// In ru, this message translates to:
-  /// **'Анимация'**
-  String get stickerAnimated;
+  /// **'Введите полный HTTPS-адрес'**
+  String get stickerInvalidUrl;
 
-  /// No description provided for @stickerStatic.
+  /// No description provided for @stickerSave.
   ///
   /// In ru, this message translates to:
-  /// **'Статичные'**
-  String get stickerStatic;
+  /// **'Сохранить'**
+  String get stickerSave;
+
+  /// No description provided for @stickerMyPacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мои паки'**
+  String get stickerMyPacks;
+
+  /// No description provided for @stickerCatalog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каталог'**
+  String get stickerCatalog;
+
+  /// No description provided for @stickerRefresh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить'**
+  String get stickerRefresh;
+
+  /// No description provided for @stickerDownload.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скачать пак'**
+  String get stickerDownload;
+
+  /// No description provided for @stickerInstalled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пак установлен'**
+  String get stickerInstalled;
+
+  /// No description provided for @stickerRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить пак с устройства'**
+  String get stickerRemove;
+
+  /// No description provided for @stickerNoInstalled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установленных паков пока нет. Добавьте их из каталога — после загрузки они работают без интернета.'**
+  String get stickerNoInstalled;
+
+  /// No description provided for @stickerConfigureHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите адрес каталога стикеров. Он может находиться на сайте приложения или на сервере зеркала.'**
+  String get stickerConfigureHint;
+
+  /// No description provided for @stickerCatalogEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В каталоге нет доступных паков'**
+  String get stickerCatalogEmpty;
+
+  /// No description provided for @stickerLicenseUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лицензия не указана'**
+  String get stickerLicenseUnknown;
+
+  /// No description provided for @stickerDownloadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось скачать пак. Проверьте соединение и попробуйте ещё раз.'**
+  String get stickerDownloadFailed;
+
+  /// No description provided for @stickerLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить стикеры'**
+  String get stickerLoadFailed;
+
+  /// No description provided for @stickerRemoveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить пак'**
+  String get stickerRemoveFailed;
+
+  /// No description provided for @unsupportedMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неподдерживаемое сообщение'**
+  String get unsupportedMessage;
+
+  /// No description provided for @stickerPreviewHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите на стикер для просмотра. Отправка пока недоступна.'**
+  String get stickerPreviewHint;
 }
 
 class _AppLocalizationsDelegate

@@ -80,7 +80,7 @@ final messageAlertsProvider = Provider<AlertWatcher>((ref) {
 
   final watcher = AlertWatcher(
     db,
-    stickerLabel: () => ref.read(appStringsProvider).stickerLabel,
+    unsupportedLabel: () => ref.read(appStringsProvider).unsupportedMessage,
     replyTitle: (where) =>
         ref.read(appStringsProvider).notificationReplyTitle(where),
     reactionBody: (reaction, target) =>

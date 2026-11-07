@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/proto/mesh.dart';
 import '../../data/database.dart';
-import 'sticker_picker.dart';
+import 'message_preview.dart';
 
 /// Поиск по ленте чата. Возвращает выбранное сообщение.
 class ChatSearchDelegate extends SearchDelegate<Message?> {

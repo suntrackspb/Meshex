@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 /// Репозиторий с релизами приложения.
 const releasesRepo = String.fromEnvironment(
   'RELEASES_REPO',
-  defaultValue: 'suntrackspb/Etohost-Mesh-Client',
+  defaultValue: 'suntrackspb/meshex',
 );
 
 /// Страница загрузок на официальном сайте (файлы выкладывает CI).

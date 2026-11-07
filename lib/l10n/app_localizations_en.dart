@@ -5084,15 +5084,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stickerLabel => 'Sticker';
 
   @override
-  String get stickerPackMissing =>
-      'This sticker is not available in the installed packs';
+  String get stickerServer => 'Sticker server';
 
   @override
-  String get stickerSendHint => 'Tap a sticker to send it';
+  String get stickerCatalogAddress => 'Catalog address';
 
   @override
-  String get stickerAnimated => 'Animated';
+  String get stickerInvalidUrl => 'Enter a full HTTPS URL';
 
   @override
-  String get stickerStatic => 'Static';
+  String get stickerSave => 'Save';
+
+  @override
+  String get stickerMyPacks => 'My packs';
+
+  @override
+  String get stickerCatalog => 'Catalog';
+
+  @override
+  String get stickerRefresh => 'Refresh';
+
+  @override
+  String get stickerDownload => 'Download pack';
+
+  @override
+  String get stickerInstalled => 'Pack installed';
+
+  @override
+  String get stickerRemove => 'Remove pack from device';
+
+  @override
+  String get stickerNoInstalled =>
+      'No packs installed yet. Add them from the catalog to use them offline.';
+
+  @override
+  String get stickerConfigureHint =>
+      'Enter a sticker catalog address. It can be hosted on the app website or a mirror server.';
+
+  @override
+  String get stickerCatalogEmpty => 'No packs available in this catalog';
+
+  @override
+  String get stickerLicenseUnknown => 'License not specified';
+
+  @override
+  String get stickerDownloadFailed =>
+      'Could not download the pack. Check your connection and try again.';
+
+  @override
+  String get stickerLoadFailed => 'Could not load stickers';
+
+  @override
+  String get stickerRemoveFailed => 'Could not remove the pack';
+
+  @override
+  String get unsupportedMessage => 'Unsupported message';
+
+  @override
+  String get stickerPreviewHint =>
+      'Tap a sticker to preview it. Sending is not available yet.';
 }

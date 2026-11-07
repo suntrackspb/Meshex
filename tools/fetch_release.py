@@ -16,7 +16,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-REPO = os.environ.get("RELEASES_REPO", "suntrackspb/Etohost-Mesh-Client")
+REPO = os.environ.get("RELEASES_REPO", "suntrackspb/meshex")
 ROOT = Path(os.environ.get("RELEASES_ROOT", "/var/www/meshex.ru/downloads"))
 KEEP = 3
 TAG_RE = re.compile(r"^v(\d+\.\d+\.\d+)$")

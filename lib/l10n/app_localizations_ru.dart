@@ -5086,15 +5086,63 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stickerLabel => 'Стикер';
 
   @override
-  String get stickerPackMissing =>
-      'Этот стикер недоступен в установленных паках';
+  String get stickerServer => 'Сервер стикеров';
 
   @override
-  String get stickerSendHint => 'Нажмите на стикер, чтобы отправить';
+  String get stickerCatalogAddress => 'Адрес каталога';
 
   @override
-  String get stickerAnimated => 'Анимация';
+  String get stickerInvalidUrl => 'Введите полный HTTPS-адрес';
 
   @override
-  String get stickerStatic => 'Статичные';
+  String get stickerSave => 'Сохранить';
+
+  @override
+  String get stickerMyPacks => 'Мои паки';
+
+  @override
+  String get stickerCatalog => 'Каталог';
+
+  @override
+  String get stickerRefresh => 'Обновить';
+
+  @override
+  String get stickerDownload => 'Скачать пак';
+
+  @override
+  String get stickerInstalled => 'Пак установлен';
+
+  @override
+  String get stickerRemove => 'Удалить пак с устройства';
+
+  @override
+  String get stickerNoInstalled =>
+      'Установленных паков пока нет. Добавьте их из каталога — после загрузки они работают без интернета.';
+
+  @override
+  String get stickerConfigureHint =>
+      'Укажите адрес каталога стикеров. Он может находиться на сайте приложения или на сервере зеркала.';
+
+  @override
+  String get stickerCatalogEmpty => 'В каталоге нет доступных паков';
+
+  @override
+  String get stickerLicenseUnknown => 'Лицензия не указана';
+
+  @override
+  String get stickerDownloadFailed =>
+      'Не удалось скачать пак. Проверьте соединение и попробуйте ещё раз.';
+
+  @override
+  String get stickerLoadFailed => 'Не удалось загрузить стикеры';
+
+  @override
+  String get stickerRemoveFailed => 'Не удалось удалить пак';
+
+  @override
+  String get unsupportedMessage => 'Неподдерживаемое сообщение';
+
+  @override
+  String get stickerPreviewHint =>
+      'Нажмите на стикер для просмотра. Отправка пока недоступна.';
 }

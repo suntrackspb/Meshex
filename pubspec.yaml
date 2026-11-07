@@ -75,8 +75,6 @@ flutter:
     - assets/tray/
     - assets/icon/window.png
     - assets/hw/
-    - assets/stickers/biscuit_vk/
-    - assets/stickers/MemeS1ick3r/
 
 # Иконки приложения: CI запускает `dart run flutter_launcher_icons` после
 # flutter create. Исходники — assets/icon/src/*.svg; PNG делает

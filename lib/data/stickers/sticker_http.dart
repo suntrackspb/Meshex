@@ -137,8 +137,15 @@ class NativeStickerHttp implements StickerHttp {
       }
       cancel.check();
       // Connect to the checked IP, not the hostname: no second DNS lookup.
-      // HttpClient still performs TLS using the original URI hostname.
+      // A custom connectionFactory must also establish TLS explicitly.
       ConnectionTask<Socket>? active;
+      Socket? connected;
+      void closeConnection() {
+        active?.cancel();
+        connected?.destroy();
+      }
+
+      unawaited(cancel._cancelled.future.then((_) => closeConnection()));
       Future<Socket> connect() async {
         for (var i = 0; i < addresses.length; i++) {
           cancel.check();
@@ -152,6 +159,7 @@ class NativeStickerHttp implements StickerHttp {
                 throw const SocketException('Sticker connection timed out');
               },
             );
+            connected = socket;
             if (cancel.isCancelled) {
               socket.destroy();
               throw const StickerCancelled();
@@ -161,15 +169,36 @@ class NativeStickerHttp implements StickerHttp {
               socket.destroy();
               throw StateError('Sticker connection address mismatch');
             }
-            return socket;
+            // Preserve SNI and certificate hostname verification without
+            // resolving the hostname again or bypassing certificate checks.
+            final secure = await SecureSocket.secure(socket, host: uri.host)
+                .timeout(
+                  const Duration(seconds: 20),
+                  onTimeout: () {
+                    socket.destroy();
+                    throw const SocketException(
+                      'Sticker TLS handshake timed out',
+                    );
+                  },
+                );
+            connected = secure;
+            if (cancel.isCancelled) {
+              secure.destroy();
+              throw const StickerCancelled();
+            }
+            return secure;
           } on SocketException {
+            connected?.destroy();
             if (i == addresses.length - 1) rethrow;
+          } catch (_) {
+            connected?.destroy();
+            rethrow;
           }
         }
         throw const SocketException('No sticker connection available');
       }
 
-      return ConnectionTask.fromSocket(connect(), () => active?.cancel());
+      return ConnectionTask.fromSocket(connect(), closeConnection);
     };
     Future<StickerHttpResponse> read() async {
       final request = await client.getUrl(url);

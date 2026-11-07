@@ -277,6 +277,12 @@ class Messages extends Table {
 
   /// Порт сообщения: 1 — текст, 256 — приватный протокол стикеров Meshex.
   IntColumn get portnum => integer().withDefault(const Constant(1))();
+
+  /// Exact v2 bytes; never UTF-8 decoded or reconstructed from body.
+  BlobColumn get rawPayload => blob().nullable()();
+
+  /// Canonical validated envelope JSON; body remains a display fallback.
+  TextColumn get stickerContent => text().nullable()();
   DateTimeColumn get rxTime => dateTime()();
   BoolColumn get isOutgoing => boolean().withDefault(const Constant(false))();
   IntColumn get replyId => integer().nullable()();
@@ -463,7 +469,7 @@ class AppDatabase extends _$AppDatabase {
   final AppDatabase? settings;
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   // До первого релиза схема пересоздаётся целиком (данные — кэш с ноды).
   // После релиза — нормальные пошаговые миграции.
@@ -534,6 +540,10 @@ class AppDatabase extends _$AppDatabase {
       }
     },
     14: (m) => _addColumn(m, nodes, nodes.macaddr),
+    17: (m) async {
+      await _addColumn(m, messages, messages.rawPayload);
+      await _addColumn(m, messages, messages.stickerContent);
+    },
     16: (m) => _addColumn(m, messages, messages.portnum),
     15: (m) async {
       await _addColumn(m, nodes, nodes.precisionBits);

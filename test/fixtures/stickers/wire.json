@@ -1,0 +1,8 @@
+{
+  "contract": "STK-DRAFT-2",
+  "source_url": "https://s.example/stickers/source.json",
+  "pack_sha256": "d2431a467ff3f617bf814ee3b2fddb976eba91ecbfe9a08650e84bd2cb5817d3",
+  "sticker_id": "blue",
+  "payload_hex": "45544f02012668747470733a2f2f732e6578616d706c652f737469636b6572732f736f757263652e6a736f6ed2431a467ff3f617bf814ee3b2fddb976eba91ecbfe9a08650e84bd2cb5817d304626c7565",
+  "payload_bytes": 81
+}

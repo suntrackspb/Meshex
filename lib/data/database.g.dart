@@ -2448,6 +2448,28 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _rawPayloadMeta = const VerificationMeta(
+    'rawPayload',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> rawPayload = GeneratedColumn<Uint8List>(
+    'raw_payload',
+    aliasedName,
+    true,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stickerContentMeta = const VerificationMeta(
+    'stickerContent',
+  );
+  @override
+  late final GeneratedColumn<String> stickerContent = GeneratedColumn<String>(
+    'sticker_content',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _rxTimeMeta = const VerificationMeta('rxTime');
   @override
   late final GeneratedColumn<DateTime> rxTime = GeneratedColumn<DateTime>(
@@ -2687,6 +2709,8 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     channelKey,
     body,
     portnum,
+    rawPayload,
+    stickerContent,
     rxTime,
     isOutgoing,
     replyId,
@@ -2770,6 +2794,21 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
       context.handle(
         _portnumMeta,
         portnum.isAcceptableOrUnknown(data['portnum']!, _portnumMeta),
+      );
+    }
+    if (data.containsKey('raw_payload')) {
+      context.handle(
+        _rawPayloadMeta,
+        rawPayload.isAcceptableOrUnknown(data['raw_payload']!, _rawPayloadMeta),
+      );
+    }
+    if (data.containsKey('sticker_content')) {
+      context.handle(
+        _stickerContentMeta,
+        stickerContent.isAcceptableOrUnknown(
+          data['sticker_content']!,
+          _stickerContentMeta,
+        ),
       );
     }
     if (data.containsKey('rx_time')) {
@@ -2939,6 +2978,14 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
         DriftSqlType.int,
         data['${effectivePrefix}portnum'],
       )!,
+      rawPayload: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}raw_payload'],
+      ),
+      stickerContent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sticker_content'],
+      ),
       rxTime: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}rx_time'],
@@ -3046,6 +3093,12 @@ class Message extends DataClass implements Insertable<Message> {
 
   /// Порт сообщения: 1 — текст, 256 — приватный протокол стикеров Meshex.
   final int portnum;
+
+  /// Exact v2 bytes; never UTF-8 decoded or reconstructed from body.
+  final Uint8List? rawPayload;
+
+  /// Canonical validated envelope JSON; body remains a display fallback.
+  final String? stickerContent;
   final DateTime rxTime;
   final bool isOutgoing;
   final int? replyId;
@@ -3084,6 +3137,8 @@ class Message extends DataClass implements Insertable<Message> {
     required this.channelKey,
     required this.body,
     required this.portnum,
+    this.rawPayload,
+    this.stickerContent,
     required this.rxTime,
     required this.isOutgoing,
     this.replyId,
@@ -3117,6 +3172,12 @@ class Message extends DataClass implements Insertable<Message> {
     map['channel_key'] = Variable<String>(channelKey);
     map['body'] = Variable<String>(body);
     map['portnum'] = Variable<int>(portnum);
+    if (!nullToAbsent || rawPayload != null) {
+      map['raw_payload'] = Variable<Uint8List>(rawPayload);
+    }
+    if (!nullToAbsent || stickerContent != null) {
+      map['sticker_content'] = Variable<String>(stickerContent);
+    }
     map['rx_time'] = Variable<DateTime>(rxTime);
     map['is_outgoing'] = Variable<bool>(isOutgoing);
     if (!nullToAbsent || replyId != null) {
@@ -3171,6 +3232,12 @@ class Message extends DataClass implements Insertable<Message> {
       channelKey: Value(channelKey),
       body: Value(body),
       portnum: Value(portnum),
+      rawPayload: rawPayload == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rawPayload),
+      stickerContent: stickerContent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stickerContent),
       rxTime: Value(rxTime),
       isOutgoing: Value(isOutgoing),
       replyId: replyId == null && nullToAbsent
@@ -3223,6 +3290,8 @@ class Message extends DataClass implements Insertable<Message> {
       channelKey: serializer.fromJson<String>(json['channelKey']),
       body: serializer.fromJson<String>(json['body']),
       portnum: serializer.fromJson<int>(json['portnum']),
+      rawPayload: serializer.fromJson<Uint8List?>(json['rawPayload']),
+      stickerContent: serializer.fromJson<String?>(json['stickerContent']),
       rxTime: serializer.fromJson<DateTime>(json['rxTime']),
       isOutgoing: serializer.fromJson<bool>(json['isOutgoing']),
       replyId: serializer.fromJson<int?>(json['replyId']),
@@ -3258,6 +3327,8 @@ class Message extends DataClass implements Insertable<Message> {
       'channelKey': serializer.toJson<String>(channelKey),
       'body': serializer.toJson<String>(body),
       'portnum': serializer.toJson<int>(portnum),
+      'rawPayload': serializer.toJson<Uint8List?>(rawPayload),
+      'stickerContent': serializer.toJson<String?>(stickerContent),
       'rxTime': serializer.toJson<DateTime>(rxTime),
       'isOutgoing': serializer.toJson<bool>(isOutgoing),
       'replyId': serializer.toJson<int?>(replyId),
@@ -3291,6 +3362,8 @@ class Message extends DataClass implements Insertable<Message> {
     String? channelKey,
     String? body,
     int? portnum,
+    Value<Uint8List?> rawPayload = const Value.absent(),
+    Value<String?> stickerContent = const Value.absent(),
     DateTime? rxTime,
     bool? isOutgoing,
     Value<int?> replyId = const Value.absent(),
@@ -3319,6 +3392,10 @@ class Message extends DataClass implements Insertable<Message> {
     channelKey: channelKey ?? this.channelKey,
     body: body ?? this.body,
     portnum: portnum ?? this.portnum,
+    rawPayload: rawPayload.present ? rawPayload.value : this.rawPayload,
+    stickerContent: stickerContent.present
+        ? stickerContent.value
+        : this.stickerContent,
     rxTime: rxTime ?? this.rxTime,
     isOutgoing: isOutgoing ?? this.isOutgoing,
     replyId: replyId.present ? replyId.value : this.replyId,
@@ -3351,6 +3428,12 @@ class Message extends DataClass implements Insertable<Message> {
           : this.channelKey,
       body: data.body.present ? data.body.value : this.body,
       portnum: data.portnum.present ? data.portnum.value : this.portnum,
+      rawPayload: data.rawPayload.present
+          ? data.rawPayload.value
+          : this.rawPayload,
+      stickerContent: data.stickerContent.present
+          ? data.stickerContent.value
+          : this.stickerContent,
       rxTime: data.rxTime.present ? data.rxTime.value : this.rxTime,
       isOutgoing: data.isOutgoing.present
           ? data.isOutgoing.value
@@ -3396,6 +3479,8 @@ class Message extends DataClass implements Insertable<Message> {
           ..write('channelKey: $channelKey, ')
           ..write('body: $body, ')
           ..write('portnum: $portnum, ')
+          ..write('rawPayload: $rawPayload, ')
+          ..write('stickerContent: $stickerContent, ')
           ..write('rxTime: $rxTime, ')
           ..write('isOutgoing: $isOutgoing, ')
           ..write('replyId: $replyId, ')
@@ -3429,6 +3514,8 @@ class Message extends DataClass implements Insertable<Message> {
     channelKey,
     body,
     portnum,
+    $driftBlobEquality.hash(rawPayload),
+    stickerContent,
     rxTime,
     isOutgoing,
     replyId,
@@ -3461,6 +3548,8 @@ class Message extends DataClass implements Insertable<Message> {
           other.channelKey == this.channelKey &&
           other.body == this.body &&
           other.portnum == this.portnum &&
+          $driftBlobEquality.equals(other.rawPayload, this.rawPayload) &&
+          other.stickerContent == this.stickerContent &&
           other.rxTime == this.rxTime &&
           other.isOutgoing == this.isOutgoing &&
           other.replyId == this.replyId &&
@@ -3491,6 +3580,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   final Value<String> channelKey;
   final Value<String> body;
   final Value<int> portnum;
+  final Value<Uint8List?> rawPayload;
+  final Value<String?> stickerContent;
   final Value<DateTime> rxTime;
   final Value<bool> isOutgoing;
   final Value<int?> replyId;
@@ -3519,6 +3610,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.channelKey = const Value.absent(),
     this.body = const Value.absent(),
     this.portnum = const Value.absent(),
+    this.rawPayload = const Value.absent(),
+    this.stickerContent = const Value.absent(),
     this.rxTime = const Value.absent(),
     this.isOutgoing = const Value.absent(),
     this.replyId = const Value.absent(),
@@ -3548,6 +3641,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.channelKey = const Value.absent(),
     required String body,
     this.portnum = const Value.absent(),
+    this.rawPayload = const Value.absent(),
+    this.stickerContent = const Value.absent(),
     required DateTime rxTime,
     this.isOutgoing = const Value.absent(),
     this.replyId = const Value.absent(),
@@ -3581,6 +3676,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Expression<String>? channelKey,
     Expression<String>? body,
     Expression<int>? portnum,
+    Expression<Uint8List>? rawPayload,
+    Expression<String>? stickerContent,
     Expression<DateTime>? rxTime,
     Expression<bool>? isOutgoing,
     Expression<int>? replyId,
@@ -3610,6 +3707,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       if (channelKey != null) 'channel_key': channelKey,
       if (body != null) 'body': body,
       if (portnum != null) 'portnum': portnum,
+      if (rawPayload != null) 'raw_payload': rawPayload,
+      if (stickerContent != null) 'sticker_content': stickerContent,
       if (rxTime != null) 'rx_time': rxTime,
       if (isOutgoing != null) 'is_outgoing': isOutgoing,
       if (replyId != null) 'reply_id': replyId,
@@ -3641,6 +3740,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Value<String>? channelKey,
     Value<String>? body,
     Value<int>? portnum,
+    Value<Uint8List?>? rawPayload,
+    Value<String?>? stickerContent,
     Value<DateTime>? rxTime,
     Value<bool>? isOutgoing,
     Value<int?>? replyId,
@@ -3670,6 +3771,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       channelKey: channelKey ?? this.channelKey,
       body: body ?? this.body,
       portnum: portnum ?? this.portnum,
+      rawPayload: rawPayload ?? this.rawPayload,
+      stickerContent: stickerContent ?? this.stickerContent,
       rxTime: rxTime ?? this.rxTime,
       isOutgoing: isOutgoing ?? this.isOutgoing,
       replyId: replyId ?? this.replyId,
@@ -3718,6 +3821,12 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     }
     if (portnum.present) {
       map['portnum'] = Variable<int>(portnum.value);
+    }
+    if (rawPayload.present) {
+      map['raw_payload'] = Variable<Uint8List>(rawPayload.value);
+    }
+    if (stickerContent.present) {
+      map['sticker_content'] = Variable<String>(stickerContent.value);
     }
     if (rxTime.present) {
       map['rx_time'] = Variable<DateTime>(rxTime.value);
@@ -3792,6 +3901,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
           ..write('channelKey: $channelKey, ')
           ..write('body: $body, ')
           ..write('portnum: $portnum, ')
+          ..write('rawPayload: $rawPayload, ')
+          ..write('stickerContent: $stickerContent, ')
           ..write('rxTime: $rxTime, ')
           ..write('isOutgoing: $isOutgoing, ')
           ..write('replyId: $replyId, ')
@@ -7844,6 +7955,8 @@ typedef $$MessagesTableCreateCompanionBuilder =
       Value<String> channelKey,
       required String body,
       Value<int> portnum,
+      Value<Uint8List?> rawPayload,
+      Value<String?> stickerContent,
       required DateTime rxTime,
       Value<bool> isOutgoing,
       Value<int?> replyId,
@@ -7874,6 +7987,8 @@ typedef $$MessagesTableUpdateCompanionBuilder =
       Value<String> channelKey,
       Value<String> body,
       Value<int> portnum,
+      Value<Uint8List?> rawPayload,
+      Value<String?> stickerContent,
       Value<DateTime> rxTime,
       Value<bool> isOutgoing,
       Value<int?> replyId,
@@ -7941,6 +8056,16 @@ class $$MessagesTableFilterComposer
 
   ColumnFilters<int> get portnum => $composableBuilder(
     column: $table.portnum,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get rawPayload => $composableBuilder(
+    column: $table.rawPayload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stickerContent => $composableBuilder(
+    column: $table.stickerContent,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8090,6 +8215,16 @@ class $$MessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<Uint8List> get rawPayload => $composableBuilder(
+    column: $table.rawPayload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stickerContent => $composableBuilder(
+    column: $table.stickerContent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get rxTime => $composableBuilder(
     column: $table.rxTime,
     builder: (column) => ColumnOrderings(column),
@@ -8221,6 +8356,16 @@ class $$MessagesTableAnnotationComposer
   GeneratedColumn<int> get portnum =>
       $composableBuilder(column: $table.portnum, builder: (column) => column);
 
+  GeneratedColumn<Uint8List> get rawPayload => $composableBuilder(
+    column: $table.rawPayload,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get stickerContent => $composableBuilder(
+    column: $table.stickerContent,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get rxTime =>
       $composableBuilder(column: $table.rxTime, builder: (column) => column);
 
@@ -8327,6 +8472,8 @@ class $$MessagesTableTableManager
                 Value<String> channelKey = const Value.absent(),
                 Value<String> body = const Value.absent(),
                 Value<int> portnum = const Value.absent(),
+                Value<Uint8List?> rawPayload = const Value.absent(),
+                Value<String?> stickerContent = const Value.absent(),
                 Value<DateTime> rxTime = const Value.absent(),
                 Value<bool> isOutgoing = const Value.absent(),
                 Value<int?> replyId = const Value.absent(),
@@ -8355,6 +8502,8 @@ class $$MessagesTableTableManager
                 channelKey: channelKey,
                 body: body,
                 portnum: portnum,
+                rawPayload: rawPayload,
+                stickerContent: stickerContent,
                 rxTime: rxTime,
                 isOutgoing: isOutgoing,
                 replyId: replyId,
@@ -8385,6 +8534,8 @@ class $$MessagesTableTableManager
                 Value<String> channelKey = const Value.absent(),
                 required String body,
                 Value<int> portnum = const Value.absent(),
+                Value<Uint8List?> rawPayload = const Value.absent(),
+                Value<String?> stickerContent = const Value.absent(),
                 required DateTime rxTime,
                 Value<bool> isOutgoing = const Value.absent(),
                 Value<int?> replyId = const Value.absent(),
@@ -8413,6 +8564,8 @@ class $$MessagesTableTableManager
                 channelKey: channelKey,
                 body: body,
                 portnum: portnum,
+                rawPayload: rawPayload,
+                stickerContent: stickerContent,
                 rxTime: rxTime,
                 isOutgoing: isOutgoing,
                 replyId: replyId,

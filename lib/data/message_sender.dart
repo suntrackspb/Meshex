@@ -4,7 +4,9 @@ import 'package:drift/drift.dart';
 
 import '../core/proto/mesh.dart';
 import '../core/radio/send_queue.dart';
+import '../core/stickers/wire_codec.dart';
 import 'database.dart';
+import 'message_content.dart';
 
 /// Лимит текста в байтах UTF-8 — как в официальном iOS-клиенте.
 const maxMessageBytes = 200;
@@ -38,9 +40,14 @@ class MessageSender {
     this._myNum,
     this._nextId, {
     this.prepareDirect,
+    this.stickerPayloadBudget,
   });
 
   final Future<void> Function(int)? prepareDirect;
+
+  /// Transport-specific limit (PKI/signing/firmware), rechecked on retry.
+  /// Until measured for the connected transport, 200 is only a software cap.
+  final int Function(bool direct)? stickerPayloadBudget;
 
   final AppDatabase db;
   final Future<DeliveryResult> Function(MeshPacket p) _send;
@@ -72,6 +79,38 @@ class MessageSender {
     bool emoji = false,
   }) => _new(to: to, channel: 0, text: text, replyId: replyId, emoji: emoji);
 
+  Future<void> sendStickerToChannel({
+    required int channel,
+    required String channelKey,
+    required StickerEnvelope sticker,
+    int? replyId,
+    int payloadBudget = maxMessageBytes,
+  }) => _new(
+    to: broadcastNum,
+    channel: channel,
+    channelKey: channelKey,
+    text: '[Sticker]',
+    replyId: replyId,
+    emoji: false,
+    sticker: sticker,
+    payloadBudget: payloadBudget,
+  );
+
+  Future<void> sendStickerDirect({
+    required int to,
+    required StickerEnvelope sticker,
+    int? replyId,
+    int payloadBudget = maxMessageBytes,
+  }) => _new(
+    to: to,
+    channel: 0,
+    text: '[Sticker]',
+    replyId: replyId,
+    emoji: false,
+    sticker: sticker,
+    payloadBudget: payloadBudget,
+  );
+
   Future<void> _new({
     required int to,
     required int channel,
@@ -79,11 +118,25 @@ class MessageSender {
     required String text,
     int? replyId,
     required bool emoji,
+    StickerEnvelope? sticker,
+    int payloadBudget = maxMessageBytes,
   }) async {
     final me = _myNum();
     if (me == null) throw StateError('нет соединения с нодой');
-    if (messageBytes(text) > maxMessageBytes) {
+    final payload = sticker == null
+        ? Uint8List.fromList(utf8.encode(text))
+        : StickerWireCodec.encode(sticker, payloadBudget: payloadBudget);
+    final port = sticker == null
+        ? PortNum.TEXT_MESSAGE_APP
+        : PortNum.PRIVATE_APP;
+    if (payload.length > maxMessageBytes) {
       throw ArgumentError('длиннее $maxMessageBytes байт');
+    }
+    if (sticker != null &&
+        payload.length >
+            (stickerPayloadBudget?.call(to != broadcastNum) ??
+                maxMessageBytes)) {
+      throw const FormatException('Sticker exceeds transport payload budget');
     }
     final key = to == broadcastNum ? null : await _publicKey(to);
     if (_myNum() != me) throw StateError('соединение с нодой изменилось');
@@ -98,7 +151,11 @@ class MessageSender {
             channel: Value(channel),
             channelKey: Value(channelKey),
             body: text,
-            portnum: Value(PortNum.TEXT_MESSAGE_APP.value),
+            portnum: Value(port.value),
+            rawPayload: Value(sticker == null ? null : payload),
+            stickerContent: Value(
+              sticker == null ? null : jsonEncode(sticker.toJson()),
+            ),
             rxTime: DateTime.now(),
             isOutgoing: const Value(true),
             replyId: Value(replyId),
@@ -107,14 +164,33 @@ class MessageSender {
             ackState: const Value(AckState.pending),
           ),
         );
-    await _transmit(id, to, channel, key, text, replyId, emoji);
+    await _transmit(id, to, channel, key, payload, port, replyId, emoji);
   }
 
   /// Повторить неотправленное/неподтверждённое: новый id пакета, та же запись.
   Future<void> retry(Message m) async {
     if (!m.isOutgoing || m.channel == null) return;
-    if (m.portnum != PortNum.TEXT_MESSAGE_APP.value) {
-      throw StateError('тип сообщения не поддерживается');
+    final content = messageContent(m);
+    final Uint8List payload;
+    final PortNum port;
+    switch (content) {
+      case TextMessageContent(:final text):
+        payload = Uint8List.fromList(utf8.encode(text));
+        port = PortNum.TEXT_MESSAGE_APP;
+      case StickerMessageContent():
+        payload = m.rawPayload!;
+        port = PortNum.PRIVATE_APP;
+      case UnsupportedMessageContent():
+        throw StateError('тип сообщения не поддерживается');
+    }
+    if (payload.length > maxMessageBytes) {
+      throw ArgumentError('длиннее $maxMessageBytes байт');
+    }
+    if (port == PortNum.PRIVATE_APP &&
+        payload.length >
+            (stickerPayloadBudget?.call(m.toNum != broadcastNum) ??
+                maxMessageBytes)) {
+      throw const FormatException('Sticker exceeds transport payload budget');
     }
     // Ключ мог появиться (или смениться) с прошлой попытки.
     final key = m.toNum == broadcastNum ? null : await _publicKey(m.toNum);
@@ -134,9 +210,10 @@ class MessageSender {
       m.toNum,
       m.channel!,
       key,
-      m.body,
+      payload,
+      port,
       m.replyId,
-      m.emoji != 0,
+      port == PortNum.TEXT_MESSAGE_APP && m.emoji != 0,
     );
   }
 
@@ -161,7 +238,8 @@ class MessageSender {
     int to,
     int channel,
     Uint8List? publicKey,
-    String text,
+    Uint8List payload,
+    PortNum port,
     int? replyId,
     bool emoji,
   ) async {
@@ -174,8 +252,8 @@ class MessageSender {
         pkiEncrypted: publicKey != null,
         publicKey: publicKey,
         decoded: Data(
-          portnum: PortNum.TEXT_MESSAGE_APP,
-          payload: utf8.encode(text),
+          portnum: port,
+          payload: payload,
           replyId: replyId,
           emoji: emoji ? 1 : 0,
         ),

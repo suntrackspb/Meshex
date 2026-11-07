@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:drift/drift.dart';
 
 import '../core/proto/channel_names.dart';
 import '../core/proto/mesh.dart';
+import '../core/stickers/wire_codec.dart';
 import 'database.dart';
 import 'jammer_zones.dart';
 import 'node_key.dart';
@@ -188,7 +190,12 @@ class PacketRouter {
     final d = p.decoded;
     switch (d.portnum) {
       case PortNum.TEXT_MESSAGE_APP:
-        await _insertText(p, utf8.decode(d.payload, allowMalformed: true));
+        await _insertMessage(p, utf8.decode(d.payload, allowMalformed: true));
+      case PortNum.PRIVATE_APP:
+        final sticker = StickerWireCodec.decode(d.payload);
+        if (sticker != null) {
+          await _insertMessage(p, '[Sticker]', sticker: sticker);
+        }
       case PortNum.POSITION_APP:
         await _onPosition(p.from, Position.fromBuffer(d.payload), _rxTime(p));
       case PortNum.TELEMETRY_APP:
@@ -423,14 +430,34 @@ class PacketRouter {
         );
   }
 
-  Future<void> _insertText(MeshPacket p, String text) async {
+  Future<void> _insertMessage(
+    MeshPacket p,
+    String text, {
+    StickerEnvelope? sticker,
+  }) async {
     // Личные сообщения — по собеседнику, ключ канала им не нужен.
     final key = p.to == broadcastNum
         ? channelKey(await _channelName(p.channel))
         : '';
+    final existing =
+        await (db.select(
+              db.messages,
+            )..where((m) => m.packetId.equals(p.id) & m.fromNum.equals(p.from)))
+            .getSingleOrNull();
+    if (existing != null &&
+        (existing.portnum != p.decoded.portnum.value ||
+            existing.body != text ||
+            existing.stickerContent !=
+                (sticker == null ? null : jsonEncode(sticker.toJson())))) {
+      // Preserve the first content; merge radio metadata below. Do not log URLs
+      // or private message bodies in diagnostics.
+      developer.log(
+        'Conflicting content for packet ${p.id} from ${p.from}',
+        name: 'PacketRouter',
+      );
+    }
     final radio = MessagesCompanion(
       channel: Value(p.channel),
-      portnum: Value(p.decoded.portnum.value),
       rxSnr: Value(p.rxSnr == 0 ? null : p.rxSnr),
       rxRssi: Value(p.rxRssi == 0 ? null : p.rxRssi),
       hopStart: Value(p.hopStart == 0 ? null : p.hopStart),
@@ -450,9 +477,15 @@ class PacketRouter {
             channelKey: Value(key),
             body: text,
             portnum: Value(p.decoded.portnum.value),
+            rawPayload: Value(
+              sticker == null ? null : Uint8List.fromList(p.decoded.payload),
+            ),
+            stickerContent: Value(
+              sticker == null ? null : jsonEncode(sticker.toJson()),
+            ),
             rxTime: _time(_rxTime(p)),
             replyId: Value(p.decoded.replyId == 0 ? null : p.decoded.replyId),
-            emoji: Value(p.decoded.emoji),
+            emoji: Value(sticker == null ? p.decoded.emoji : 0),
             rxSnr: radio.rxSnr,
             rxRssi: radio.rxRssi,
             hopStart: radio.hopStart,

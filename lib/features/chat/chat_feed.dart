@@ -1792,7 +1792,11 @@ class _ComposerState extends ConsumerState<_Composer> {
   }
 
   Future<void> _openStickerPicker() async {
-    if (_progress != null || _pickingSticker) return;
+    if (_progress != null ||
+        _pickingSticker ||
+        !ref.read(canSendProvider)) {
+      return;
+    }
     _focus.unfocus();
     final chat = widget.chatId;
     setState(() => _pickingSticker = true);
@@ -1969,7 +1973,7 @@ class _ComposerState extends ConsumerState<_Composer> {
                   IconButton(
                     tooltip: context.l10n.stickersTitle,
                     icon: const Icon(Icons.sticky_note_2_outlined),
-                    onPressed: progress == null && !_pickingSticker
+                    onPressed: canSend && progress == null && !_pickingSticker
                         ? _openStickerPicker
                         : null,
                   ),

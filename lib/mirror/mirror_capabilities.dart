@@ -9,6 +9,7 @@ class MirrorCapabilities {
   const MirrorCapabilities({
     this.name,
     this.contact,
+    this.sseUrl,
     this.images,
     this.reports,
     this.stickers,
@@ -22,6 +23,20 @@ class MirrorCapabilities {
   /// Контакт оператора экземпляра — показываем рядом с жалобой.
   final String? contact;
 
+  /// Полный URL SSE-транспорта (`https://sse.domain.com/sse`).
+  final Uri? sseUrl;
+
+  /// Базовый адрес резервного домена SSE для обычных REST-запросов к зеркалу.
+  Uri? get sseBaseUrl {
+    final u = sseUrl;
+    if (u == null) return null;
+    return Uri(
+      scheme: u.scheme,
+      host: u.host,
+      port: u.hasPort ? u.port : null,
+    );
+  }
+
   final ImagesCapability? images;
   final ReportsCapability? reports;
   final StickersCapability? stickers;
@@ -29,6 +44,7 @@ class MirrorCapabilities {
   Map<String, Object?> toJson() => {
     'name': name,
     'operator': {'contact': contact},
+    if (sseUrl != null) 'sse_url': sseUrl.toString(),
     'images': images == null
         ? null
         : {
@@ -50,6 +66,27 @@ class MirrorCapabilities {
           },
   };
 
+  /// `sse.domain.com` или `https://sse.domain.com` → `https://sse.domain.com/sse`;
+  /// если путь указан явно (`https://sse.domain.com/custom/sse`), сохраняется.
+  static Uri? parseSseUrl(Object? v) {
+    if (v is! String) return null;
+    final s = v.trim();
+    if (s.isEmpty) return null;
+    final withScheme = s.contains('://') ? s : 'https://$s';
+    final u = Uri.tryParse(withScheme);
+    if (u == null || u.scheme.toLowerCase() != 'https' || u.host.isEmpty) {
+      return null;
+    }
+    final path = u.path.isEmpty || u.path == '/' ? '/sse' : u.path;
+    return Uri(
+      scheme: 'https',
+      host: u.host.toLowerCase(),
+      port: u.hasPort ? u.port : null,
+      path: path,
+      queryParameters: u.queryParameters.isEmpty ? null : u.queryParameters,
+    );
+  }
+
   static MirrorCapabilities parse(Object? j) {
     if (j is! Map) return none;
     String? str(Object? v) => v is String && v.trim().isNotEmpty ? v : null;
@@ -57,6 +94,7 @@ class MirrorCapabilities {
     return MirrorCapabilities(
       name: str(j['name']),
       contact: op is Map ? str(op['contact']) : null,
+      sseUrl: parseSseUrl(j['sse_url']),
       images: ImagesCapability.tryParse(j['images']),
       reports: ReportsCapability.tryParse(j['reports']),
       stickers: StickersCapability.tryParse(j['stickers']),

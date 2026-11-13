@@ -39,11 +39,26 @@ class MirrorApiException implements Exception {
 
 /// REST API зеркала. Перенос 1:1 из iOS (MirrorAPI.swift).
 class MirrorApi {
-  MirrorApi(this.baseUrl, {http.Client? client})
-    : _client = client ?? VersionedClient();
+  MirrorApi(
+    this.baseUrl, {
+    http.Client? client,
+    this.fallbackBaseUrl,
+    this.preferFallback = false,
+  }) : _client = client ?? VersionedClient();
 
   final Uri baseUrl;
+
+  /// Резервный домен из capabilities (`sse_url`), когда основной недоступен.
+  Uri? fallbackBaseUrl;
+
+  /// Использовать ли сразу [fallbackBaseUrl] (например, когда активен SSE).
+  bool preferFallback;
+
   final http.Client _client;
+
+  /// Активный базовый адрес для запросов к API.
+  Uri get activeBaseUrl =>
+      preferFallback && fallbackBaseUrl != null ? fallbackBaseUrl! : baseUrl;
 
   static const timeout = Duration(seconds: 20);
 
@@ -111,7 +126,28 @@ class MirrorApi {
   Future<int> probe() async => (await nodes()).length;
 
   Future<Object?> _get(String path, [Map<String, String>? query]) async {
-    final url = baseUrl.replace(
+    final fallback = fallbackBaseUrl;
+    final primary = preferFallback && fallback != null ? fallback : baseUrl;
+    final secondary = preferFallback && fallback != null ? baseUrl : fallback;
+    try {
+      return await _getFrom(primary, path, query);
+    } on MirrorApiException catch (e) {
+      // Переключаемся на резервный домен только при обрыве/таймауте,
+      // а не когда сервер ответил HTTP-ошибкой (404, 426, 503).
+      if (e.status == null && secondary != null && secondary != primary) {
+        preferFallback = secondary == fallback;
+        return _getFrom(secondary, path, query);
+      }
+      rethrow;
+    }
+  }
+
+  Future<Object?> _getFrom(
+    Uri base,
+    String path, [
+    Map<String, String>? query,
+  ]) async {
+    final url = base.replace(
       path: '/$path',
       queryParameters: query?.isEmpty ?? true ? null : query,
     );

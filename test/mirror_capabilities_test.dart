@@ -71,8 +71,38 @@ void main() {
     expect(r.notices, isTrue);
     expect(
       ReportsCapability.tryParse({'base_url': 'http://report.example.org/'}),
-      isNull,
+    isNull,
     );
     expect(MirrorCapabilities.parse({'version': 1}).reports, isNull);
+  });
+
+  test('sse_url: домен и полный путь, сериализация', () {
+    final byDomain = MirrorCapabilities.parse({
+      'sse_url': 'https://SSE.example.org',
+    });
+    expect(byDomain.sseUrl.toString(), 'https://sse.example.org/sse');
+    expect(byDomain.sseBaseUrl.toString(), 'https://sse.example.org');
+
+    final bareHost = MirrorCapabilities.parse({'sse_url': 'sse.example.org/'});
+    expect(bareHost.sseUrl.toString(), 'https://sse.example.org/sse');
+
+    final customPath = MirrorCapabilities.parse({
+      'sse_url': 'https://sse.example.org/v1/stream?history=1',
+    });
+    expect(
+      customPath.sseUrl.toString(),
+      'https://sse.example.org/v1/stream?history=1',
+    );
+    expect(customPath.sseBaseUrl.toString(), 'https://sse.example.org');
+
+    // Roundtrip через toJson (для кэша в SQLite).
+    final roundtrip = MirrorCapabilities.parse(customPath.toJson());
+    expect(roundtrip.sseUrl, customPath.sseUrl);
+    expect(roundtrip.sseBaseUrl, customPath.sseBaseUrl);
+
+    // Невалидные значения и http отклоняются.
+    for (final bad in ['', 'http://sse.example.org', 'ftp://x', 123]) {
+      expect(MirrorCapabilities.parse({'sse_url': bad}).sseUrl, isNull);
+    }
   });
 }

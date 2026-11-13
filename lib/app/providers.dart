@@ -295,22 +295,24 @@ final mirrorCapabilitiesLoadProvider =
       if (api == null) return (capabilities: null, refreshed: false);
       final db = ref.watch(appDatabaseProvider);
       final key = AppSettingKeys.mirrorCapabilities(api.baseUrl);
+      MirrorCapabilities? cachedCaps;
+      try {
+        final cached = await db.getSetting(key);
+        if (cached != null) {
+          cachedCaps = MirrorCapabilities.parse(jsonDecode(cached));
+          api.fallbackBaseUrl ??= cachedCaps.sseBaseUrl;
+        }
+      } catch (_) {}
       MirrorCapabilities capabilities;
       try {
         capabilities = await api.capabilities();
       } catch (_) {
-        try {
-          final cached = await db.getSetting(key);
-          return (
-            capabilities: MirrorCapabilities.parse(
-              cached == null ? null : jsonDecode(cached),
-            ),
-            refreshed: false,
-          );
-        } catch (_) {
-          return (capabilities: MirrorCapabilities.none, refreshed: false);
-        }
+        return (
+          capabilities: cachedCaps ?? MirrorCapabilities.none,
+          refreshed: false,
+        );
       }
+      api.fallbackBaseUrl = capabilities.sseBaseUrl;
       // Сбой записи не отменяет успешно полученный ответ.
       try {
         await db.setSetting(key, jsonEncode(capabilities.toJson()));
@@ -331,7 +333,7 @@ final avatarFramesProvider = StateProvider<AvatarFrames>((ref) {
   return AvatarFrames.empty;
 });
 
-/// WS-подписка на зеркало; null, пока зеркало не включено.
+/// WS/SSE-подписка на зеркало; null, пока зеркало не включено.
 final mirrorRealtimeProvider = ChangeNotifierProvider<MirrorRealtime?>((ref) {
   final cfg = ref.watch(mirrorConfigProvider).value ?? MirrorConfig.off;
   final ws = cfg.webSocketUrl, api = ref.watch(mirrorApiProvider);
@@ -346,29 +348,6 @@ final mirrorRealtimeProvider = ChangeNotifierProvider<MirrorRealtime?>((ref) {
     e == null ? s : '$s: $e',
     fileText: e == null ? s : '$s (${e.runtimeType})',
   );
-
-  api
-      .nodes()
-      .then((n) async {
-        await ingest.nodes(n);
-        await ingest.db.purgeStaleNodes();
-      })
-      .catchError((Object e) {
-        log('Зеркало: ноды не загружены', e);
-      });
-  // Зоны — при каждом запуске; не ответило — остаются сохранённые.
-  api
-      .jammerZones()
-      .then((z) async {
-        if (z != null) {
-          await ref
-              .read(databaseProvider)
-              .setSetting(AppSettingKeys.jammerZones, z.encode());
-        }
-      })
-      .catchError((Object e) {
-        log('Зеркало: зоны глушилок не загружены', e);
-      });
 
   final rt = MirrorRealtime(
     ws,
@@ -395,13 +374,64 @@ final mirrorRealtimeProvider = ChangeNotifierProvider<MirrorRealtime?>((ref) {
       }
     },
     log: log,
+    onTransportChanged: (t) {
+      api.preferFallback = t == MirrorTransport.sse;
+    },
     onOutdated: () {
       // Текст плашки — из HTTP-ответа 426; ответа нет — хотя бы общий.
       api.checkVersion().then((_) {}, onError: (_) {}).whenComplete(() {
         outdatedMessage.value ??= defaultOutdatedText;
       });
     },
-  )..start();
+  );
+
+  ref.listen<AsyncValue<MirrorCapabilities?>>(mirrorCapabilitiesProvider, (
+    _,
+    next,
+  ) {
+    if (next.hasValue) {
+      final c = next.value;
+      api.fallbackBaseUrl = c?.sseBaseUrl;
+      rt.sseUrl = c?.sseUrl;
+    }
+  }, fireImmediately: true);
+
+  Future<void>(() async {
+    try {
+      final cached = await ref
+          .read(appDatabaseProvider)
+          .getSetting(AppSettingKeys.mirrorCapabilities(api.baseUrl));
+      if (cached != null) {
+        final c = MirrorCapabilities.parse(jsonDecode(cached));
+        api.fallbackBaseUrl ??= c.sseBaseUrl;
+        rt.sseUrl ??= c.sseUrl;
+      }
+    } catch (_) {}
+    api
+        .nodes()
+        .then((n) async {
+          await ingest.nodes(n);
+          await ingest.db.purgeStaleNodes();
+        })
+        .catchError((Object e) {
+          log('Зеркало: ноды не загружены', e);
+        });
+    // Зоны — при каждом запуске; не ответило — остаются сохранённые.
+    api
+        .jammerZones()
+        .then((z) async {
+          if (z != null) {
+            await ref
+                .read(databaseProvider)
+                .setSetting(AppSettingKeys.jammerZones, z.encode());
+          }
+        })
+        .catchError((Object e) {
+          log('Зеркало: зоны глушилок не загружены', e);
+        });
+  });
+
+  rt.start();
   // dispose вызывает сам ChangeNotifierProvider; второй вызов — ошибка.
   return rt;
 });

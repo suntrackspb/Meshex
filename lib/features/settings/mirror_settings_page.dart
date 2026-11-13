@@ -251,7 +251,10 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
   String _stateText(MirrorRealtime? rt) => switch (rt?.state) {
     null || MirrorState.idle => context.l10n.waiting_5813a9,
     MirrorState.connecting => context.l10n.connecting_40b27e,
-    MirrorState.connected => context.l10n.connected_1578f2,
+    MirrorState.connected =>
+      rt?.transport == MirrorTransport.sse
+          ? '${context.l10n.connected_1578f2} (SSE)'
+          : context.l10n.connected_1578f2,
     MirrorState.waiting => context.l10n.disconnectedRetryingInS_c55f01(
       (rt!.retryIn).toString(),
     ),

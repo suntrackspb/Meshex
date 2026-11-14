@@ -1,3 +1,5 @@
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,4 +55,41 @@ void main() {
     await tester.pump();
     expect(launched, [url]);
   });
+
+  testWidgets('desktop mouse selection copies text and links still open', (
+    tester,
+  ) async {
+    String? copied;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+    const url = 'https://example.com';
+    await tester.pumpWidget(message(url));
+    await tester.tap(find.text(url));
+    await tester.pump();
+    expect(launched, [url]);
+
+    await tester.pumpWidget(message('Select this message'));
+    final bounds = tester.getRect(find.text('Select this message'));
+    final mouse = await tester.startGesture(
+      bounds.centerLeft + const Offset(1, 0),
+      kind: PointerDeviceKind.mouse,
+    );
+    await mouse.moveTo(bounds.centerRight + const Offset(2, 0));
+    await mouse.up();
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(copied, 'Select this message');
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 }

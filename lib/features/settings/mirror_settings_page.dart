@@ -22,6 +22,7 @@ class MirrorSettingsPage extends ConsumerStatefulWidget {
 class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
   final _address = TextEditingController();
   bool _loaded = false;
+  AppDatabase? _scope;
   bool _checking = false;
   bool _refreshing = false;
   String? _error;
@@ -33,10 +34,12 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
     super.dispose();
   }
 
-  AppDatabase get _db => ref.read(databaseProvider);
+  AppDatabase get _db => ref.read(mirrorSettingsDatabaseProvider);
 
   /// Проверить адрес запросом к API и, если это зеркало, сохранить и включить.
   Future<void> _checkAndEnable() async {
+    final db = _db;
+    final address = _address.text.trim();
     final strings = context.l10n;
     final url = normalizeMirrorUrl(_address.text);
     if (url == null) {
@@ -51,24 +54,25 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
     final api = MirrorApi(url);
     try {
       final count = await api.probe();
-      await _db.setSetting(AppSettingKeys.mirrorAddress, _address.text.trim());
-      await _db.setSetting(AppSettingKeys.mirrorEnabled, 'true');
-      if (mounted) {
+      if (!mounted || !identical(db, _db)) return;
+      await db.saveMirrorConfig(MirrorConfig(enabled: true, address: address));
+      if (mounted && identical(db, _db)) {
         setState(
           () => _ok = strings.mirrorRespondingNodes_d2a09d((count).toString()),
         );
       }
     } on MirrorApiException catch (e) {
-      if (mounted) {
+      if (mounted && identical(db, _db)) {
         setState(() => _error = strings.failed_317897((e).toString()));
       }
     } finally {
       api.close();
-      if (mounted) setState(() => _checking = false);
+      if (mounted && identical(db, _db)) setState(() => _checking = false);
     }
   }
 
   Future<void> _refreshCapabilities() async {
+    final db = _db;
     setState(() {
       _refreshing = true;
       _error = null;
@@ -76,7 +80,7 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
     });
     try {
       final result = await ref.refresh(mirrorCapabilitiesLoadProvider.future);
-      if (!mounted) return;
+      if (!mounted || !identical(db, _db)) return;
       setState(() {
         if (result.refreshed) {
           _ok = context.l10n.mirrorCapabilitiesUpdated;
@@ -85,15 +89,26 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
         }
       });
     } finally {
-      if (mounted) setState(() => _refreshing = false);
+      if (mounted && identical(db, _db)) setState(() => _refreshing = false);
     }
   }
 
-  Future<void> _disable() =>
-      _db.setSetting(AppSettingKeys.mirrorEnabled, 'false');
+  Future<void> _disable() => _db.saveMirrorConfig(
+    MirrorConfig(address: ref.read(mirrorConfigProvider).value?.address ?? ''),
+  );
 
   @override
   Widget build(BuildContext context) {
+    final db = ref.watch(mirrorSettingsDatabaseProvider);
+    if (!identical(_scope, db)) {
+      _scope = db;
+      _loaded = false;
+      _checking = false;
+      _refreshing = false;
+      _error = null;
+      _ok = null;
+      _address.clear();
+    }
     final cfg = ref.watch(mirrorConfigProvider).value;
     if (cfg != null && !_loaded) {
       _loaded = true;
@@ -115,7 +130,9 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
         padding: pagePadding(context),
         children: [
           SectionCard(
-            footer: context.l10n.mirrorServerAddressChatMessagesAnd_64453e,
+            footer:
+                '${context.l10n.mirrorSettingsScope}\n\n'
+                '${context.l10n.mirrorServerAddressChatMessagesAnd_64453e}',
             children: [
               SwitchListTile.adaptive(
                 secondary: const Icon(Icons.public),
@@ -125,7 +142,7 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
                 ),
                 value: enabled,
                 // Включение — только через проверку адреса.
-                onChanged: _checking
+                onChanged: _checking || cfg == null
                     ? null
                     : (v) => v ? _checkAndEnable() : _disable(),
               ),

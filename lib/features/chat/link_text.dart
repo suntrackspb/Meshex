@@ -58,6 +58,17 @@ class _LinkTextState extends State<LinkText> {
 
   @override
   Widget build(BuildContext context) {
+    final desktop = switch (Theme.of(context).platform) {
+      TargetPlatform.macOS ||
+      TargetPlatform.windows ||
+      TargetPlatform.linux => true,
+      _ => false,
+    };
+    final text = _buildText(context);
+    return desktop ? SelectionArea(child: text) : text;
+  }
+
+  Widget _buildText(BuildContext context) {
     // Keep recognizers alive across feed/theme rebuilds: disposing one while
     // the finger is down cancels the pending tap.
     if (_taps.isEmpty) return Text(widget.text);

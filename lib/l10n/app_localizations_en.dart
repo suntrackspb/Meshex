@@ -9,6 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get mirrorSettingsScope =>
+      'Mirror settings are saved for the selected node. Without a node, shared settings are used.';
+
+  @override
   String get journalAir => 'Radio traffic';
 
   @override

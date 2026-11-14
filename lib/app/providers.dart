@@ -256,18 +256,22 @@ final radioProvider = ChangeNotifierProvider<RadioSession>((ref) {
   return session;
 });
 
-/// Конфиг зеркала из настроек. По умолчанию — выключено, адреса нет.
-final mirrorConfigProvider = StreamProvider<MirrorConfig>(
-  (ref) => ref
-      .watch(databaseProvider)
-      .watchSettings()
-      .map(
-        (s) => MirrorConfig(
-          enabled: s[AppSettingKeys.mirrorEnabled] == 'true',
-          address: s[AppSettingKeys.mirrorAddress] ?? '',
-        ),
-      )
-      .distinct(),
+/// Без ноды используем общие настройки; иначе — базу выбранной ноды.
+final mirrorSettingsDatabaseProvider = Provider<AppDatabase>(
+  (ref) => ref.watch(activeNodeDbProvider) == noNodeDb
+      ? ref.watch(appDatabaseProvider)
+      : ref.watch(databaseProvider),
+);
+
+final _mirrorConfigForDatabaseProvider = StreamProvider.autoDispose
+    .family<MirrorConfig, AppDatabase>((ref, db) => db.watchMirrorConfig());
+
+/// A fresh scoped provider prevents the previous node's config leaking while
+/// the new database loads (including starting its mirror subscription).
+final mirrorConfigProvider = Provider<AsyncValue<MirrorConfig>>(
+  (ref) => ref.watch(
+    _mirrorConfigForDatabaseProvider(ref.watch(mirrorSettingsDatabaseProvider)),
+  ),
 );
 
 /// Показывать ли данные зеркала. Выключили — данные зеркала скрыты (не удалены).

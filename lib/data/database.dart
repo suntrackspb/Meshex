@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import 'db_location.dart';
+import '../mirror/mirror_config.dart';
 
 import '../core/proto/mesh.dart';
 
@@ -905,6 +906,53 @@ class AppDatabase extends _$AppDatabase {
       into(appSettings).insertOnConflictUpdate(
         AppSettingsCompanion.insert(key: key, value: value),
       );
+
+  /// Mirror preferences belong to this database, bypassing shared settings.
+  /// Snapshot the shared defaults once, so later edits cannot affect other nodes.
+  Stream<MirrorConfig> watchMirrorConfig() async* {
+    final defaults = settings;
+    if (defaults != null) {
+      final enabled = await defaults.getSetting(AppSettingKeys.mirrorEnabled);
+      final address = await defaults.getSetting(AppSettingKeys.mirrorAddress);
+      await transaction(() async {
+        for (final entry in {
+          AppSettingKeys.mirrorEnabled: enabled ?? 'false',
+          AppSettingKeys.mirrorAddress: address ?? '',
+        }.entries) {
+          await into(appSettings).insert(
+            AppSettingsCompanion.insert(key: entry.key, value: entry.value),
+            mode: InsertMode.insertOrIgnore,
+          );
+        }
+      });
+    }
+    yield* (select(appSettings)..where(
+          (s) => s.key.isIn([
+            AppSettingKeys.mirrorEnabled,
+            AppSettingKeys.mirrorAddress,
+          ]),
+        ))
+        .watch()
+        .map((rows) {
+          final values = {for (final row in rows) row.key: row.value};
+          return MirrorConfig(
+            enabled: values[AppSettingKeys.mirrorEnabled] == 'true',
+            address: values[AppSettingKeys.mirrorAddress] ?? '',
+          );
+        })
+        .distinct();
+  }
+
+  Future<void> saveMirrorConfig(MirrorConfig config) => transaction(() async {
+    for (final entry in {
+      AppSettingKeys.mirrorEnabled: '${config.enabled}',
+      AppSettingKeys.mirrorAddress: config.address,
+    }.entries) {
+      await into(appSettings).insertOnConflictUpdate(
+        AppSettingsCompanion.insert(key: entry.key, value: entry.value),
+      );
+    }
+  });
 
   // Не используем getSetting/setSetting: они перенаправляют в общую базу.
   // Старый общий список намеренно не наследуем: неизвестно, для какой ноды

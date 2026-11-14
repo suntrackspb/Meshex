@@ -1,4 +1,5 @@
 {
+  "mirrorSettingsScope": "Mirror settings are saved for the selected node. Without a node, shared settings are used.",
   "journalAir": "Radio traffic",
   "@@locale": "en",
   "language": "Language",

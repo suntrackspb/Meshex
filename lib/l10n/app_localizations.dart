@@ -98,6 +98,12 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @mirrorSettingsScope.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки зеркала сохраняются для выбранной ноды. Без ноды используются общие настройки.'**
+  String get mirrorSettingsScope;
+
   /// No description provided for @journalAir.
   ///
   /// In ru, this message translates to:

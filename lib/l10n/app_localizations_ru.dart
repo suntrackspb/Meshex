@@ -9,6 +9,10 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get mirrorSettingsScope =>
+      'Настройки зеркала сохраняются для выбранной ноды. Без ноды используются общие настройки.';
+
+  @override
   String get journalAir => 'Эфир';
 
   @override

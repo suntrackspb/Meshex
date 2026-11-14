@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/appearance.dart';
+import '../../data/mentions.dart';
 import '../../ui/theme.dart';
 import '../../app/toasts.dart';
 import '../../app/images_providers.dart';
@@ -22,7 +23,6 @@ import '../../data/message_content.dart';
 import '../../data/delivery.dart';
 import '../../data/message_filter.dart';
 import '../../data/message_meta.dart';
-import '../../data/notify/message_alerts.dart';
 import '../../data/message_sender.dart';
 import '../../data/message_split.dart';
 import '../../data/text_clean.dart';
@@ -789,7 +789,7 @@ class _MessageListState extends ConsumerState<_MessageList> {
         : mentionBubble(mc.color, Theme.of(context).brightness);
     final mirror = ref.watch(mirrorActiveProvider);
     final me = ref.watch(radioProvider.select((r) => r.myNodeNum));
-    final myShort = me == null ? '' : nodes[me]?.shortName ?? '';
+    final myNode = me == null ? null : nodes[me];
     final byPacket = {for (final m in messages) m.packetId: m};
     final reactions = <int, List<Message>>{};
     final visible = <Message>[];
@@ -869,7 +869,7 @@ class _MessageListState extends ConsumerState<_MessageList> {
               pos: positions[i],
               incoming: incomingFill,
               infoColor: infoColor,
-              mention: !m.isOutgoing && _toMe(m, byPacket, me, myShort)
+              mention: !m.isOutgoing && _toMe(m, byPacket, me, myNode)
                   ? mentionFill
                   : null,
               highlighted: _highlight == m.packetId,
@@ -1372,10 +1372,18 @@ class _DayChip extends StatelessWidget {
   }
 }
 
-/// Чужое сообщение обращено ко мне: упоминание короткого имени своей ноды
+/// Чужое сообщение обращено ко мне: упоминание имени или ID своей ноды
 /// (как для уведомлений) или ответ на моё сообщение.
-bool _toMe(Message m, Map<int, Message> byPacket, int? me, String myShort) {
-  if (isTextMessage(m) && MessageAlerts.mentions(m.body, myShort)) {
+bool _toMe(Message m, Map<int, Message> byPacket, int? me, Node? myNode) {
+  if (isTextMessage(m) &&
+      me != null &&
+      NodeMentions.mentions(
+        m.body,
+        me,
+        longName: myNode?.longName ?? '',
+        shortName: myNode?.shortName ?? '',
+        userId: myNode?.userId ?? '',
+      )) {
     return true;
   }
   final q = m.replyId == null ? null : byPacket[m.replyId];
@@ -1705,6 +1713,8 @@ class _Composer extends ConsumerStatefulWidget {
 class _ComposerState extends ConsumerState<_Composer> {
   final _text = TextEditingController();
   final _focus = FocusNode();
+  String? _dismissedMentionPrefix;
+  int _mentionIndex = 0;
 
   @override
   void initState() {
@@ -1792,9 +1802,7 @@ class _ComposerState extends ConsumerState<_Composer> {
   }
 
   Future<void> _openStickerPicker() async {
-    if (_progress != null ||
-        _pickingSticker ||
-        !ref.read(canSendProvider)) {
+    if (_progress != null || _pickingSticker || !ref.read(canSendProvider)) {
       return;
     }
     _focus.unfocus();
@@ -1860,6 +1868,42 @@ class _ComposerState extends ConsumerState<_Composer> {
     final over = parts > MessageSplit.maxParts;
     final progress = _progress;
     final reply = widget.replyTo;
+    var query = !widget.chatId.startsWith('dm:') && _text.selection.isCollapsed
+        ? NodeMentions.query(_text.text, _text.selection.baseOffset)
+        : null;
+    if (query != null &&
+        _dismissedMentionPrefix != null &&
+        _text.text.startsWith(_dismissedMentionPrefix!) &&
+        query.start < _dismissedMentionPrefix!.length &&
+        query.end >= _dismissedMentionPrefix!.length) {
+      query = null;
+    }
+    final activeQuery = query;
+    final candidates = query == null
+        ? <Node>[]
+        : NodeMentions.candidates(
+            ref.watch(nodesProvider).value ?? <Node>[],
+            query.query,
+          );
+    void selectMention(Node node) {
+      final query = activeQuery;
+      if (query == null) return;
+      final name = NodeMentions.insertion(
+        node,
+        ref.read(mentionFormatProvider).value ?? 'longName',
+      );
+      final replacement = '$name ';
+      _dismissedMentionPrefix =
+          _text.text.substring(0, query.start) + replacement;
+      _mentionIndex = 0;
+      _text.value = TextEditingValue(
+        text: _text.text.replaceRange(query.start, query.end, replacement),
+        selection: TextSelection.collapsed(
+          offset: query.start + replacement.length,
+        ),
+      );
+      _focus.requestFocus();
+    }
 
     // Свайп вниз по строке ввода прячет клавиатуру.
     return GestureDetector(
@@ -1882,6 +1926,26 @@ class _ComposerState extends ConsumerState<_Composer> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (candidates.isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: candidates.length,
+                    itemBuilder: (context, index) {
+                      final node = candidates[index];
+                      return ListTile(
+                        dense: true,
+                        selected: index == _mentionIndex % candidates.length,
+                        title: Text(NodeMentions.insertion(node, 'longName')),
+                        subtitle: Text(
+                          '${node.shortName} · ${NodeMentions.nodeId(node.num)}',
+                        ),
+                        onTap: () => selectMention(node),
+                      );
+                    },
+                  ),
+                ),
               if (reply != null)
                 Row(
                   children: [
@@ -1944,10 +2008,44 @@ class _ComposerState extends ConsumerState<_Composer> {
                   Expanded(
                     child: CallbackShortcuts(
                       bindings: {
-                        const SingleActivator(LogicalKeyboardKey.enter):
-                            _submit,
-                        const SingleActivator(LogicalKeyboardKey.numpadEnter):
-                            _submit,
+                        if (candidates.isNotEmpty) ...{
+                          const SingleActivator(
+                            LogicalKeyboardKey.arrowDown,
+                          ): () => setState(
+                            () => _mentionIndex =
+                                (_mentionIndex + 1) % candidates.length,
+                          ),
+                          const SingleActivator(
+                            LogicalKeyboardKey.arrowUp,
+                          ): () => setState(
+                            () => _mentionIndex =
+                                (_mentionIndex - 1) % candidates.length,
+                          ),
+                          const SingleActivator(
+                            LogicalKeyboardKey.escape,
+                          ): () => setState(
+                            () => _dismissedMentionPrefix = _text.text
+                                .substring(0, activeQuery!.end),
+                          ),
+                          const SingleActivator(LogicalKeyboardKey.tab): () =>
+                              selectMention(
+                                candidates[_mentionIndex % candidates.length],
+                              ),
+                        },
+                        const SingleActivator(
+                          LogicalKeyboardKey.enter,
+                        ): candidates.isEmpty
+                            ? _submit
+                            : () => selectMention(
+                                candidates[_mentionIndex % candidates.length],
+                              ),
+                        const SingleActivator(
+                          LogicalKeyboardKey.numpadEnter,
+                        ): candidates.isEmpty
+                            ? _submit
+                            : () => selectMention(
+                                candidates[_mentionIndex % candidates.length],
+                              ),
                       },
                       child: TextField(
                         controller: _text,

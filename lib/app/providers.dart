@@ -761,7 +761,9 @@ final messageSenderProvider = Provider<MessageSender>((ref) {
     radio.sendPacket,
     () => radio.state == RadioState.ready ? radio.myNodeNum : null,
     radio.queue.nextId,
-    prepareSticker: (sticker) => StickerSourceRepository(ref.read(appDatabaseProvider)).checkSendAllowed(sticker.sourceUrl),
+    prepareSticker: (sticker) => StickerSourceRepository(
+      ref.read(appDatabaseProvider),
+    ).checkSendAllowed(sticker.sourceUrl),
     prepareDirect: (peer) async {
       final api = ref.read(mirrorApiProvider);
       final actions = ref.read(nodeActionsProvider);
@@ -1219,3 +1221,8 @@ final radioStatsProvider = Provider<RadioStats?>((ref) {
   final channels = ref.watch(channelsProvider).value ?? const <MeshChannel>[];
   return RadioStats.of(nodes, channels, me: me);
 });
+
+final mentionFormatProvider = StreamProvider<String>(
+  (ref) =>
+      _setting(ref, AppSettingKeys.mentionFormat).map((v) => v ?? 'longName'),
+);

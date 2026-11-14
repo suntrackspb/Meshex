@@ -43,6 +43,7 @@ abstract final class AppSettingKeys {
   /// 'system' / 'ru' / 'en'; отсутствующее значение — язык системы.
   static const locale = 'app.locale';
   static const accent = 'app.accent';
+  static const mentionFormat = 'app.mentionFormat';
   static const mentionColor = 'app.mentionColor';
   static const incomingColor = 'app.incomingColor';
   static const messageInfoColor = 'app.messageInfoColor';

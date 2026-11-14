@@ -1599,5 +1599,7 @@
   "stickerShorterSource": "The source URL exceeds the radio payload budget. Choose a shorter URL for this revision.",
   "stickerSendingBlocked": "The source is blocked. Choose another verified copy or unblock it in the library.",
   "stickerTrustedCopy": "Another allowed source for the same revision",
-  "stickerCheckingLocal": "Checking local files"
+  "stickerCheckingLocal": "Checking local files",
+  "mentionFormat": "Mention format for @",
+  "mentionIdentifiers": "Node long name, short name or node_id in channel messages"
 }

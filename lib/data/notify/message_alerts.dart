@@ -1,5 +1,6 @@
 import '../../core/notify/notify_channels.dart';
 import '../database.dart';
+import '../mentions.dart';
 import '../message_content.dart';
 
 /// Повод уведомить о сообщении.
@@ -39,6 +40,8 @@ class AlertContext {
   const AlertContext({
     required this.me,
     this.myShortName = '',
+    this.myLongName = '',
+    this.myUserId = '',
     this.targetIsMine = false,
     this.senderIgnored = false,
     this.channelMuted = false,
@@ -47,6 +50,8 @@ class AlertContext {
 
   final int me;
   final String myShortName;
+  final String myLongName;
+  final String myUserId;
 
   /// Сообщение, на которое ответили или отреагировали, — наше.
   final bool targetIsMine;
@@ -78,7 +83,13 @@ abstract final class MessageAlerts {
     if (direct) return AlertKind.direct;
     if (m.replyId != null && c.targetIsMine) return AlertKind.reply;
     if (content is TextMessageContent &&
-        mentions(content.text, c.myShortName)) {
+        NodeMentions.mentions(
+          content.text,
+          c.me,
+          shortName: c.myShortName,
+          longName: c.myLongName,
+          userId: c.myUserId,
+        )) {
       return AlertKind.mention;
     }
     return null;
@@ -88,14 +99,7 @@ abstract final class MessageAlerts {
   /// буквы, цифры и `_` рядом — часть другого слова). `@` перед именем
   /// допускается.
   static bool mentions(String text, String name) {
-    final n = name.trim();
-    if (n.isEmpty) return false;
-    final re = RegExp(
-      '(?<![\\p{L}\\p{N}_])${RegExp.escape(n)}(?![\\p{L}\\p{N}_])',
-      caseSensitive: false,
-      unicode: true,
-    );
-    return re.hasMatch(text);
+    return NodeMentions.matches(text, [name]);
   }
 
   /// Заголовок и текст уведомления. [sender] — имя отправителя,

@@ -5267,4 +5267,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stickerCheckingLocal => 'Checking local files';
+
+  @override
+  String get mentionFormat => 'Mention format for @';
+
+  @override
+  String get mentionIdentifiers =>
+      'Node long name, short name or node_id in channel messages';
 }

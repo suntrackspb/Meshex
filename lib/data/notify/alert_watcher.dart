@@ -127,6 +127,8 @@ class AlertWatcher {
       AlertContext(
         me: me,
         myShortName: node(me)?.shortName ?? '',
+        myLongName: node(me)?.longName ?? '',
+        myUserId: node(me)?.userId ?? '',
         targetIsMine: mine,
         senderIgnored: sender?.isIgnored ?? false,
         channelMuted: muted,

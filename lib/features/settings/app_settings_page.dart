@@ -13,7 +13,6 @@ import '../../app/desktop_tray_provider.dart';
 import '../../app/notify_providers.dart';
 import '../../app/position_service.dart';
 import '../../app/providers.dart';
-import '../../app/settings_providers.dart';
 import '../../core/desktop/desktop_tray.dart';
 import '../../core/geo/geo.dart';
 import '../../data/appearance.dart';
@@ -44,7 +43,6 @@ class AppSettingsPage extends ConsumerWidget {
         ref.watch(positionIntervalProvider).value ?? defaultPositionIntervalMin;
     final alerts =
         ref.watch(alertSettingsProvider).value ?? const AlertSettings();
-    final myShort = ref.watch(ownNodeProvider).value?.shortName ?? '';
     void save(String k, String v) => saveSetting(ref, k, v);
     Widget alert(String title, String? sub, String key, bool v) =>
         SwitchListTile(
@@ -185,11 +183,7 @@ class AppSettingsPage extends ConsumerWidget {
               ),
               alert(
                 context.l10n.mentionsOfMyNode_dfdc0f,
-                myShort.isEmpty
-                    ? context.l10n.yourNodeShortNameInChannel_7ab080
-                    : context.l10n.inChannelMessages_74052f(
-                        (myShort).toString(),
-                      ),
+                context.l10n.mentionIdentifiers,
                 AppSettingKeys.notifyMention,
                 alerts.mention,
               ),
@@ -204,6 +198,34 @@ class AppSettingsPage extends ConsumerWidget {
           SectionCard(
             title: context.l10n.chat_8c77e4,
             children: [
+              ListTile(
+                title: Text(context.l10n.mentionFormat),
+                subtitle: Text(context.l10n.mentionIdentifiers),
+                trailing: DropdownButton<String>(
+                  value:
+                      const [
+                        'longName',
+                        'shortName',
+                        'nodeId',
+                      ].contains(ref.watch(mentionFormatProvider).value)
+                      ? ref.watch(mentionFormatProvider).value
+                      : 'longName',
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'longName',
+                      child: Text('long_name'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'shortName',
+                      child: Text('short_name'),
+                    ),
+                    DropdownMenuItem(value: 'nodeId', child: Text('node_id')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) save(AppSettingKeys.mentionFormat, v);
+                  },
+                ),
+              ),
               SwitchListTile(
                 title: Text(context.l10n.showImages_436fda),
                 subtitle: Text(

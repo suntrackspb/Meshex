@@ -9269,6 +9269,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проверяем локальные файлы'**
   String get stickerCheckingLocal;
+
+  /// No description provided for @mentionFormat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Формат упоминаний через @'**
+  String get mentionFormat;
+
+  /// No description provided for @mentionIdentifiers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя ноды, короткое имя или node_id в сообщениях канала'**
+  String get mentionIdentifiers;
 }
 
 class _AppLocalizationsDelegate

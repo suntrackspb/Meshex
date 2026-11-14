@@ -5267,4 +5267,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get stickerCheckingLocal => 'Проверяем локальные файлы';
+
+  @override
+  String get mentionFormat => 'Формат упоминаний через @';
+
+  @override
+  String get mentionIdentifiers =>
+      'Имя ноды, короткое имя или node_id в сообщениях канала';
 }

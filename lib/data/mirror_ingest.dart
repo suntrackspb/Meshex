@@ -31,8 +31,6 @@ class MirrorIngest {
       final ch = m.channel;
       final from = nodeNumFromId(m.fromId);
       if (text == null || text.isEmpty || ch == null || from == null) continue;
-      // Скрытый пользователем канал зеркала — не подтягиваем снова.
-      if (hidden.contains(channelKey(ch))) continue;
       // Время приёма сервером, а не sentAt: часы отправителя могут спешить.
       final time = live
           ? DateTime.now()
@@ -69,6 +67,15 @@ class MirrorIngest {
               body: text,
               sticker: m.sticker,
             );
+        // Скрытие запрещает добавлять сообщения из зеркала, но не дополнять
+        // шлюзами своё сообщение или уже услышанное по радио.
+        if (hidden.contains(channelKey(ch)) &&
+            (existing == null ||
+                !(existing.heardOnRadio || existing.isOutgoing) ||
+                existing.channelKey != channelKey(ch) ||
+                !sameContent)) {
+          return;
+        }
         if (!sameContent) {
           developer.log(
             'Conflicting mirror content for packet $packetId from $from',

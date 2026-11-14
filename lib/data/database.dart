@@ -141,7 +141,8 @@ abstract final class AppSettingKeys {
   static const nodeDbLimit = 'db.limit';
 
   /// Скрытые каналы зеркала: JSON-список ключей.
-  static const hiddenChannels = 'chat.hiddenChannels';
+  // В базе ноды; старый общий chat.hiddenChannels нельзя привязать к ноде.
+  static const hiddenChannels = 'chat.hiddenChannels.node';
 
   /// Время последнего прочитанного сообщения канала (ISO-8601).
   static String channelRead(String key) => 'chat.read.$key';
@@ -498,7 +499,8 @@ class StickerInstalls extends Table {
 )
 class AppDatabase extends _$AppDatabase {
   /// [settings] — общая база приложения: настройки и недавние подключения
-  /// берутся из неё. Без неё (общая база сама, тесты) — из этой же.
+  /// берутся из неё. Скрытые каналы хранятся в базе ноды.
+  /// Без неё (общая база сама, тесты) — из этой же.
   AppDatabase([QueryExecutor? executor, this.settings])
     : super(executor ?? driftDatabase(name: appDbName, native: _native));
 
@@ -538,6 +540,16 @@ class AppDatabase extends _$AppDatabase {
         await upgradeSteps[v]!(m);
       }
     }),
+    beforeOpen: (_) async {
+      // При первом открытии после обновления удаляем прежний общий список.
+      // Проверяем и базы нод: старые копии/импорты могли сохранить этот ключ.
+      // Новый список chat.hiddenChannels.node не затрагиваем.
+      await customUpdate(
+        'DELETE FROM app_settings WHERE key = ?',
+        variables: [Variable.withString('chat.hiddenChannels')],
+        updates: {appSettings},
+      );
+    },
   );
 
   /// Шаг миграции к версии (ключ) с предыдущей. Новая версия — новый шаг,
@@ -894,20 +906,35 @@ class AppDatabase extends _$AppDatabase {
         AppSettingsCompanion.insert(key: key, value: value),
       );
 
-  Future<Set<String>> hiddenChannels() async =>
-      parseHiddenChannels(await getSetting(AppSettingKeys.hiddenChannels));
+  // Не используем getSetting/setSetting: они перенаправляют в общую базу.
+  // Старый общий список намеренно не наследуем: неизвестно, для какой ноды
+  // пользователь скрывал каждый канал.
+  Future<Set<String>> hiddenChannels() async => parseHiddenChannels(
+    (await (select(appSettings)
+              ..where((s) => s.key.equals(AppSettingKeys.hiddenChannels)))
+            .getSingleOrNull())
+        ?.value,
+  );
 
   Stream<Set<String>> watchHiddenChannels() =>
-      watchSetting(AppSettingKeys.hiddenChannels).map(parseHiddenChannels);
+      (select(appSettings)
+            ..where((s) => s.key.equals(AppSettingKeys.hiddenChannels)))
+          .watchSingleOrNull()
+          .map((r) => parseHiddenChannels(r?.value));
+
+  Future<void> _saveHiddenChannels(Set<String> channels) =>
+      into(appSettings).insertOnConflictUpdate(
+        AppSettingsCompanion.insert(
+          key: AppSettingKeys.hiddenChannels,
+          value: jsonEncode(channels.toList()..sort()),
+        ),
+      );
 
   /// Скрыть канал зеркала: больше не показывать и не загружать, а его
   /// сообщения только из зеркала удалить. Своё и услышанное в эфире — оставить.
   Future<void> hideChannel(String key) => transaction(() async {
     final all = await hiddenChannels();
-    await setSetting(
-      AppSettingKeys.hiddenChannels,
-      jsonEncode((all..add(key)).toList()..sort()),
-    );
+    await _saveHiddenChannels(all..add(key));
     await (delete(messages)..where(
           (m) =>
               m.channelKey.equals(key) &
@@ -920,10 +947,7 @@ class AppDatabase extends _$AppDatabase {
   /// Вернуть канал: сообщения снова придут из зеркала.
   Future<void> unhideChannel(String key) async {
     final all = await hiddenChannels();
-    await setSetting(
-      AppSettingKeys.hiddenChannels,
-      jsonEncode((all..remove(key)).toList()..sort()),
-    );
+    await _saveHiddenChannels(all..remove(key));
   }
 
   /// После сброса NodeDB своей ноды: ноды только с радио удаляем, у нод из

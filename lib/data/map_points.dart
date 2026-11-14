@@ -47,7 +47,7 @@ class MapPoint {
 }
 
 /// Сколько времени нода считается «свежей» на карте.
-const mapStaleAfter = Duration(hours: 2);
+const mapStaleAfter = Duration(hours: 24);
 
 List<MapPoint> mapPoints(
   List<Node> nodes, {

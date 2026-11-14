@@ -16,7 +16,7 @@ void main() {
     ).copyWith(latitude: const Value(0.0), longitude: const Value(0.0));
     final c = n(
       3,
-      heard: now.subtract(const Duration(hours: 5)),
+      heard: now.subtract(const Duration(hours: 25)),
     ).copyWith(latitude: const Value(60.0), longitude: const Value(30.0));
     final p = mapPoints([a, b, n(4), c], me: 1, now: now);
     expect(p.map((e) => e.num), [1, 3]);

@@ -56,18 +56,97 @@ def patch_android():
     # (иначе Flutter не получает predictive back).
     if "enableOnBackInvokedCallback" not in s:
         s = s.replace("<application", '<application\n        android:enableOnBackInvokedCallback="true"', 1)
-    # Служба flutter_foreground_task; имя менять нельзя. stopWithTask — смахнули
-    # приложение, соединения уже нет, уведомление не нужно.
+    # Соединение живёт в движке Application, а не Activity. Смахивание окна
+    # не останавливает ни движок, ни удерживающую его foreground service.
     if "flutter_foreground_task.service.ForegroundService" not in s:
         s = s.replace("</application>", '''    <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="connectedDevice"
-            android:stopWithTask="true"
+            android:stopWithTask="false"
             android:exported="false" />
     </application>''', 1)
+    s = re.sub(
+        r'(<service\b[^>]*android:name="com\.pravera\.flutter_foreground_task\.service\.ForegroundService"[^>]*android:stopWithTask=")true(")',
+        r'\g<1>false\2', s,
+    )
+    s = re.sub(r'(<application\b[^>]*android:name=")[^"]*"',
+               r'\g<1>ru.meshex.runtime.MeshApplication"', s)
     if s != orig:
         f.write_text(s)
+    patch_android_runtime()
     print("android: ok")
+
+
+def patch_android_runtime():
+    """Keep the real application engine alive across Activity destruction.
+
+    Application is also created on a sticky service restart, so it reconstructs
+    the same Dart provider graph (radio, database, MQTT and message alerts).
+    Generated sources live outside the Activity namespace chosen by flutter create.
+    """
+    source = ROOT / "android/app/src/main/kotlin/ru/meshex/runtime"
+    source.mkdir(parents=True, exist_ok=True)
+    (source / "MeshApplication.kt").write_text('''package ru.meshex.runtime
+
+import android.app.Application
+import com.pravera.flutter_foreground_task.FlutterForegroundTaskLifecycleListener
+import com.pravera.flutter_foreground_task.FlutterForegroundTaskPlugin
+import com.pravera.flutter_foreground_task.FlutterForegroundTaskStarter
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.dart.DartExecutor
+
+class MeshApplication : Application(), FlutterForegroundTaskLifecycleListener {
+    private var engine: FlutterEngine? = null
+
+    fun getMeshEngine(restoreConnection: Boolean = false): FlutterEngine {
+        engine?.let { return it }
+        val created = FlutterEngine(this)
+        engine = created
+        created.dartExecutor.executeDartEntrypoint(
+            DartExecutor.DartEntrypoint.createDefault(),
+            if (restoreConnection) listOf("--restore-radio") else emptyList()
+        )
+        return created
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        FlutterForegroundTaskPlugin.addTaskLifecycleListener(this)
+    }
+
+    override fun onTaskStart(starter: FlutterForegroundTaskStarter) {
+        // Also runs after a sticky service restart, once it is foreground.
+        // Other receivers (e.g. boot) must not start a radio session themselves.
+        getMeshEngine(restoreConnection = true)
+    }
+
+    override fun onEngineCreate(flutterEngine: FlutterEngine?) {}
+    override fun onTaskRepeatEvent() {}
+    override fun onTaskDestroy() {}
+    override fun onEngineWillDestroy() {}
+}
+''')
+    (source / "MeshActivity.kt").write_text('''package ru.meshex.runtime
+
+import android.content.Context
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+
+class MeshActivity : FlutterActivity() {
+    override fun provideFlutterEngine(context: Context): FlutterEngine =
+        (application as MeshApplication).getMeshEngine()
+
+    override fun shouldDestroyEngineWithHost(): Boolean = false
+
+    // Plugins are already registered by the Application-owned engine.
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {}
+}
+''')
+    manifest = ROOT / "android/app/src/main/AndroidManifest.xml"
+    text = manifest.read_text()
+    text = re.sub(r'android:name="(?:\.[^"]*MainActivity|[^" ]*\.MainActivity)"',
+                  'android:name="ru.meshex.runtime.MeshActivity"', text)
+    manifest.write_text(text)
 
 
 def replace_in(f: pathlib.Path, pairs):

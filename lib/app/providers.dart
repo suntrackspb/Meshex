@@ -880,15 +880,36 @@ Endpoint endpointOf(RecentConnection r) =>
     Endpoint(EndpointKind.values.byName(r.kind), r.address, r.name);
 
 /// Один раз при старте: подключиться к последней ноде, если включено.
+/// A restarted Android service restores an existing connection even when the
+/// user disabled automatic connection on ordinary app launches.
+final restoreRadioOnStartupProvider = Provider<bool>((ref) => false);
+
 final startupConnectProvider = FutureProvider<void>((ref) async {
   final db = ref.read(databaseProvider);
-  if (await db.getSetting(AppSettingKeys.autoConnect) == 'false') return;
+  if (!ref.read(restoreRadioOnStartupProvider) &&
+      await db.getSetting(AppSettingKeys.autoConnect) == 'false') {
+    return;
+  }
   final recent = await db.watchRecent(limit: 1).first;
   if (recent.isEmpty) return;
   final e = endpointOf(recent.single);
   if (e.kind == EndpointKind.serial && !serialSupported) return;
   if (e.kind == EndpointKind.ble && (Platform.isAndroid || Platform.isIOS)) {
-    await UniversalBle.requestPermissions(withAndroidFineLocation: false);
+    // A sticky Android service can restore this engine without an Activity.
+    // A background restore must not attempt to display permission dialogs.
+    if (ref.read(restoreRadioOnStartupProvider) &&
+        !await UniversalBle.hasPermissions(withAndroidFineLocation: false)) {
+      ref
+          .read(journalProvider)
+          .add(
+            JournalKind.app,
+            'Автоподключение: требуется разрешение Bluetooth',
+          );
+      return;
+    }
+    if (!ref.read(restoreRadioOnStartupProvider)) {
+      await UniversalBle.requestPermissions(withAndroidFineLocation: false);
+    }
   }
   final radio = ref.read(radioProvider);
   // Пользователь уже подключается сам.

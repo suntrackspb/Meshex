@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
@@ -37,8 +38,10 @@ KeepAliveStatus? keepAliveStatus(
 abstract interface class KeepAlive {
   Future<void> update(KeepAliveStatus? status);
 
-  factory KeepAlive.platform() =>
-      Platform.isAndroid ? AndroidKeepAlive() : const _NoKeepAlive();
+  factory KeepAlive.platform({void Function(Object)? onError}) =>
+      Platform.isAndroid
+      ? AndroidKeepAlive(onError: onError)
+      : const _NoKeepAlive();
 }
 
 class _NoKeepAlive implements KeepAlive {
@@ -50,8 +53,9 @@ class _NoKeepAlive implements KeepAlive {
 @pragma('vm:entry-point')
 void _keepAliveCallback() => FlutterForegroundTask.setTaskHandler(_Idle());
 
-/// Обработчик в фоновом изоляте ничего не делает: соединение живёт в главном
-/// изоляте, служба только не даёт системе усыпить процесс.
+/// Служебный изолят не открывает вторую БД и соединение. MeshApplication
+/// удерживает основной движок после закрытия Activity и восстанавливает его
+/// через onTaskStart при пересоздании службы системой.
 class _Idle extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {}
@@ -62,31 +66,49 @@ class _Idle extends TaskHandler {
 }
 
 class AndroidKeepAlive implements KeepAlive {
+  AndroidKeepAlive({this.onError});
+
+  final void Function(Object)? onError;
   bool _init = false;
   bool _asked = false;
-  KeepAliveStatus? _last;
+  KeepAliveStatus? _desired;
+  Timer? _retry;
+  int _failures = 0;
+  final _options = ForegroundTaskOptions(
+    eventAction: ForegroundTaskEventAction.nothing(),
+    allowWakeLock: true,
+    allowWifiLock: true,
+    stopWithTask: false,
+    allowAutoRestart: true,
+  );
 
   /// Вызовы приходят на каждое изменение состояния — выполняем по очереди.
   Future<void> _chain = Future.value();
 
   @override
   Future<void> update(KeepAliveStatus? status) {
-    if (status == _last) return _chain;
-    _last = status;
-    return _chain = _chain.then((_) => _apply(status)).catchError((_) {});
+    _desired = status;
+    _retry?.cancel();
+    return _chain = _chain.then((_) async {
+      try {
+        await _apply(status);
+        _failures = 0;
+      } catch (e) {
+        onError?.call(e);
+        // Retry failed starts even when the radio status hasn't changed.
+        // A newer status supersedes this request, including an explicit stop.
+        if (_desired != status) return;
+        final seconds = (5 * (1 << _failures.clamp(0, 4))).clamp(5, 60);
+        _failures++;
+        _retry = Timer(Duration(seconds: seconds), () => update(_desired));
+      }
+    });
   }
 
   Future<void> _apply(KeepAliveStatus? s) async {
     final running = await FlutterForegroundTask.isRunningService;
     if (s == null) {
-      if (running) await FlutterForegroundTask.stopService();
-      return;
-    }
-    if (running) {
-      await FlutterForegroundTask.updateService(
-        notificationTitle: s.title,
-        notificationText: s.text,
-      );
+      if (running) _check(await FlutterForegroundTask.stopService());
       return;
     }
     if (!_init) {
@@ -102,12 +124,18 @@ class AndroidKeepAlive implements KeepAlive {
         iosNotificationOptions: const IOSNotificationOptions(
           showNotification: false,
         ),
-        foregroundTaskOptions: ForegroundTaskOptions(
-          eventAction: ForegroundTaskEventAction.nothing(),
-          allowWakeLock: true,
-          allowWifiLock: true,
+        foregroundTaskOptions: _options,
+      );
+    }
+    if (running) {
+      _check(
+        await FlutterForegroundTask.updateService(
+          foregroundTaskOptions: _options,
+          notificationTitle: s.title,
+          notificationText: s.text,
         ),
       );
+      return;
     }
     // Android 13+: без разрешения служба работает, но уведомление скрыто.
     if (!_asked) {
@@ -117,12 +145,18 @@ class AndroidKeepAlive implements KeepAlive {
         await FlutterForegroundTask.requestNotificationPermission();
       }
     }
-    await FlutterForegroundTask.startService(
-      serviceId: 1001,
-      serviceTypes: [ForegroundServiceTypes.connectedDevice],
-      notificationTitle: s.title,
-      notificationText: s.text,
-      callback: _keepAliveCallback,
+    _check(
+      await FlutterForegroundTask.startService(
+        serviceId: 1001,
+        serviceTypes: [ForegroundServiceTypes.connectedDevice],
+        notificationTitle: s.title,
+        notificationText: s.text,
+        callback: _keepAliveCallback,
+      ),
     );
+  }
+
+  void _check(ServiceRequestResult result) {
+    if (result is ServiceRequestFailure) throw result.error;
   }
 }

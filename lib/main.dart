@@ -26,7 +26,7 @@ import 'data/appearance.dart';
 import 'data/db_location.dart';
 import 'ui/theme.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     clientVersion = (await PackageInfo.fromPlatform()).version;
@@ -34,7 +34,13 @@ Future<void> main() async {
   // Общая база и база ноды — один класс AppDatabase на разных файлах;
   // предупреждение drift про «несколько экземпляров» здесь ложное.
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [
+      restoreRadioOnStartupProvider.overrideWithValue(
+        Platform.isAndroid && args.contains('--restore-radio'),
+      ),
+    ],
+  );
   final journal = container.read(journalProvider);
   journal.add(JournalKind.app, 'Запуск приложения');
 

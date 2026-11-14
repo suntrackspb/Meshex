@@ -42,6 +42,7 @@ import '../../app/sticker_providers.dart';
 import 'message_preview.dart';
 import 'chat_search_delegate.dart';
 import 'emoji_sheet.dart';
+import 'emoji_button.dart';
 import 'link_text.dart';
 import 'message_images.dart';
 import 'reactions_sheet.dart';
@@ -1722,6 +1723,7 @@ class _Composer extends ConsumerStatefulWidget {
 class _ComposerState extends ConsumerState<_Composer> {
   final _text = TextEditingController();
   final _focus = FocusNode();
+  final _emojiMenu = MenuController();
   String? _dismissedMentionPrefix;
   int _mentionIndex = 0;
 
@@ -2011,124 +2013,149 @@ class _ComposerState extends ConsumerState<_Composer> {
                     ),
                   ),
                 ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: CallbackShortcuts(
-                      bindings: {
-                        if (candidates.isNotEmpty) ...{
+              IconButtonTheme(
+                data: IconButtonThemeData(
+                  style: IconButton.styleFrom(
+                    fixedSize: const Size.square(_rowHeight),
+                    visualDensity: VisualDensity.standard,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: CallbackShortcuts(
+                        bindings: {
+                          const SingleActivator(LogicalKeyboardKey.escape): () {
+                            if (_emojiMenu.isOpen) {
+                              _emojiMenu.close();
+                            } else if (candidates.isNotEmpty) {
+                              setState(
+                                () => _dismissedMentionPrefix = _text.text
+                                    .substring(0, activeQuery!.end),
+                              );
+                            }
+                          },
+                          if (candidates.isNotEmpty) ...{
+                            const SingleActivator(
+                              LogicalKeyboardKey.arrowDown,
+                            ): () => setState(
+                              () => _mentionIndex =
+                                  (_mentionIndex + 1) % candidates.length,
+                            ),
+                            const SingleActivator(
+                              LogicalKeyboardKey.arrowUp,
+                            ): () => setState(
+                              () => _mentionIndex =
+                                  (_mentionIndex - 1) % candidates.length,
+                            ),
+                            const SingleActivator(LogicalKeyboardKey.tab): () =>
+                                selectMention(
+                                  candidates[_mentionIndex % candidates.length],
+                                ),
+                          },
                           const SingleActivator(
-                            LogicalKeyboardKey.arrowDown,
-                          ): () => setState(
-                            () => _mentionIndex =
-                                (_mentionIndex + 1) % candidates.length,
-                          ),
+                            LogicalKeyboardKey.enter,
+                          ): candidates.isEmpty
+                              ? _submit
+                              : () => selectMention(
+                                  candidates[_mentionIndex % candidates.length],
+                                ),
                           const SingleActivator(
-                            LogicalKeyboardKey.arrowUp,
-                          ): () => setState(
-                            () => _mentionIndex =
-                                (_mentionIndex - 1) % candidates.length,
-                          ),
-                          const SingleActivator(
-                            LogicalKeyboardKey.escape,
-                          ): () => setState(
-                            () => _dismissedMentionPrefix = _text.text
-                                .substring(0, activeQuery!.end),
-                          ),
-                          const SingleActivator(LogicalKeyboardKey.tab): () =>
-                              selectMention(
-                                candidates[_mentionIndex % candidates.length],
-                              ),
+                            LogicalKeyboardKey.numpadEnter,
+                          ): candidates.isEmpty
+                              ? _submit
+                              : () => selectMention(
+                                  candidates[_mentionIndex % candidates.length],
+                                ),
                         },
-                        const SingleActivator(
-                          LogicalKeyboardKey.enter,
-                        ): candidates.isEmpty
-                            ? _submit
-                            : () => selectMention(
-                                candidates[_mentionIndex % candidates.length],
-                              ),
-                        const SingleActivator(
-                          LogicalKeyboardKey.numpadEnter,
-                        ): candidates.isEmpty
-                            ? _submit
-                            : () => selectMention(
-                                candidates[_mentionIndex % candidates.length],
-                              ),
-                      },
-                      child: TextField(
+                        child: TextField(
+                          controller: _text,
+                          focusNode: _focus,
+                          minLines: 1,
+                          maxLines: 5,
+                          keyboardType: TextInputType.multiline,
+                          decoration: InputDecoration(
+                            hintText: canSend
+                                ? context.l10n.message_dc7234
+                                : context.l10n.connectToANodeToSend_67b4d9,
+                            border: InputBorder.none,
+                            // Одна строка — ровно высота кнопок (48), текст
+                            // по центру вровень с ними.
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (switch (Theme.of(context).platform) {
+                      TargetPlatform.macOS ||
+                      TargetPlatform.windows ||
+                      TargetPlatform.linux => true,
+                      _ => false,
+                    })
+                      EmojiButton(
                         controller: _text,
                         focusNode: _focus,
-                        minLines: 1,
-                        maxLines: 5,
-                        keyboardType: TextInputType.multiline,
-                        decoration: InputDecoration(
-                          hintText: canSend
-                              ? context.l10n.message_dc7234
-                              : context.l10n.connectToANodeToSend_67b4d9,
-                          border: InputBorder.none,
-                          // Одна строка — ровно высота кнопок (48), текст
-                          // по центру вровень с ними.
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                          ),
-                        ),
+                        menuController: _emojiMenu,
+                        enabled:
+                            canSend && progress == null && !_pickingSticker,
                       ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: context.l10n.stickersTitle,
-                    icon: const Icon(Icons.sticky_note_2_outlined),
-                    onPressed: canSend && progress == null && !_pickingSticker
-                        ? _openStickerPicker
-                        : null,
-                  ),
-                  if (images != null)
-                    _uploading
-                        ? const SizedBox(
-                            width: _rowHeight,
-                            height: _rowHeight,
-                            child: Center(
-                              child: SizedBox.square(
-                                dimension: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                          )
-                        : IconButton(
-                            tooltip: context.l10n.image_690092,
-                            icon: const Icon(Icons.image_outlined),
-                            onPressed: canSend && !_pickingSticker
-                                ? () => _attachImage(images)
-                                : null,
-                          ),
-                  SizedBox(
-                    height: _rowHeight,
-                    child: Center(child: _ZipButton(level: zip)),
-                  ),
-                  if (progress != null)
-                    SizedBox(
-                      width: _rowHeight,
-                      height: _rowHeight,
-                      child: Center(
-                        child: Text(
-                          '${progress.$1}/${progress.$2}',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                      ),
-                    )
-                  else
                     IconButton(
-                      tooltip: context.l10n.send_76dcf7,
-                      icon: const Icon(Icons.send),
-                      onPressed: canSend && !_pickingSticker && _valid(zip)
-                          ? _submit
+                      tooltip: context.l10n.stickersTitle,
+                      icon: const Icon(Icons.sticky_note_2_outlined),
+                      onPressed: canSend && progress == null && !_pickingSticker
+                          ? _openStickerPicker
                           : null,
                     ),
-                ],
+                    if (images != null)
+                      _uploading
+                          ? const SizedBox(
+                              width: _rowHeight,
+                              height: _rowHeight,
+                              child: Center(
+                                child: SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              tooltip: context.l10n.image_690092,
+                              icon: const Icon(Icons.image_outlined),
+                              onPressed: canSend && !_pickingSticker
+                                  ? () => _attachImage(images)
+                                  : null,
+                            ),
+                    SizedBox(
+                      height: _rowHeight,
+                      child: Center(child: _ZipButton(level: zip)),
+                    ),
+                    if (progress != null)
+                      SizedBox(
+                        width: _rowHeight,
+                        height: _rowHeight,
+                        child: Center(
+                          child: Text(
+                            '${progress.$1}/${progress.$2}',
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                        ),
+                      )
+                    else
+                      IconButton(
+                        tooltip: context.l10n.send_76dcf7,
+                        icon: const Icon(Icons.send),
+                        onPressed: canSend && !_pickingSticker && _valid(zip)
+                            ? _submit
+                            : null,
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

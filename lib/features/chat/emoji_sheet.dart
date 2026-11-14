@@ -13,37 +13,58 @@ Future<String?> pickEmoji(BuildContext context) {
     showDragHandle: true,
     backgroundColor: bg,
     builder: (ctx) => SafeArea(
-      child: EmojiPicker(
-        onEmojiSelected: (_, e) => Navigator.pop(ctx, e.emoji),
-        config: Config(
-          height: 320,
-          locale: const Locale('ru'),
-          emojiViewConfig: EmojiViewConfig(
-            backgroundColor: bg,
-            columns: 8,
-            emojiSizeMax: 30,
-          ),
-          categoryViewConfig: CategoryViewConfig(
-            backgroundColor: bg,
-            initCategory: Category.SMILEYS,
-            recentTabBehavior: RecentTabBehavior.NONE,
-            indicatorColor: scheme.primary,
-            iconColor: scheme.onSurfaceVariant,
-            iconColorSelected: scheme.primary,
-          ),
-          bottomActionBarConfig: BottomActionBarConfig(
-            showBackspaceButton: false,
-            backgroundColor: bg,
-            buttonColor: bg,
-            buttonIconColor: scheme.onSurfaceVariant,
-          ),
-          searchViewConfig: SearchViewConfig(
-            backgroundColor: bg,
-            buttonIconColor: scheme.onSurfaceVariant,
-            hintText: context.l10n.search_6433b5,
-          ),
-        ),
-      ),
+      child: ChatEmojiPicker(onSelected: (emoji) => Navigator.pop(ctx, emoji)),
     ),
   );
+}
+
+/// Shared Unicode picker; glyphs are rendered with the platform's fonts.
+class ChatEmojiPicker extends StatelessWidget {
+  const ChatEmojiPicker({
+    super.key,
+    required this.onSelected,
+    this.showRecents = false,
+  });
+
+  final ValueChanged<String> onSelected;
+  final bool showRecents;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bg = scheme.surfaceContainerLow;
+    return EmojiPicker(
+      onEmojiSelected: (_, e) => onSelected(e.emoji),
+      config: Config(
+        height: 320,
+        locale: Localizations.localeOf(context),
+        emojiViewConfig: EmojiViewConfig(
+          backgroundColor: bg,
+          columns: 8,
+          emojiSizeMax: 30,
+        ),
+        categoryViewConfig: CategoryViewConfig(
+          backgroundColor: bg,
+          initCategory: Category.SMILEYS,
+          recentTabBehavior: showRecents
+              ? RecentTabBehavior.RECENT
+              : RecentTabBehavior.NONE,
+          indicatorColor: scheme.primary,
+          iconColor: scheme.onSurfaceVariant,
+          iconColorSelected: scheme.primary,
+        ),
+        bottomActionBarConfig: BottomActionBarConfig(
+          showBackspaceButton: false,
+          backgroundColor: bg,
+          buttonColor: bg,
+          buttonIconColor: scheme.onSurfaceVariant,
+        ),
+        searchViewConfig: SearchViewConfig(
+          backgroundColor: bg,
+          buttonIconColor: scheme.onSurfaceVariant,
+          hintText: context.l10n.search_6433b5,
+        ),
+      ),
+    );
+  }
 }

@@ -5280,4 +5280,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get purgeStalePending => 'Changes take effect after you tap Apply.';
+
+  @override
+  String get stickerRecent => 'Recent';
+
+  @override
+  String get stickerRecentEmpty =>
+      'Your last 20 used stickers will appear here.';
 }

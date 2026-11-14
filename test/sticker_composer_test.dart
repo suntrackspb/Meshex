@@ -140,10 +140,30 @@ void main() {
       expect(find.byTooltip('Отменить ответ'), findsOneWidget);
       await tester.tap(find.byTooltip('Стикеры'));
       await settle(tester);
+      expect(
+        find.text('Здесь появятся последние 20 использованных стикеров.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Demo Colors'));
+      await settle(tester);
       await tester.tap(find.byTooltip('Blue square'));
       await settle(tester);
       expect(find.byType(StickerPicker), findsNothing);
       expect(sent.length, 1);
+      expect(await container.read(recentStickersProvider.future), [
+        (packSha256: testPackHash, stickerId: 'blue'),
+      ]);
+      await tester.tap(find.byTooltip('Стикеры'));
+      await settle(tester);
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Недавние'))
+            .selected,
+        isTrue,
+      );
+      expect(find.byTooltip('Blue square'), findsOneWidget);
+      await tester.tap(find.byTooltip('Закрыть'));
+      await settle(tester);
       expect(sent.single.decoded.portnum, PortNum.PRIVATE_APP);
       expect(sent.single.decoded.replyId, 7);
       expect(sent.single.decoded.emoji, 0);

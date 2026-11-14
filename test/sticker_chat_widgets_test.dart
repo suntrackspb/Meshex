@@ -262,6 +262,14 @@ void main() {
       );
       await tester.tap(find.text('open'));
       await settle(tester);
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Недавние'))
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Demo Colors'));
+      await settle(tester);
       expect(find.byType(StickerPicker), findsOneWidget);
       await tester.tap(find.byTooltip('Blue square'));
       await settle(tester);
@@ -290,6 +298,14 @@ void main() {
         ),
       );
       await tester.tap(find.text('open'));
+      await settle(tester);
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Недавние'))
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Demo Colors'));
       await settle(tester);
       expect(find.textContaining('Источник заблокирован'), findsOneWidget);
       await tester.tap(find.byTooltip('Blue square'));
@@ -381,6 +397,14 @@ void main() {
       );
       await tester.tap(find.text('open'));
       await settle(tester);
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Недавние'))
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Demo Colors'));
+      await settle(tester);
       await tester.tap(find.byTooltip('Blue square'));
       await settle(tester);
       expect(selected, isNull);
@@ -445,6 +469,14 @@ void main() {
         ),
       );
       await tester.tap(find.text('open'));
+      await settle(tester);
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Недавние'))
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Demo Colors'));
       await settle(tester);
       expect(find.textContaining('Источник заблокирован'), findsOneWidget);
       await tester.tap(find.byTooltip('Управление паками'));

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -92,3 +93,49 @@ final stickerSourcesProvider = StreamProvider<List<StickerSourceState>>((ref) {
       .watch(stickerSourceRepositoryProvider)
       .watchSources(currentMirror: mirror);
 });
+
+const recentStickersSettingKey = 'stickers.recent';
+typedef RecentSticker = ({String packSha256, String stickerId});
+
+List<RecentSticker> parseRecentStickers(String? value) {
+  try {
+    final decoded = jsonDecode(value ?? '[]') as List;
+    final result = <RecentSticker>[];
+    for (final entry in decoded) {
+      if (entry is! Map || entry['pack'] is! String || entry['id'] is! String) {
+        continue;
+      }
+      final sticker = (
+        packSha256: entry['pack'] as String,
+        stickerId: entry['id'] as String,
+      );
+      if (!result.contains(sticker)) result.add(sticker);
+      if (result.length == 20) break;
+    }
+    return result;
+  } catch (_) {
+    return [];
+  }
+}
+
+final recentStickersProvider = StreamProvider<List<RecentSticker>>(
+  (ref) => ref
+      .watch(appDatabaseProvider)
+      .watchSetting(recentStickersSettingKey)
+      .map(parseRecentStickers),
+);
+
+Future<void> recordRecentSticker(AppDatabase db, RecentSticker sticker) async {
+  final recent = parseRecentStickers(
+    await db.getSetting(recentStickersSettingKey),
+  );
+  recent.remove(sticker);
+  recent.insert(0, sticker);
+  await db.setSetting(
+    recentStickersSettingKey,
+    jsonEncode([
+      for (final item in recent.take(20))
+        {'pack': item.packSha256, 'id': item.stickerId},
+    ]),
+  );
+}

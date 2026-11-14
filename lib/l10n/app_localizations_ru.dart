@@ -5281,4 +5281,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get purgeStalePending =>
       'Изменения вступят в силу после нажатия «Применить».';
+
+  @override
+  String get stickerRecent => 'Недавние';
+
+  @override
+  String get stickerRecentEmpty =>
+      'Здесь появятся последние 20 использованных стикеров.';
 }

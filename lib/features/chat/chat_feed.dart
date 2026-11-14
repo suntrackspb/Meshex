@@ -510,7 +510,16 @@ class _ChatFeedState extends ConsumerState<ChatFeed> {
             replyId: reply?.packetId,
           );
       }
-      sending.catchError((Object error) => _stickerError(error));
+      final recentDb = ref.read(appDatabaseProvider);
+      sending
+          .then((_) async {
+            try {
+              await recordRecentSticker(recentDb, selection);
+            } catch (_) {
+              // A history write must not turn a successful send into an error.
+            }
+          })
+          .catchError((Object error) => _stickerError(error));
       if (_replyTo == reply) setState(() => _replyTo = null);
       return true;
     } catch (error) {

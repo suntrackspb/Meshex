@@ -35,17 +35,28 @@ class _StickerPickerState extends ConsumerState<StickerPicker> {
     final sources = ref.watch(stickerLocalSourcesProvider);
     final canSend = ref.watch(canSendProvider);
     final packs = installed.value ?? const <InstalledStickerPack>[];
-    final pack =
-        packs.where((p) => p.hash == _selected).firstOrNull ??
-        packs.firstOrNull;
+    final pack = packs.where((p) => p.hash == _selected).firstOrNull;
+    final recent = ref.watch(recentStickersProvider);
+    final items = _selected == null
+        ? [
+            for (final entry in recent.value ?? const <RecentSticker>[])
+              for (final p in packs.where((p) => p.hash == entry.packSha256))
+                for (final sticker in p.manifest.stickers.where(
+                  (s) => s.id == entry.stickerId,
+                ))
+                  (pack: p, sticker: sticker),
+          ]
+        : [
+            if (pack != null)
+              for (final sticker in pack.manifest.stickers)
+                (pack: pack, sticker: sticker),
+          ];
     final blocked =
         pack != null &&
         sources.value?.any(
               (s) => s.url == pack.preferredSourceUrl && s.record.blocked,
             ) ==
             true;
-    final enabled =
-        canSend && sources.hasValue && !sources.hasError && !blocked;
     return SafeArea(
       top: false,
       child: SizedBox(
@@ -95,7 +106,7 @@ class _StickerPickerState extends ConsumerState<StickerPicker> {
               ),
             if (installed.isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
-            else if (pack == null)
+            else if (packs.isEmpty)
               Expanded(
                 child: Center(
                   child: Padding(
@@ -113,6 +124,15 @@ class _StickerPickerState extends ConsumerState<StickerPicker> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        avatar: const Icon(Icons.history, size: 18),
+                        label: Text(context.l10n.stickerRecent),
+                        selected: _selected == null,
+                        onSelected: (_) => setState(() => _selected = null),
+                      ),
+                    ),
                     for (final p in packs)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -124,7 +144,7 @@ class _StickerPickerState extends ConsumerState<StickerPicker> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          selected: pack.hash == p.hash,
+                          selected: _selected == p.hash,
                           onSelected: (_) => setState(() => _selected = p.hash),
                         ),
                       ),
@@ -132,49 +152,69 @@ class _StickerPickerState extends ConsumerState<StickerPicker> {
                 ),
               ),
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 112,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: pack.manifest.stickers.length,
-                  itemBuilder: (context, index) {
-                    final sticker = pack.manifest.stickers[index];
-                    return Semantics(
-                      label: sticker.alt,
-                      button: true,
-                      enabled: enabled,
-                      child: Tooltip(
-                        message: sticker.alt,
-                        child: Material(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(12),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: enabled
-                                ? () => Navigator.pop(context, (
-                                    packSha256: pack.hash,
-                                    stickerId: sticker.id,
-                                  ))
-                                : null,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: StickerImage(
-                                hash: pack.hash,
-                                sticker: sticker,
-                                still: true,
-                              ),
-                            ),
+                child: items.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            context.l10n.stickerRecentEmpty,
+                            textAlign: TextAlign.center,
                           ),
                         ),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(12),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 112,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final (:pack, :sticker) = items[index];
+                          final enabled =
+                              canSend &&
+                              sources.hasValue &&
+                              !sources.hasError &&
+                              !sources.value!.any(
+                                (s) =>
+                                    s.url == pack.preferredSourceUrl &&
+                                    s.record.blocked,
+                              );
+                          return Semantics(
+                            label: sticker.alt,
+                            button: true,
+                            enabled: enabled,
+                            child: Tooltip(
+                              message: sticker.alt,
+                              child: Material(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(12),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: enabled
+                                      ? () => Navigator.pop(context, (
+                                          packSha256: pack.hash,
+                                          stickerId: sticker.id,
+                                        ))
+                                      : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: StickerImage(
+                                      hash: pack.hash,
+                                      sticker: sticker,
+                                      still: true,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           ],

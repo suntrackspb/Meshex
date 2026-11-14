@@ -1603,5 +1603,7 @@
   "mentionFormat": "Mention format for @",
   "mentionIdentifiers": "Node long name, short name or node_id in channel messages",
   "applyChanges": "Apply",
-  "purgeStalePending": "Changes take effect after you tap Apply."
+  "purgeStalePending": "Changes take effect after you tap Apply.",
+"stickerRecent": "Recent",
+"stickerRecentEmpty": "Your last 20 used stickers will appear here."
 }

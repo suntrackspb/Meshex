@@ -9293,6 +9293,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Изменения вступят в силу после нажатия «Применить».'**
   String get purgeStalePending;
+
+  /// No description provided for @stickerRecent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавние'**
+  String get stickerRecent;
+
+  /// No description provided for @stickerRecentEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь появятся последние 20 использованных стикеров.'**
+  String get stickerRecentEmpty;
 }
 
 class _AppLocalizationsDelegate

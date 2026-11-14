@@ -8,39 +8,86 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      release:
-        description: 'Создать draft release'
-        type: boolean
-        default: false
+      platform:
+        description: 'Платформа для тестовой сборки'
+        type: choice
+        required: true
+        default: android
+        options: [android, windows, linux, macos, ios, all]
+      version:
+        description: 'Версия приложения, например v0.1.13.beta или 0.1.14-beta.1'
+        type: string
+        required: true
+
+permissions:
+  contents: read
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - name: Select platforms and validate version
+        id: select
+        env:
+          EVENT: ${{ github.event_name }}
+          PLATFORM: ${{ inputs.platform }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, re
+          # Linux stays on Ubuntu 22.04 for compatibility with older glibc.
+          platforms = [
+              {
+                  "platform": "android",
+                  "os": "ubuntu-latest",
+                  "cmd": "flutter build apk --release",
+                  "out": "build/app/outputs/flutter-apk/app-release.apk"
+              },
+              {
+                  "platform": "linux",
+                  "os": "ubuntu-22.04",
+                  "cmd": "flutter build linux --release",
+                  "out": "build/linux/x64/release/bundle"
+              },
+              {
+                  "platform": "windows",
+                  "os": "windows-latest",
+                  "cmd": "flutter build windows --release",
+                  "out": "build/windows/x64/runner/Release"
+              },
+              {
+                  "platform": "macos",
+                  "os": "macos-latest",
+                  "cmd": "flutter build macos --release",
+                  "out": "build/macos/Build/Products/Release/*.app"
+              },
+              {
+                  "platform": "ios",
+                  "os": "macos-latest",
+                  "cmd": "flutter build ios --release --no-codesign",
+                  "out": "build/ios/iphoneos/Runner.app"
+              }
+          ]
+          if os.environ['EVENT'] == 'workflow_dispatch':
+              version = os.environ['VERSION'].removeprefix('v')
+              if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:[-.][0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?', version):
+                  raise SystemExit('Invalid version: expected v0.1.13.beta or 0.1.14-beta.1')
+              platform = os.environ['PLATFORM']
+              if platform != 'all':
+                  platforms = [item for item in platforms if item['platform'] == platform]
+              if not platforms:
+                  raise SystemExit('Unknown platform')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('matrix=' + json.dumps({'include': platforms}), file=output)
+          PYTHON
+
   build:
+    needs: prepare
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: android
-            os: ubuntu-latest
-            cmd: flutter build apk --release
-            out: build/app/outputs/flutter-apk/app-release.apk
-          # Старый glibc: собранное на ubuntu-latest (glibc 2.42) не
-          # грузится на Ubuntu 24.04 (2.39) — libserialport.so не открывается.
-          - platform: linux
-            os: ubuntu-22.04
-            cmd: flutter build linux --release
-            out: build/linux/x64/release/bundle
-          - platform: windows
-            os: windows-latest
-            cmd: flutter build windows --release
-            out: build/windows/x64/runner/Release
-          - platform: macos
-            os: macos-latest
-            cmd: flutter build macos --release
-            out: build/macos/Build/Products/Release/*.app
-          - platform: ios
-            os: macos-latest
-            cmd: flutter build ios --release --no-codesign
-            out: build/ios/iphoneos/Runner.app
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     name: ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -70,7 +117,7 @@ jobs:
       # Подпись APK постоянным ключом: секреты ANDROID_KEYSTORE_BASE64 (jks в
       # base64), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS. Без ключа
       # каждая сборка подписана своим отладочным и не ставится поверх
-      # прежней — поэтому релиз (тег) без ключа не собираем.
+      # прежней — поэтому тег и ручную сборку без ключа не собираем.
       - name: Android signing key
         if: matrix.platform == 'android'
         shell: bash
@@ -78,7 +125,7 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            if [[ "$GITHUB_REF" == refs/tags/v* || "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
               echo "::error::нет секрета ANDROID_KEYSTORE_BASE64 — релизный APK не подписать"
               exit 1
             fi
@@ -100,11 +147,22 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter test
-      # Сборка по тегу v1.2.3 — версия приложения из тега (по ней проверка обновлений).
-      - name: Version from tag
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Set build version
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         shell: bash
-        run: echo "VERSION_ARGS=--build-name=${GITHUB_REF_NAME#v} --build-number=${{ github.run_number }}" >> "$GITHUB_ENV"
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            version="${REQUESTED_VERSION#v}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          # Apple bundle versions accept only the numeric X.Y.Z part.
+          case "${{ matrix.platform }}" in
+            ios|macos) version="$(echo "$version" | cut -d. -f1-3 | cut -d- -f1)" ;;
+          esac
+          echo "VERSION_ARGS=--build-name=$version --build-number=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
       # CARTO_KEY — тёмная подложка карты; пусто — только OSM.
       - name: Build
         shell: bash
@@ -144,12 +202,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: meshex-${{ matrix.platform }}
+          name: meshex-${{ matrix.platform }}${{ github.event_name == 'workflow_dispatch' && format('-{0}', inputs.version) || '' }}
           path: dist/*
+          if-no-files-found: error
 
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write

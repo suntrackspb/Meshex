@@ -5274,4 +5274,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get mentionIdentifiers =>
       'Имя ноды, короткое имя или node_id в сообщениях канала';
+
+  @override
+  String get applyChanges => 'Применить';
+
+  @override
+  String get purgeStalePending =>
+      'Изменения вступят в силу после нажатия «Применить».';
 }

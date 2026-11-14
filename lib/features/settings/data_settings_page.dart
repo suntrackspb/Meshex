@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/toasts.dart';
 import '../../app/providers.dart';
 import '../../core/proto/mesh.dart';
-import '../../data/database.dart';
 import '../../data/node_db_store.dart';
 import '../../data/node_dbs.dart';
 import '../../ui/kit/kit.dart';
 import '../../app/link_badge.dart';
+import 'purge_stale_nodes_card.dart';
 
 /// Настройки → Данные: базы нод (у каждой своя), экспорт, импорт, удаление.
 class DataSettingsPage extends ConsumerWidget {
@@ -68,7 +68,7 @@ class DataSettingsPage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: Tokens.s16),
-          const _PurgeStaleCard(),
+          PurgeStaleNodesCard(key: ObjectKey(ref.watch(databaseProvider))),
           SectionCard(
             title: context.l10n.applicationDatabase_4d6431,
             footer:
@@ -377,58 +377,6 @@ class DataSettingsPage extends ConsumerWidget {
         _snack(context, strings.couldNotLoad_9d91fc((e).toString()));
       }
     }
-  }
-}
-
-/// «Очистить устаревшие ноды» — как в iOS: переключатель и дни (1–180).
-class _PurgeStaleCard extends ConsumerStatefulWidget {
-  const _PurgeStaleCard();
-
-  @override
-  ConsumerState<_PurgeStaleCard> createState() => _PurgeStaleCardState();
-}
-
-class _PurgeStaleCardState extends ConsumerState<_PurgeStaleCard> {
-  /// Пока тянут ползунок — значение здесь, сохраняем по отпусканию.
-  double? _drag;
-
-  void _save(int days) => saveSetting(
-    ref,
-    AppSettingKeys.purgeStaleNodeDays,
-    '$days',
-  ).then((_) => ref.read(databaseProvider).purgeStaleNodes());
-
-  @override
-  Widget build(BuildContext context) {
-    final days = ref.watch(purgeStaleNodeDaysProvider).value ?? 0;
-    final shown = (_drag ?? days.toDouble()).clamp(1, 180).toDouble();
-    return SectionCard(
-      footer: context.l10n.favoriteAndIgnoredNodesAreAlways_f2c698,
-      children: [
-        SwitchListTile(
-          title: Text(context.l10n.clearStaleNodes_968b4f),
-          value: days > 0,
-          onChanged: (on) => _save(on ? 7 : 0),
-        ),
-        if (days > 0) ...[
-          MeshTile(
-            title: context.l10n.afterDays_00b005((shown.round()).toString()),
-          ),
-          Slider(
-            value: shown,
-            min: 1,
-            max: 180,
-            divisions: 179,
-            label: '${shown.round()}',
-            onChanged: (v) => setState(() => _drag = v),
-            onChangeEnd: (v) {
-              setState(() => _drag = null);
-              _save(v.round());
-            },
-          ),
-        ],
-      ],
-    );
   }
 }
 

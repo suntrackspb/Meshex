@@ -9281,6 +9281,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Имя ноды, короткое имя или node_id в сообщениях канала'**
   String get mentionIdentifiers;
+
+  /// No description provided for @applyChanges.
+  ///
+  /// In ru, this message translates to:
+  /// **'Применить'**
+  String get applyChanges;
+
+  /// No description provided for @purgeStalePending.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменения вступят в силу после нажатия «Применить».'**
+  String get purgeStalePending;
 }
 
 class _AppLocalizationsDelegate

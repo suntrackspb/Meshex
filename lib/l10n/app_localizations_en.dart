@@ -5274,4 +5274,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mentionIdentifiers =>
       'Node long name, short name or node_id in channel messages';
+
+  @override
+  String get applyChanges => 'Apply';
+
+  @override
+  String get purgeStalePending => 'Changes take effect after you tap Apply.';
 }

@@ -1601,5 +1601,7 @@
   "stickerTrustedCopy": "Another allowed source for the same revision",
   "stickerCheckingLocal": "Checking local files",
   "mentionFormat": "Mention format for @",
-  "mentionIdentifiers": "Node long name, short name or node_id in channel messages"
+  "mentionIdentifiers": "Node long name, short name or node_id in channel messages",
+  "applyChanges": "Apply",
+  "purgeStalePending": "Changes take effect after you tap Apply."
 }

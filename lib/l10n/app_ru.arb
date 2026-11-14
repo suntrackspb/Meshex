@@ -8079,5 +8079,7 @@
   "stickerTrustedCopy": "Другой разрешённый источник той же ревизии",
   "stickerCheckingLocal": "Проверяем локальные файлы",
   "mentionFormat": "Формат упоминаний через @",
-  "mentionIdentifiers": "Имя ноды, короткое имя или node_id в сообщениях канала"
+  "mentionIdentifiers": "Имя ноды, короткое имя или node_id в сообщениях канала",
+  "applyChanges": "Применить",
+  "purgeStalePending": "Изменения вступят в силу после нажатия «Применить»."
 }

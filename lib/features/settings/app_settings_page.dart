@@ -20,9 +20,11 @@ import '../../data/database.dart';
 import '../../data/screen_orientation.dart';
 import '../../data/notify/message_alerts.dart';
 import '../../data/position_sharer.dart';
+import '../../ui/app_display_scale.dart';
 import '../../ui/kit/kit.dart';
 import '../nodes/nodes_page.dart';
 import '../../app/link_badge.dart';
+import 'display_scale_settings.dart';
 
 /// Настройки приложения: карта, дальние ноды, позиция телефона.
 class AppSettingsPage extends ConsumerWidget {
@@ -64,6 +66,46 @@ class AppSettingsPage extends ConsumerWidget {
         padding: pagePadding(context),
         children: [
           SectionCard(
+            title: context.l10n.appearance_d206f1,
+            children: [
+              if (supportsAppDisplayScale) const DisplayScaleSettings(),
+              Padding(
+                padding: const EdgeInsets.all(Tokens.s16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final textScale = MediaQuery.textScalerOf(context);
+                    return SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<AppTheme>(
+                        direction:
+                            constraints.maxWidth >=
+                                300 * (textScale.scale(14) / 14)
+                            ? Axis.horizontal
+                            : Axis.vertical,
+                        showSelectedIcon: false,
+                        segments: [
+                          for (final t in AppTheme.values)
+                            ButtonSegment(
+                              value: t,
+                              label: Text(context.builtIn(t.title)),
+                            ),
+                        ],
+                        selected: {theme},
+                        onSelectionChanged: (s) =>
+                            save(AppSettingKeys.theme, s.first.name),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              MeshTile(
+                title: context.l10n.appColors,
+                leading: const Icon(Icons.palette_outlined),
+                onTap: () => context.push('/settings/app/colors'),
+              ),
+            ],
+          ),
+          SectionCard(
             title: context.l10n.language,
             children: [
               for (final (code, title) in [
@@ -89,35 +131,6 @@ class AppSettingsPage extends ConsumerWidget {
                       : null,
                   onTap: () => save(AppSettingKeys.locale, code),
                 ),
-            ],
-          ),
-          SectionCard(
-            title: context.l10n.appearance_d206f1,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(Tokens.s16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<AppTheme>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (final t in AppTheme.values)
-                        ButtonSegment(
-                          value: t,
-                          label: Text(context.builtIn(t.title)),
-                        ),
-                    ],
-                    selected: {theme},
-                    onSelectionChanged: (s) =>
-                        save(AppSettingKeys.theme, s.first.name),
-                  ),
-                ),
-              ),
-              MeshTile(
-                title: context.l10n.appColors,
-                leading: const Icon(Icons.palette_outlined),
-                onTap: () => context.push('/settings/app/colors'),
-              ),
             ],
           ),
           if (orientationSupported)

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/settings_search.dart';
+import '../../ui/app_display_scale.dart';
 import '../../ui/kit/kit.dart';
 import 'radio/config_section_page.dart';
 import 'radio/config_sections.dart';
@@ -120,7 +121,15 @@ class SettingsSearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = context.l10n;
     final localized = [
+      if (supportsAppDisplayScale)
+        for (final title in [strings.interfaceScale, strings.textSize])
+          SettingsEntry(
+            title: title,
+            route: 'app',
+            section: '${strings.app_f9886c} › ${strings.appearance_d206f1}',
+          ),
       for (final entry in settingsIndex())
         SettingsEntry(
           title: context.builtIn(entry.title),

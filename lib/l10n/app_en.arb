@@ -1538,6 +1538,8 @@
   "defaultMessageColor": "Default",
   "messageInfoColor": "Message information text color",
   "appColors": "App colors",
+  "interfaceScale": "Interface zoom",
+  "textSize": "Text size",
   "colorPreviewIncoming": "Hello! Can you hear me?",
   "colorPreviewOutgoing": "Loud and clear!",
   "colorPreviewMention": "@You, did you get my message?",

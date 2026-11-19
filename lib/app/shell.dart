@@ -57,6 +57,7 @@ class AdaptiveShell extends ConsumerWidget {
       body: Row(
         children: [
           NavigationRail(
+            scrollable: true,
             selectedIndex: shell.currentIndex,
             onDestinationSelected: _go,
             labelType: NavigationRailLabelType.all,

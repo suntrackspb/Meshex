@@ -5070,6 +5070,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appColors => 'App colors';
 
   @override
+  String get interfaceScale => 'Interface zoom';
+
+  @override
+  String get textSize => 'Text size';
+
+  @override
   String get colorPreviewIncoming => 'Hello! Can you hear me?';
 
   @override

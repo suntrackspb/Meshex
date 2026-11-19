@@ -5072,6 +5072,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appColors => 'Цвета приложения';
 
   @override
+  String get interfaceScale => 'Масштаб интерфейса';
+
+  @override
+  String get textSize => 'Размер текста';
+
+  @override
   String get colorPreviewIncoming => 'Привет! Как слышно?';
 
   @override

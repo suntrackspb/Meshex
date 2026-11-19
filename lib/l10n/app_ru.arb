@@ -8016,6 +8016,8 @@
   "defaultMessageColor": "По умолчанию",
   "messageInfoColor": "Цвет текста информации о сообщении",
   "appColors": "Цвета приложения",
+  "interfaceScale": "Масштаб интерфейса",
+  "textSize": "Размер текста",
   "colorPreviewIncoming": "Привет! Как слышно?",
   "colorPreviewOutgoing": "Отлично, я на связи!",
   "colorPreviewMention": "@Вы, сообщение дошло?",

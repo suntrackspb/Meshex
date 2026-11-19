@@ -997,6 +997,22 @@ final appThemeProvider = StreamProvider<AppTheme>(
   (ref) => _setting(ref, AppSettingKeys.theme).map(AppTheme.parse),
 );
 
+final interfaceScaleProvider = StreamProvider<int>(
+  (ref) => ref
+      .watch(appDatabaseProvider)
+      .watchSetting(AppSettingKeys.interfaceScale)
+      .map((value) => parseAppearanceScale(value, interfaceScaleOptions))
+      .distinct(),
+);
+
+final textSizeProvider = StreamProvider<int>(
+  (ref) => ref
+      .watch(appDatabaseProvider)
+      .watchSetting(AppSettingKeys.textSize)
+      .map((value) => parseAppearanceScale(value, textSizeOptions))
+      .distinct(),
+);
+
 /// Цвет пузыря с обращением ко мне; null — без подсветки.
 final mentionColorProvider = StreamProvider<Accent?>(
   (ref) => _setting(ref, AppSettingKeys.mentionColor).map(parseMentionColor),

@@ -8898,6 +8898,18 @@ abstract class AppLocalizations {
   /// **'Цвета приложения'**
   String get appColors;
 
+  /// No description provided for @interfaceScale.
+  ///
+  /// In ru, this message translates to:
+  /// **'Масштаб интерфейса'**
+  String get interfaceScale;
+
+  /// No description provided for @textSize.
+  ///
+  /// In ru, this message translates to:
+  /// **'Размер текста'**
+  String get textSize;
+
   /// No description provided for @colorPreviewIncoming.
   ///
   /// In ru, this message translates to:

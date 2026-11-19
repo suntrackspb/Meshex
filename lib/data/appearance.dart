@@ -2,6 +2,17 @@ import 'dart:ui' show Color;
 
 import '../ui/tokens.dart';
 
+const defaultAppearanceScale = 100;
+const interfaceScaleOptions = [100, 110, 125, 150, 175, 200];
+const textSizeOptions = [100, 110, 125, 150];
+
+int parseAppearanceScale(String? value, List<int> options) {
+  final percent = int.tryParse(value ?? '');
+  return percent != null && options.contains(percent)
+      ? percent
+      : defaultAppearanceScale;
+}
+
 /// Тема приложения. [black] — тёмная с чистым чёрным фоном (OLED).
 enum AppTheme {
   system('Система'),

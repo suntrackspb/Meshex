@@ -24,6 +24,7 @@ import 'core/desktop/single_instance.dart';
 import 'core/radio/journal.dart';
 import 'data/appearance.dart';
 import 'data/db_location.dart';
+import 'ui/app_display_scale.dart';
 import 'ui/theme.dart';
 
 Future<void> main(List<String> args) async {
@@ -138,7 +139,7 @@ class _MeshAppState extends ConsumerState<MeshApp> {
     ref.listen(nodeFilterPersistProvider, (_, _) {});
     final theme = ref.watch(appThemeProvider).value ?? AppTheme.system;
     final accent = ref.watch(accentProvider).value ?? accents.first;
-    return toastsHost(
+    final app = toastsHost(
       MaterialApp.router(
         title: 'Meshex',
         locale: ref.watch(appLocaleProvider).value,
@@ -159,6 +160,13 @@ class _MeshAppState extends ConsumerState<MeshApp> {
         routerConfig: appRouter,
         debugShowCheckedModeBanner: false,
       ),
+    );
+    if (!supportsAppDisplayScale) return app;
+    return AppDisplayScale(
+      interfacePercent:
+          ref.watch(interfaceScaleProvider).value ?? defaultAppearanceScale,
+      textPercent: ref.watch(textSizeProvider).value ?? defaultAppearanceScale,
+      child: app,
     );
   }
 }

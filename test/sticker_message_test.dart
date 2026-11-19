@@ -51,7 +51,8 @@ void main() {
         replyId: 7,
       );
       final first = await only();
-      expect(first.portnum, 256);
+      expect(first.portnum, 283);
+      expect(sent.single.decoded.portnum.value, 283);
       expect(first.rawPayload, bytes);
       expect(first.body, '[Sticker]');
       expect(messageContent(first), isA<StickerMessageContent>());
@@ -59,13 +60,19 @@ void main() {
       expect(sent.single.decoded.payload, bytes);
       expect(sent.single.decoded.emoji, 0);
       expect(sent.single.decoded.replyId, 7);
-      await sender.retry(first);
+      // Simulate a queued sticker saved by an older client.
+      await db
+          .update(db.messages)
+          .write(const MessagesCompanion(portnum: Value(256)));
+      final legacy = await only();
+      await sender.retry(legacy);
       final second = await only();
       expect(second.id, first.id);
       expect(second.packetId, isNot(first.packetId));
       expect(second.rawPayload, bytes);
+      expect(second.portnum, 283);
       expect(sent.last.decoded.payload, bytes);
-      expect(sent.last.decoded.portnum, PortNum.PRIVATE_APP);
+      expect(sent.last.decoded.portnum.value, 283);
       expect(sent.last.decoded.replyId, 7);
     },
   );
@@ -160,7 +167,7 @@ void main() {
   });
 
   test(
-    'radio inserts typed content, ignores malformed private, keeps stream alive',
+    'radio decodes port 283 and ignores malformed sticker packets',
     () async {
       final router = PacketRouter(db);
       MeshPacket packet(int id, List<int> payload) => MeshPacket(
@@ -169,19 +176,21 @@ void main() {
         to: broadcastNum,
         channel: 0,
         decoded: Data(
-          portnum: PortNum.PRIVATE_APP,
+          portnum: PortNum.MESHEX_STICKER_APP,
           payload: payload,
           replyId: 7,
         ),
       );
       await router.handle(FromRadio(packet: packet(1, [1, 2, 3])));
       expect(await db.select(db.messages).get(), isEmpty);
-      await router.handle(FromRadio(packet: packet(2, bytes)));
+      final frame = FromRadio(packet: packet(2, bytes));
+      await router.handle(FromRadio.fromBuffer(frame.writeToBuffer()));
       final message = await only();
       expect(message.rawPayload, bytes);
       expect(messageContent(message), isA<StickerMessageContent>());
       expect(message.replyId, 7);
       expect(message.heardOnRadio, isTrue);
+      expect(message.portnum, 283);
       await router.handle(FromRadio(packet: packet(2, bytes)..rxRssi = -55));
       expect((await only()).rxRssi, -55);
       expect((await only()).rawPayload, bytes);

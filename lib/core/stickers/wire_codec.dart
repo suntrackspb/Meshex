@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../proto/generated/meshtastic/portnums.pbenum.dart';
+
 /// STK-DRAFT-2 identity. The source is a discovery hint, not the image key.
 class StickerEnvelope {
   StickerEnvelope({
@@ -105,7 +107,11 @@ String normalizeSourceUrl(String input) {
 }
 
 class StickerWireCodec {
-  static const portnum = 256;
+  static const port = PortNum.MESHEX_STICKER_APP;
+  static const legacyPort = PortNum.PRIVATE_APP;
+
+  static bool supportsPort(int value) =>
+      value == port.value || value == legacyPort.value;
   static const maxEnvelopeBytes = 191;
 
   static Uint8List encode(StickerEnvelope value, {int payloadBudget = 200}) {
@@ -130,7 +136,7 @@ class StickerWireCodec {
     return bytes;
   }
 
-  /// Unrelated PRIVATE_APP packets and malformed envelopes return null.
+  /// Payloads without a valid sticker envelope return null.
   static StickerEnvelope? decode(List<int> bytes) {
     if (bytes.length < 41 ||
         bytes.length > maxEnvelopeBytes ||

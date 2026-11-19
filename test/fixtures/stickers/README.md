@@ -25,7 +25,7 @@ future source fetcher. ASCII URL normalization is provided; Unicode host input
 still requires IDNA conversion in the source input layer.
 
 `mirror-message.json` is the additive message API example used by the current
-`mesh-mirror-v2` implementation: `kind=sticker`, `portnum=256`, and the same
+`mesh-mirror-v2` implementation: `kind=sticker`, `portnum=283`, and the same
 `sticker` object in HTTP history, WS init/live, and SSE JSON data. The server
 excludes raw `payload`; the client reconstructs canonical wire bytes without
 HTTP/DNS access to the source. Python's mirror encoder and the client's shared

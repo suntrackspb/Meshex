@@ -130,7 +130,7 @@ class MessageSender {
         : StickerWireCodec.encode(sticker, payloadBudget: payloadBudget);
     final port = sticker == null
         ? PortNum.TEXT_MESSAGE_APP
-        : PortNum.PRIVATE_APP;
+        : StickerWireCodec.port;
     if (payload.length > maxMessageBytes) {
       throw ArgumentError('длиннее $maxMessageBytes байт');
     }
@@ -183,14 +183,14 @@ class MessageSender {
         port = PortNum.TEXT_MESSAGE_APP;
       case StickerMessageContent():
         payload = m.rawPayload!;
-        port = PortNum.PRIVATE_APP;
+        port = StickerWireCodec.port;
       case UnsupportedMessageContent():
         throw StateError('тип сообщения не поддерживается');
     }
     if (payload.length > maxMessageBytes) {
       throw ArgumentError('длиннее $maxMessageBytes байт');
     }
-    if (port == PortNum.PRIVATE_APP &&
+    if (port == StickerWireCodec.port &&
         payload.length >
             (stickerPayloadBudget?.call(m.toNum != broadcastNum) ??
                 maxMessageBytes)) {
@@ -205,6 +205,7 @@ class MessageSender {
     await (db.update(db.messages)..where((r) => r.id.equals(m.id))).write(
       MessagesCompanion(
         packetId: Value(id),
+        portnum: Value(port.value),
         rxTime: Value(DateTime.now()),
         pkiEncrypted: Value(key != null),
         ackState: const Value(AckState.pending),

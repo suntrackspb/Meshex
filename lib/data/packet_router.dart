@@ -192,7 +192,8 @@ class PacketRouter {
     switch (d.portnum) {
       case PortNum.TEXT_MESSAGE_APP:
         await _insertMessage(p, utf8.decode(d.payload, allowMalformed: true));
-      case PortNum.PRIVATE_APP:
+      case StickerWireCodec.port:
+      case StickerWireCodec.legacyPort:
         final sticker = StickerWireCodec.decode(d.payload);
         if (sticker != null) {
           await _insertMessage(p, '[Sticker]', sticker: sticker);

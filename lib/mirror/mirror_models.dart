@@ -60,8 +60,9 @@ class MirrorMessage {
     final int portnum;
     StickerEnvelope? sticker;
     if (kind == 'sticker') {
-      if (raw['portnum'] is! int ||
-          raw['portnum'] != StickerWireCodec.portnum ||
+      final rawPortnum = raw['portnum'];
+      if (rawPortnum is! int ||
+          !StickerWireCodec.supportsPort(rawPortnum) ||
           raw['sticker'] is! Map ||
           (raw['emoji'] != null &&
               (raw['emoji'] is! int || raw['emoji'] != 0)) ||
@@ -82,7 +83,7 @@ class MirrorMessage {
       } on FormatException {
         return null;
       }
-      portnum = StickerWireCodec.portnum;
+      portnum = rawPortnum;
     } else if (kind == 'text') {
       if ((raw['portnum'] != null &&
               (raw['portnum'] is! int || raw['portnum'] != 1)) ||
@@ -123,7 +124,7 @@ class MirrorMessage {
   bool get hasValidContent => switch (kind) {
     'text' => portnum == 1 && sticker == null,
     'sticker' =>
-      portnum == StickerWireCodec.portnum &&
+      StickerWireCodec.supportsPort(portnum) &&
           sticker != null &&
           (emoji == null || emoji == 0) &&
           nodeNumFromId(fromId) != null &&

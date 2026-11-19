@@ -276,7 +276,7 @@ class Messages extends Table {
   TextColumn get channelKey => text().withDefault(const Constant(''))();
   TextColumn get body => text()();
 
-  /// Порт сообщения: 1 — текст, 256 — приватный протокол стикеров Meshex.
+  /// Порт сообщения: 1 — текст, 283 — стикеры Meshex (ранее 256).
   IntColumn get portnum => integer().withDefault(const Constant(1))();
 
   /// Exact v2 bytes; never UTF-8 decoded or reconstructed from body.

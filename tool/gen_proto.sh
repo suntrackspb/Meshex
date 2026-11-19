@@ -14,6 +14,11 @@ git clone --quiet https://github.com/meshtastic/protobufs.git "$SRC"
 git -C "$SRC" checkout --quiet "$REF"
 echo "$REF" > tool/protobufs.ref
 
+# The client uses a private sticker port in addition to the upstream enum.
+perl -pi -e 's/^([ \t]*)(ATAK_FORWARDER[ \t]*=[ \t]*257;)/$1$2\n\n${1}MESHEX_STICKER_APP = 283;/' \
+  "$SRC/meshtastic/portnums.proto"
+grep -q 'MESHEX_STICKER_APP = 283;' "$SRC/meshtastic/portnums.proto"
+
 mkdir -p "$OUT"
 PATH="$HOME/.pub-cache/bin:$PATH" protoc \
   -I "$SRC" \

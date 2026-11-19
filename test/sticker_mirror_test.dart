@@ -44,13 +44,17 @@ void main() {
           final row = dto()..['text'] = text;
           final parsed = MirrorMessage.tryParse(row)!;
           expect(parsed.kind, 'sticker');
-          expect(parsed.portnum, 256);
+          expect(parsed.portnum, 283);
           expect(parsed.sticker, envelope);
           expect(parsed.hasValidContent, isTrue);
           expect(StickerWireCodec.encode(parsed.sticker!), payload);
         }
         final row = dto()..remove('text');
         expect(MirrorMessage.tryParse(row)!.sticker, envelope);
+        final legacy = MirrorMessage.tryParse(row..['portnum'] = 256)!;
+        expect(legacy.portnum, 256);
+        expect(legacy.hasValidContent, isTrue);
+        expect(legacy.sticker, envelope);
       },
     );
 
@@ -62,8 +66,9 @@ void main() {
           {'kind': 'text'},
           {'kind': null},
           {'portnum': 1},
-          {'portnum': '256'},
-          {'portnum': 256.0},
+          {'portnum': 284},
+          {'portnum': '283'},
+          {'portnum': 283.0},
           {'sticker': null},
           {'sticker': 'legacy'},
           {
@@ -197,7 +202,7 @@ void main() {
           live.message,
         ]) {
           expect(m.sticker, envelope);
-          expect(m.portnum, 256);
+          expect(m.portnum, 283);
         }
         expect(
           MirrorEvent.parse({
@@ -254,7 +259,7 @@ void main() {
           xeddsaSigned: signed,
           pkiEncrypted: pki,
           decoded: Data(
-            portnum: PortNum.PRIVATE_APP,
+            portnum: PortNum.MESHEX_STICKER_APP,
             payload: bytes ?? payload,
             replyId: reply,
           ),
@@ -272,7 +277,7 @@ void main() {
         ]);
         final m = await only();
         expect(m.body, '[Sticker]');
-        expect(m.portnum, 256);
+        expect(m.portnum, 283);
         expect(m.rawPayload, payload);
         expect(messageContent(m), isA<StickerMessageContent>());
         expect(m.replyId, 7);
@@ -685,7 +690,7 @@ void main() {
             fromId: '!12345678',
             channel: 'MediumFast',
             kind: 'sticker',
-            portnum: 256,
+            portnum: 283,
             text: '[Sticker]',
           ),
           parsed(),

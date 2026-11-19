@@ -29,7 +29,7 @@ MessageContent messageContent(Message message) {
         ? TextMessageContent(message.body)
         : const UnsupportedMessageContent();
   }
-  if (message.portnum != StickerWireCodec.portnum ||
+  if (!StickerWireCodec.supportsPort(message.portnum) ||
       message.rawPayload == null ||
       message.stickerContent == null) {
     return const UnsupportedMessageContent();
@@ -79,6 +79,6 @@ bool messageContentMatches(
       TextMessageContent(:final text) =>
         portnum == 1 && sticker == null && text == body,
       StickerMessageContent(:final envelope) =>
-        portnum == StickerWireCodec.portnum && sticker == envelope,
+        portnum == existing.portnum && sticker == envelope,
       UnsupportedMessageContent() => false,
     };

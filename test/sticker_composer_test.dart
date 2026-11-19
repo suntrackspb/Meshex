@@ -164,7 +164,7 @@ void main() {
       expect(find.byTooltip('Blue square'), findsOneWidget);
       await tester.tap(find.byTooltip('Закрыть'));
       await settle(tester);
-      expect(sent.single.decoded.portnum, PortNum.PRIVATE_APP);
+      expect(sent.single.decoded.portnum.value, 283);
       expect(sent.single.decoded.replyId, 7);
       expect(sent.single.decoded.emoji, 0);
       expect(
@@ -181,7 +181,7 @@ void main() {
         () => db.select(db.messages).get(),
       );
       expect(messages!.length, 2);
-      expect(messages.last.portnum, 256);
+      expect(messages.last.portnum, 283);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await settle(tester);

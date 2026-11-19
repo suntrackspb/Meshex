@@ -305,6 +305,9 @@ class PortNum extends $pb.ProtobufEnum {
   static const PortNum ATAK_FORWARDER =
       PortNum._(257, _omitEnumNames ? '' : 'ATAK_FORWARDER');
 
+  static const PortNum MESHEX_STICKER_APP =
+      PortNum._(283, _omitEnumNames ? '' : 'MESHEX_STICKER_APP');
+
   ///
   ///  Currently we limit port nums to no higher than this value
   static const PortNum MAX = PortNum._(511, _omitEnumNames ? '' : 'MAX');
@@ -350,6 +353,7 @@ class PortNum extends $pb.ProtobufEnum {
     GROUPALARM_APP,
     PRIVATE_APP,
     ATAK_FORWARDER,
+    MESHEX_STICKER_APP,
     MAX,
   ];
 

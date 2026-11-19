@@ -6,8 +6,7 @@ import 'database.dart';
 
 /// Зеркало дополняет отсутствующий ключ, но не заменяет уже известный.
 Future<void> loadMirrorNodeKey(AppDatabase db, MirrorApi api, int num) async {
-  final identity = await api.nodeIdentity(nodeIdString(num));
-  final key = identity.publicKey;
+  final key = await api.nodePublicKey(nodeIdString(num));
   if (key == null || key.length != 32 || key.every((b) => b == 0)) return;
   await db.transaction(() async {
     final node = await (db.select(

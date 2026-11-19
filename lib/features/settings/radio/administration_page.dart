@@ -8,7 +8,6 @@ import '../../../app/settings_providers.dart';
 import '../../../data/settings/device_actions.dart';
 import '../../../ui/kit/kit.dart';
 import '../../../app/link_badge.dart';
-import 'package:go_router/go_router.dart';
 
 /// «Администрирование» (AdministrationScreen, Android): перезагрузка,
 /// выключение, сбросы. Подписи — iOS ru, иначе Android ru.
@@ -64,16 +63,6 @@ class _AdministrationPageState extends ConsumerState<AdministrationPage> {
                 () => _nodeDb(role),
               ),
               tile(context.l10n.factoryReset_5dbd37, Icons.restore, _factory),
-            ],
-          ),
-          const SizedBox(height: Tokens.s16),
-          SectionCard(
-            children: [
-              MeshTile(
-                title: context.l10n.repairNodeId_47d759,
-                leading: Icon(Icons.healing, color: danger),
-                onTap: me == null ? null : () => context.go('/settings/id-fix'),
-              ),
             ],
           ),
           if (_busy) const LinearProgressIndicator(),

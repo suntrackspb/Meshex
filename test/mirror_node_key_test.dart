@@ -10,6 +10,15 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  test('ключ из зеркала', () {
+    final k = parsePublicKey('ab' * 32);
+    expect(k, hasLength(32));
+    expect(k!.first, 0xab);
+    expect(parsePublicKey('ab' * 31), isNull);
+    expect(parsePublicKey('zz' * 32), isNull);
+    expect(parsePublicKey(null), isNull);
+  });
+
   late AppDatabase db;
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());

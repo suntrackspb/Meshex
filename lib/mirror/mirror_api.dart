@@ -9,16 +9,6 @@ import '../data/jammer_zones.dart';
 import 'mirror_capabilities.dart';
 import 'mirror_models.dart';
 
-/// «9c:13:9e:ef:f1:20» → байты; нулевой и неверный — null.
-List<int>? parseMac(Object? v) {
-  if (v is! String) return null;
-  final p = v.split(RegExp('[:-]'));
-  if (p.length != 6) return null;
-  final b = [for (final x in p) int.tryParse(x, radix: 16) ?? -1];
-  if (b.any((x) => x < 0 || x > 255) || b.every((x) => x == 0)) return null;
-  return b;
-}
-
 /// Публичный ключ из `/full`: 32 байта в hex («ab12…», 64 символа); иначе null.
 List<int>? parsePublicKey(Object? v) {
   if (v is! String || !RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(v)) return null;
@@ -81,21 +71,12 @@ class MirrorApi {
   Future<MirrorNode?> node(String id) async =>
       MirrorNode.tryParse(await _get('api/nodes/$id'));
 
-  /// Ключ и MAC ноды — отдельная ручка `/full`, только по одной ноде
-  /// (из общей выдачи mac_addr уберут). Нет ноды — 404 (исключение).
-  Future<({List<int>? publicKey, List<int>? mac})> nodeIdentity(
-    String id,
-  ) async {
+  /// Публичный ключ ноды из `/full`. Нет ноды — 404 (исключение).
+  Future<List<int>?> nodePublicKey(String id) async {
     final raw = await _get('api/nodes/$id/full');
-    if (raw is! Map<String, dynamic>) return (publicKey: null, mac: null);
-    return (
-      publicKey: parsePublicKey(raw['public_key']),
-      mac: parseMac(raw['mac_addr']),
-    );
+    if (raw is! Map<String, dynamic>) return null;
+    return parsePublicKey(raw['public_key']);
   }
-
-  /// MAC ноды («9c:13:…» в `mac_addr`); null — не отдаёт.
-  Future<List<int>?> nodeMac(String id) async => (await nodeIdentity(id)).mac;
 
   Future<List<MirrorMessage>> chatHistory({
     required int beforeId,

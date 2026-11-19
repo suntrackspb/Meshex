@@ -63,8 +63,6 @@ abstract final class AppSettingKeys {
   /// нода не загружается, пока её не услышат позже удаления.
   static const forgottenNodes = 'nodes.forgotten';
 
-  /// Имя своей ноды для возврата после починки ID (см. id_bug.dart).
-  static const pendingOwner = 'nodes.pendingOwner';
 
   /// Без уведомлений от ноды (как «Mute notifications» в iOS).
   static String nodeMuted(int num) => 'node.mute.$num';

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../core/radio/radio_session.dart';
 import '../ui/kit/kit.dart';
-import 'id_bug_providers.dart';
 import 'providers.dart';
 import 'router.dart';
 import 'sticker_providers.dart';
@@ -38,7 +37,7 @@ class AdaptiveShell extends ConsumerWidget {
 
     if (!wide) {
       return Scaffold(
-        body: _withIdBug(shell),
+        body: shell,
         bottomNavigationBar: NavigationBar(
           selectedIndex: shell.currentIndex,
           onDestinationSelected: _go,
@@ -87,7 +86,7 @@ class AdaptiveShell extends ConsumerWidget {
             child: MediaQuery.removePadding(
               context: context,
               removeLeft: true,
-              child: _withIdBug(shell),
+              child: shell,
             ),
           ),
         ],
@@ -95,16 +94,6 @@ class AdaptiveShell extends ConsumerWidget {
     );
   }
 }
-
-/// Держит живыми починку ID (id_bug.dart): мягкую — сама, и возврат имени
-/// после починки сбросом.
-Widget _withIdBug(Widget child) => Consumer(
-  builder: (context, ref, _) {
-    ref.watch(autoIdFixProvider);
-    ref.watch(ownerRestoreProvider);
-    return child;
-  },
-);
 
 String radioStateLabel(RadioState s) => switch (s) {
   RadioState.ready => 'на связи',

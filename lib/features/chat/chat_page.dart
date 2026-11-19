@@ -80,7 +80,7 @@ class ChatPage extends ConsumerWidget {
                         selected: wide && c.key == selected,
                         onTap: () => context.go(ChatPage.location(c.key)),
                         // Канал только из зеркала можно скрыть.
-                        onLongPress: c.index == null
+                        onContextAction: c.index == null
                             ? () => _hide(context, ref, c)
                             : null,
                       ),

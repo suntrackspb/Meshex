@@ -313,7 +313,7 @@ class NodeTile extends ConsumerWidget {
         ],
       ),
       onTap: onTap,
-      onLongPress: () => showNodeActions(context, node),
+      onContextAction: () => showNodeActions(context, node),
     );
   }
 }

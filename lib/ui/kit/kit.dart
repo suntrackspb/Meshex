@@ -89,6 +89,7 @@ class MeshTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.onLongPress,
+    this.onContextAction,
     this.selected = false,
   });
 
@@ -104,37 +105,45 @@ class MeshTile extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+
+  /// Действие по правому клику и долгому нажатию.
+  final VoidCallback? onContextAction;
   final bool selected;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    title: titleExtra == null
-        ? Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)
-        : Row(
-            children: [
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+  Widget build(BuildContext context) {
+    final tile = ListTile(
+      title: titleExtra == null
+          ? Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)
+          : Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              titleExtra!,
-            ],
-          ),
-    subtitle:
-        subtitleWidget ??
-        (subtitle == null
-            ? null
-            : Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis)),
-    leading: leading,
-    trailing:
-        trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
-    onTap: onTap,
-    onLongPress: onLongPress,
-    selected: selected,
-  );
+                const SizedBox(width: 4),
+                titleExtra!,
+              ],
+            ),
+      subtitle:
+          subtitleWidget ??
+          (subtitle == null
+              ? null
+              : Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis)),
+      leading: leading,
+      trailing:
+          trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
+      onTap: onTap,
+      onLongPress: onLongPress ?? onContextAction,
+      selected: selected,
+    );
+    return onContextAction == null
+        ? tile
+        : GestureDetector(onSecondaryTap: onContextAction, child: tile);
+  }
 }
 
 /// Пустое состояние экрана.

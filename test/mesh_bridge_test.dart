@@ -90,9 +90,13 @@ void main() {
     int to = broadcastNum,
     String text = 'hello !aabbccdd',
     int from = peer,
+    MeshPacket? packet,
   }) async {
-    final packet = MeshPacket(from: from, to: to, id: 77, channel: 1);
-    incoming.add((node: own, packet: packet, text: text));
+    incoming.add((
+      node: own,
+      packet: packet ?? MeshPacket(from: from, to: to, id: 77, channel: 1),
+      text: text,
+    ));
     return link.events.stream
         .firstWhere((event) => event['method'] == 'mesh.messageReceived')
         .then((e) => e['params'] as BridgeJson);
@@ -104,6 +108,106 @@ void main() {
     'text': 'response',
     'commandId': 'test-command',
   };
+
+  test('exposes radio metadata, including valid zero readings', () async {
+    final event = await receive(
+      packet: MeshPacket(
+        from: peer,
+        to: broadcastNum,
+        id: 77,
+        channel: 1,
+        rxRssi: 0,
+        rxSnr: 0,
+        hopStart: 3,
+        hopLimit: 1,
+        relayNode: 52,
+        nextHop: 86,
+        viaMqtt: true,
+        transportMechanism: MeshPacket_TransportMechanism.TRANSPORT_LORA,
+        decoded: Data(portnum: PortNum.TEXT_MESSAGE_APP, replyId: 42),
+      ),
+    );
+    expect(event['radio'], {
+      'packetId': 77,
+      'destinationId': '!ffffffff',
+      'channelIndex': 1,
+      'rxRssi': 0,
+      'rxSnr': 0,
+      'hopStart': 3,
+      'hopLimit': 1,
+      'hops': 2,
+      'relayNode': 52,
+      'nextHop': 86,
+      'transportMechanism': 'TRANSPORT_LORA',
+      'viaMqtt': true,
+      'wantAck': false,
+      'pkiEncrypted': false,
+      'xeddsaSigned': false,
+      'portNum': PortNum.TEXT_MESSAGE_APP.value,
+      'replyId': 42,
+    });
+  });
+
+  test('passes the full packet, including unknown protobuf fields', () async {
+    final packet = MeshPacket(
+      from: peer,
+      to: broadcastNum,
+      id: 77,
+      channel: 1,
+      txAfter: 123,
+      decoded: Data(
+        portnum: PortNum.TEXT_MESSAGE_APP,
+        payload: utf8.encode('hello !aabbccdd'),
+        requestId: 45,
+      ),
+    );
+    // Protobuf field 127 (varint), which this schema does not know.
+    final full = MeshPacket.fromBuffer([
+      ...packet.writeToBuffer(),
+      0xf8,
+      7,
+      42,
+    ]);
+    final event = await receive(packet: full);
+    final envelope = event['packet'] as BridgeJson;
+    final json = envelope['json'] as BridgeJson;
+    expect(json['txAfter'], 123);
+    expect(json['decoded'], containsPair('requestId', 45));
+    expect(
+      (json['decoded'] as BridgeJson)['payload'],
+      base64Encode(packet.decoded.payload),
+    );
+    final decoded = MeshPacket.fromBuffer(
+      base64Decode(envelope['protobufBase64'] as String),
+    );
+    expect(decoded, full);
+    expect(decoded.unknownFields, isNot(packet.unknownFields));
+  });
+
+  test(
+    'omits unknown measurements and distinguishes known zero hops',
+    () async {
+      final packet = MeshPacket(
+        from: peer,
+        to: broadcastNum,
+        id: 77,
+        channel: 1,
+        hopStart: 0,
+        rxSnr: double.nan,
+        decoded: Data(portnum: PortNum.TEXT_MESSAGE_APP),
+      );
+      final legacyEvent = await receive(packet: packet);
+      expect(() => jsonEncode(legacyEvent), returnsNormally);
+      final legacy = legacyEvent['radio'] as BridgeJson;
+      for (final field in ['rxRssi', 'rxSnr', 'hops']) {
+        expect(legacy.containsKey(field), isFalse, reason: field);
+      }
+
+      packet.decoded.bitfield = 0;
+      final modern = (await receive(packet: packet))['radio'] as BridgeJson;
+      expect(modern, containsPair('hops', 0));
+    },
+  );
 
   test(
     'allows a channel reply once and publishes the actual radio status',

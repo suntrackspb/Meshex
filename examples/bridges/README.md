@@ -40,10 +40,32 @@ Meshex sends this first. Wait for initialization before sending module commands.
 ### `mesh.messageReceived` · Meshex → module notification
 
 ```json
-{"jsonrpc":"2.0","method":"mesh.messageReceived","params":{"nodeId":"!abcd1234","messageId":"!11223344:329021","author":{"id":"!11223344","name":"Alex"},"target":{"id":"channel:opaque-id","kind":"channel","name":"LongFast"},"replyRef":"opaque-reply-ref","text":"/meshping","receivedAt":"2026-11-20T08:00:00.000Z"}}
+{"jsonrpc":"2.0","method":"mesh.messageReceived","params":{"nodeId":"!abcd1234","messageId":"!11223344:329021","author":{"id":"!11223344","name":"Alex"},"target":{"id":"channel:opaque-id","kind":"channel","name":"LongFast"},"replyRef":"opaque-reply-ref","text":"/meshping","receivedAt":"2026-11-20T08:00:00.000Z","radio":{"packetId":329021,"destinationId":"!ffffffff","channelIndex":0,"rxRssi":-92,"rxSnr":6.5,"hopStart":3,"hopLimit":1,"hops":2,"viaMqtt":false,"wantAck":false,"pkiEncrypted":false,"xeddsaSigned":false,"portNum":1}}}
 ```
 
-All leaf fields are strings. `target.kind` is `channel` or `direct`. Node identifiers use `!xxxxxxxx`. `messageId` identifies the packet in the scope of `nodeId`. `receivedAt` is an ISO 8601 UTC timestamp. Treat `target.id` and `replyRef` as opaque and keep them with `nodeId`.
+`target.kind` is `channel` or `direct`. Node identifiers use `!xxxxxxxx`. `messageId` identifies the packet in the scope of `nodeId`. `receivedAt` is an ISO 8601 UTC timestamp. Treat `target.id` and `replyRef` as opaque and keep them with `nodeId`.
+
+The optional `radio` object describes the packet received by the connected node. Existing API v1 modules can ignore it. Treat missing measurements as unknown, and preserve valid zero readings.
+
+| Fields in `radio` | Type and meaning |
+| --- | --- |
+| `packetId`, `portNum`, `replyId` | Integer packet ID, Meshtastic application port, and original reply packet ID when present. |
+| `destinationId`, `channelIndex` | Destination node ID (`!ffffffff` for broadcast) and local channel slot when available. Use the top-level `target.id` or `replyRef` to send. |
+| `rxRssi`, `rxSnr`, `rxTime` | RSSI in dBm, SNR in dB, and the receiver's raw Unix timestamp in seconds, when reported. RSSI and SNR describe the receiving node's radio link. With relays, they describe the last RF leg. |
+| `hopStart`, `hopLimit`, `hops` | Integer initial and remaining forwarding budgets from the header when reported. `hops` is their difference when the header provides enough information, with an omitted remaining budget treated as zero. A direct reception can have zero hops. |
+| `relayNode`, `nextHop` | Integer low bytes of the relay and next-hop mesh node numbers, when reported. The full node IDs cannot be inferred from either byte alone. |
+| `transportMechanism`, `priority`, `delayed` | Meshtastic enum names when reported. |
+| `viaMqtt`, `wantAck`, `pkiEncrypted`, `xeddsaSigned` | Boolean packet flags for an MQTT leg, acknowledgement requested, PKI encryption, and a valid XEdDSA signature. |
+| `bitfield` | Integer flags from the decoded payload header, when present. |
+
+The optional `packet` object carries the complete `MeshPacket` for this event in two forms:
+
+| Field in `packet` | Meaning |
+| --- | --- |
+| `json` | A Protobuf JSON object with the packet fields known to Meshex, including `decoded` and its payload bytes encoded as Base64. Protobuf field names are camel-cased. |
+| `protobufBase64` | The reserialized binary `MeshPacket`, Base64 encoded. This form also preserves fields the Meshex protobuf schema does not recognize. |
+
+The packet comes from the connected node's client API and includes the decoded payload for admitted text events. Use `radio` for normalized measurements and the top-level `target.id` or `replyRef` for replying. Modules on older versions of Meshex may receive events without `packet`.
 
 The module gets live radio text covered by the selected channel rules or the receive-direct permission. Meshex omits its own outgoing messages, ignored senders, reactions, stickers, database history and messages available only through the mirror. Events are best-effort. Meshex can drop events when its outbound queue fills or the module is disconnected.
 
@@ -111,6 +133,6 @@ For a process bridge set the executable to your absolute `python3` path and add 
 MESHEX_BRIDGE_TOKEN='your-random-token' python3 examples/bridges/mesh_bot.py --http 8765
 ```
 
-Connect Meshex to `http://127.0.0.1:8765` with that token. From another mesh node send `/meshping` to the configured channel. The example replies to that packet in the same channel. A weather bot can use the same event and request when it handles its own command.
+Connect Meshex to `http://127.0.0.1:8765` with that token. From another mesh node send `/meshping` to the configured channel. The example replies in the same channel and includes the hop count, RSSI and SNR when available.
 
 The [Telegram adapters](telegram/README.md) use the same public API and handle their own bot token and account pairing.

@@ -31,6 +31,19 @@ class Bot:
             return dict(response, error={"code": -32000, "message": "Meshex API v1 required"})
 
         if method == "mesh.messageReceived" and params.get("text", "").strip() == "/meshping":
+            radio = params.get("radio", {})
+            measurements = [
+                f"{label} {radio[field]}{unit}"
+                for field, label, unit in (
+                    ("hops", "hops", ""),
+                    ("rxRssi", "RSSI", " dBm"),
+                    ("rxSnr", "SNR", " dB"),
+                )
+                if radio.get(field) is not None
+            ]
+            text = "Pong from the Meshex bridge"
+            if measurements:
+                text += " | " + ", ".join(measurements)
             identifier = uuid.uuid4().hex
             with self.ready:
                 self.commands.append({
@@ -41,7 +54,7 @@ class Bot:
                         "commandId": identifier,
                         "nodeId": params["nodeId"],
                         "replyRef": params["replyRef"],
-                        "text": "Pong from the Meshex bridge",
+                        "text": text,
                     },
                 })
                 self.ready.notify_all()

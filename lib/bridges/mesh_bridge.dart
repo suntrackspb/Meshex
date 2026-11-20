@@ -170,7 +170,50 @@ class MeshBridge {
       'replyRef': reply,
       'text': text,
       'receivedAt': received.toIso8601String(),
+      'radio': _radioMetadata(packet),
+      'packet': {
+        'json': packet.toProto3Json(),
+        'protobufBase64': base64Encode(packet.writeToBuffer()),
+      },
     });
+  }
+
+  static BridgeJson _radioMetadata(MeshPacket packet) {
+    final data = packet.decoded;
+    final start = packet.hopStart;
+    final limit = packet.hopLimit;
+    // Older senders left hopStart at zero. A decoded bitfield distinguishes
+    // an intentional zero on newer firmware, even if the header value is omitted.
+    final hopsKnown =
+        (start > 0 || data.hasBitfield()) &&
+        start <= 7 &&
+        limit >= 0 &&
+        limit <= start;
+    return {
+      'packetId': packet.id,
+      'destinationId': nodeIdString(packet.to),
+      if (packet.to == broadcastNum || packet.hasChannel())
+        'channelIndex': packet.channel,
+      if (packet.hasRxTime()) 'rxTime': packet.rxTime,
+      if (packet.hasRxRssi()) 'rxRssi': packet.rxRssi,
+      if (packet.hasRxSnr() && packet.rxSnr.isFinite) 'rxSnr': packet.rxSnr,
+      if (packet.hasHopStart()) 'hopStart': start,
+      if (packet.hasHopLimit()) 'hopLimit': limit,
+      if (hopsKnown) 'hops': start - limit,
+      if (packet.hasRelayNode()) 'relayNode': packet.relayNode,
+      if (packet.hasNextHop()) 'nextHop': packet.nextHop,
+      if (packet.hasTransportMechanism())
+        'transportMechanism': packet.transportMechanism.name,
+      if (packet.hasDelayed()) 'delayed': packet.delayed.name,
+      if (packet.hasPriority()) 'priority': packet.priority.name,
+      'viaMqtt': packet.viaMqtt,
+      'wantAck': packet.wantAck,
+      'pkiEncrypted': packet.pkiEncrypted,
+      'xeddsaSigned': packet.xeddsaSigned,
+      'portNum': data.portnum.value,
+      if (data.replyId != 0) 'replyId': data.replyId,
+      if (data.hasBitfield()) 'bitfield': data.bitfield,
+    };
   }
 
   Future<BridgeJson> _handle(String method, BridgeJson params) async {

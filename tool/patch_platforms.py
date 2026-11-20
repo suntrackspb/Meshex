@@ -4,6 +4,7 @@
 import json
 import os
 import pathlib
+import plistlib
 import re
 import sys
 
@@ -274,6 +275,7 @@ def entitlements_add(f: pathlib.Path, keys):
 
 def patch_apple():
     ios_plist = ROOT / "ios/Runner/Info.plist"
+    macos_plist = ROOT / "macos/Runner/Info.plist"
     if ios_plist.exists() and "UIBackgroundModes" not in ios_plist.read_text():
         # Фоновый BLE: iOS будит приложение на пакеты от ноды после сворачивания.
         s = ios_plist.read_text()
@@ -289,7 +291,7 @@ def patch_apple():
         "NSCameraUsageDescription": CAM_TEXT,
     })
     # Поиск нод в локальной сети: iOS показывает только объявленные типы Bonjour.
-    for f in (ROOT / "ios/Runner/Info.plist", ROOT / "macos/Runner/Info.plist"):
+    for f in (ios_plist, macos_plist):
         if f.exists() and "NSBonjourServices" not in f.read_text():
             s = re.sub(r"</dict>\s*</plist>\s*$",
                        "\t<key>NSBonjourServices</key>\n\t<array>\n\t\t<string>_meshtastic._tcp</string>\n"
@@ -306,12 +308,20 @@ def patch_apple():
                 "<string>UIInterfaceOrientationPortrait</string>\n\t\t<string>UIInterfaceOrientationPortraitUpsideDown</string>",
                 1) + s[m.start(3):]
             ios_plist.write_text(s)
-    plist_add(ROOT / "macos/Runner/Info.plist", {
+    plist_add(macos_plist, {
         "NSBluetoothAlwaysUsageDescription": BT_TEXT,
         "NSLocalNetworkUsageDescription": NET_TEXT,
         "NSLocationUsageDescription": LOC_TEXT,
         "NSCameraUsageDescription": CAM_TEXT,
     })
+    # Use Skia until Flutter fixes the Impeller resize crash (flutter/flutter#185394).
+    if macos_plist.exists():
+        with macos_plist.open("rb") as f:
+            settings = plistlib.load(f)
+        if settings.get("FLTEnableImpeller") is not False:
+            settings["FLTEnableImpeller"] = False
+            with macos_plist.open("wb") as f:
+                plistlib.dump(settings, f, sort_keys=False)
     for name in ("DebugProfile.entitlements", "Release.entitlements"):
         entitlements_add(ROOT / "macos/Runner" / name, [
             "com.apple.security.device.bluetooth",

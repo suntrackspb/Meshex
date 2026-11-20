@@ -1,9 +1,42 @@
 import 'package:meshex/core/links.dart';
 import 'package:meshex/ui/kit/kit.dart';
+import 'package:meshex/ui/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('section cards separate groups and inset row dividers', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(Brightness.dark),
+        home: const Scaffold(
+          body: Column(
+            children: [
+              SectionCard(
+                title: 'USB',
+                children: [
+                  MeshTile(title: 'Port 1'),
+                  MeshTile(title: 'Port 2'),
+                ],
+              ),
+              SectionCard(children: [MeshTile(title: 'Journal')]),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final cards = find.byType(Card);
+    final gap =
+        tester.getTopLeft(cards.last).dy - tester.getBottomLeft(cards.first).dy;
+    expect(gap, Tokens.s12);
+    final divider = tester.widget<Divider>(find.byType(Divider));
+    expect(divider.indent, Tokens.s16);
+    expect(divider.endIndent, Tokens.s16);
+  });
+
   test('nodeColor берёт младшие 24 бита', () {
     expect(nodeColor(0xA1B2C3D4), const Color(0xFFB2C3D4));
   });

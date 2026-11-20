@@ -67,7 +67,6 @@ class DataSettingsPage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: Tokens.s16),
           PurgeStaleNodesCard(key: ObjectKey(ref.watch(databaseProvider))),
           SectionCard(
             title: context.l10n.applicationDatabase_4d6431,

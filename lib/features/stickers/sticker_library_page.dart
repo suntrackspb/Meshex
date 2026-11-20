@@ -10,6 +10,7 @@ import '../../data/stickers/source_models.dart';
 import '../../data/stickers/source_repository.dart';
 import '../../data/stickers/sticker_http.dart';
 import '../../l10n/l10n.dart';
+import '../../ui/kit/kit.dart';
 
 Future<void> showStickerLibrary(BuildContext context) => Navigator.of(
   context,
@@ -276,10 +277,17 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
                                 ),
                               ),
                             )
-                          : ListView(
-                              children: [
-                                for (final pack in packs) _installedPack(pack),
-                              ],
+                          : ListView.separated(
+                              padding: pagePadding(
+                                context,
+                              ).copyWith(top: Tokens.s8),
+                              itemCount: packs.length,
+                              itemBuilder: (_, index) => Card(
+                                clipBehavior: Clip.antiAlias,
+                                child: _installedPack(packs[index]),
+                              ),
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: Tokens.s8),
                             ),
                     )
                   : sources.when(
@@ -299,7 +307,7 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
   }
 
   Widget _sources(List<StickerSourceState> sources) => ListView(
-    padding: const EdgeInsets.all(16),
+    padding: pagePadding(context).copyWith(top: Tokens.s8),
     children: [
       Text(context.l10n.stickerSourceHint),
       const SizedBox(height: 12),
@@ -313,6 +321,7 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
       ),
       for (final source in sources)
         Card(
+          margin: const EdgeInsets.only(top: Tokens.s8),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
@@ -381,7 +390,7 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
     List<StickerSourceState> sources,
     StickerInstallProgress? progress,
   ) => ListView(
-    padding: const EdgeInsets.all(16),
+    padding: pagePadding(context).copyWith(top: Tokens.s8),
     children: [
       if (sources.isEmpty)
         ListTile(
@@ -393,7 +402,8 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
             onPressed: () => setState(() => _tab = 2),
           ),
         ),
-      for (final source in sources) ...[
+      for (final (index, source) in sources.indexed) ...[
+        if (index > 0) const SizedBox(height: Tokens.s12),
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(source.name),
@@ -427,6 +437,8 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
           ),
         for (final revision in source.catalog?.revisions ?? <StickerRevision>[])
           Card(
+            margin: const EdgeInsets.only(bottom: Tokens.s8),
+            clipBehavior: Clip.antiAlias,
             child: ListTile(
               title: Text(revision.title),
               subtitle: Text(
@@ -549,6 +561,7 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: Tokens.s8,
         children: [
           if (pack.origins.length > 1)
             DropdownButtonFormField<String>(
@@ -591,6 +604,8 @@ class _StickerLibraryPageState extends ConsumerState<StickerLibraryPage> {
 
   Widget _installedPack(InstalledStickerPack pack) => ExpansionTile(
     key: ValueKey(pack.hash),
+    shape: const Border(),
+    collapsedShape: const Border(),
     title: Text(pack.manifest.title),
     subtitle: Text(
       '${context.l10n.stickerRevision} ${pack.manifest.revision} · ${_size(pack.manifest.downloadBytes)}',

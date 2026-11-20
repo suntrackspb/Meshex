@@ -143,7 +143,7 @@ class _FixedPositionTileState extends ConsumerState<FixedPositionTile> {
           Padding(
             padding: const EdgeInsets.fromLTRB(
               Tokens.s16,
-              0,
+              Tokens.s12,
               Tokens.s16,
               Tokens.s12,
             ),

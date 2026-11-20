@@ -148,103 +148,88 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
               ),
               Padding(
                 padding: const EdgeInsets.all(Tokens.s16),
-                child: TextField(
-                  controller: _address,
-                  keyboardType: TextInputType.url,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.address_8db46e,
-                    errorText: _address.text.trim().isNotEmpty && draft == null
-                        ? context.l10n.invalidAddress_e5fb1c
-                        : null,
-                    helperText: draft == null
-                        ? null
-                        : context.l10n.willUse_0a9e87((draft).toString()),
-                  ),
-                  onChanged: (_) => setState(() {
-                    _error = null;
-                    _ok = null;
-                  }),
-                  onSubmitted: (_) => _checkAndEnable(),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(
-                  Tokens.s16,
-                  0,
-                  Tokens.s16,
-                  Tokens.s16,
-                ),
-                child: _ServerDisclosure(),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Tokens.s16,
-                  0,
-                  Tokens.s16,
-                  Tokens.s16,
-                ),
-                child: Wrap(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: Tokens.s12,
-                  runSpacing: Tokens.s8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    FilledButton(
-                      onPressed:
-                          _checking || draft == null || (enabled && !changed)
-                          ? null
-                          : _checkAndEnable,
-                      child: Text(
-                        enabled && changed
-                            ? context.l10n.checkAndApply_5b616e
-                            : context.l10n.checkAndEnable_38d621,
-                      ),
-                    ),
-                    if (cfg?.active == true)
-                      OutlinedButton.icon(
-                        onPressed: _checking || _refreshing || changed
+                    TextField(
+                      controller: _address,
+                      keyboardType: TextInputType.url,
+                      autocorrect: false,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.address_8db46e,
+                        errorText:
+                            _address.text.trim().isNotEmpty && draft == null
+                            ? context.l10n.invalidAddress_e5fb1c
+                            : null,
+                        helperText: draft == null
                             ? null
-                            : _refreshCapabilities,
-                        icon: const Icon(Icons.refresh),
-                        label: Text(context.l10n.mirrorCapabilitiesRefresh),
+                            : context.l10n.willUse_0a9e87((draft).toString()),
                       ),
-                    if (_checking || _refreshing)
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    if (enabled &&
-                        rt != null &&
-                        rt.state != MirrorState.connected)
-                      TextButton(
-                        onPressed: rt.reconnectNow,
-                        child: Text(context.l10n.reconnect_91c240),
+                      onChanged: (_) => setState(() {
+                        _error = null;
+                        _ok = null;
+                      }),
+                      onSubmitted: (_) => _checkAndEnable(),
+                    ),
+                    const _ServerDisclosure(),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: Tokens.s12,
+                      runSpacing: Tokens.s8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        FilledButton(
+                          onPressed:
+                              _checking ||
+                                  draft == null ||
+                                  (enabled && !changed)
+                              ? null
+                              : _checkAndEnable,
+                          child: Text(
+                            enabled && changed
+                                ? context.l10n.checkAndApply_5b616e
+                                : context.l10n.checkAndEnable_38d621,
+                          ),
+                        ),
+                        if (cfg?.active == true)
+                          OutlinedButton.icon(
+                            onPressed: _checking || _refreshing || changed
+                                ? null
+                                : _refreshCapabilities,
+                            icon: const Icon(Icons.refresh),
+                            label: Text(context.l10n.mirrorCapabilitiesRefresh),
+                          ),
+                        if (_checking || _refreshing)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        if (enabled &&
+                            rt != null &&
+                            rt.state != MirrorState.connected)
+                          TextButton(
+                            onPressed: rt.reconnectNow,
+                            child: Text(context.l10n.reconnect_91c240),
+                          ),
+                      ],
+                    ),
+                    if (_error != null || _ok != null)
+                      Text(
+                        context.builtIn(_error ?? _ok!),
+                        style: TextStyle(
+                          color: _error != null
+                              ? theme.colorScheme.error
+                              : StatusColors.ok,
+                        ),
                       ),
                   ],
                 ),
               ),
-              if (_error != null || _ok != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Tokens.s16,
-                    0,
-                    Tokens.s16,
-                    Tokens.s16,
-                  ),
-                  child: Text(
-                    context.builtIn(_error ?? _ok!),
-                    style: TextStyle(
-                      color: _error != null
-                          ? theme.colorScheme.error
-                          : StatusColors.ok,
-                    ),
-                  ),
-                ),
             ],
           ),
-          if (hidden.isNotEmpty) ...[
-            const SizedBox(height: Tokens.s16),
+          if (hidden.isNotEmpty)
             SectionCard(
               footer: context.l10n.messagesFromHiddenChannelsAreNot_ae5ae7,
               children: [
@@ -259,7 +244,6 @@ class _MirrorSettingsPageState extends ConsumerState<MirrorSettingsPage> {
                   ),
               ],
             ),
-          ],
         ],
       ),
     );

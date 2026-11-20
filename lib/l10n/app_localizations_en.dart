@@ -517,7 +517,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Traffic Management Configuration';
 
   @override
-  String get configuration_7f17c7 => 'Configuration';
+  String get configuration_7f17c7 => 'Settings';
 
   @override
   String get moduleConfiguration_f1e43a => 'Module configuration';

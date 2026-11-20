@@ -184,7 +184,12 @@ class _BridgeFormState extends ConsumerState<_BridgeForm> {
                     : Text(_statusDetail(s, controller.detail!)),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  Tokens.s16,
+                  Tokens.s12,
+                  Tokens.s16,
+                  Tokens.s16,
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -219,6 +224,7 @@ class _BridgeFormState extends ConsumerState<_BridgeForm> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
+                  spacing: Tokens.s12,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     DropdownButtonFormField<BridgeTransport>(

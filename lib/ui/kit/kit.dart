@@ -35,7 +35,7 @@ class SectionCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(
               Tokens.s16,
-              Tokens.s16,
+              Tokens.s4,
               Tokens.s16,
               Tokens.s8,
             ),
@@ -51,7 +51,12 @@ class SectionCard extends StatelessWidget {
           child: Column(
             children: [
               for (var i = 0; i < children.length; i++) ...[
-                if (i > 0) const Divider(height: 1, indent: Tokens.s16),
+                if (i > 0)
+                  const Divider(
+                    height: 1,
+                    indent: Tokens.s16,
+                    endIndent: Tokens.s16,
+                  ),
                 children[i],
               ],
             ],
@@ -61,9 +66,9 @@ class SectionCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(
               Tokens.s16,
-              Tokens.s4,
-              Tokens.s16,
               Tokens.s8,
+              Tokens.s16,
+              0,
             ),
             child: Text(
               footer!,
@@ -72,6 +77,7 @@ class SectionCard extends StatelessWidget {
               ),
             ),
           ),
+        const SizedBox(height: Tokens.s12),
       ],
     );
   }

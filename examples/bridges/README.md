@@ -67,7 +67,19 @@ The optional `packet` object carries the complete `MeshPacket` for this event in
 
 The packet comes from the connected node's client API and includes the decoded payload for admitted text events. Use `radio` for normalized measurements and the top-level `target.id` or `replyRef` for replying. Modules on older versions of Meshex may receive events without `packet`.
 
-The module gets live radio text covered by the selected channel rules or the receive-direct permission. Meshex omits its own outgoing messages, ignored senders, reactions, stickers, database history and messages available only through the mirror. Events are best-effort. Meshex can drop events when its outbound queue fills or the module is disconnected.
+The module gets live messages covered by the selected channel rules or the receive-direct permission. Meshex omits its own outgoing messages, ignored senders, database history and messages available only through the mirror. Events are best-effort. Meshex can drop events when its outbound queue fills or the module is disconnected.
+
+### `mesh.reactionReceived` and `mesh.stickerReceived` · Meshex → module notifications
+
+Both carry the same message identity, author, destination, time, `radio` and `packet` fields as a text event. Modules can ignore unfamiliar notifications.
+
+- A reaction carries `emoji` and `radio.replyId`. When the original is already known in the same bridge session and chat, `originalRef` is its `replyRef`. A reaction has no reply reference of its own.
+- A sticker carries `sticker` (the validated Meshex sticker envelope with `wire_version`, `source_url`, `pack_sha256` and `sticker_id`) and a `replyRef`. When available, `originalRef` points to the message it answered.
+- In channels set to **Mentions**, reactions and stickers are forwarded when they reply to a message from the connected mesh node. **All messages** and receive-direct rules cover both event types.
+
+### `mesh.getStickerMedia` · module → Meshex request
+
+Pass the sticker event's `replyRef` and an optional byte `offset` starting at zero. Each result contains `dataBase64` (up to 128 KiB of decoded WebP bytes), `size` (total bytes) and `animated` (boolean). Advance the offset by the decoded chunk length until it reaches `size`. A stale reference, a missing local pack or a blocked source returns `-32003`. Meshex reads its installed pack library and does not fetch a remote source for the module.
 
 ### `mesh.listTargets` · module → Meshex request
 
@@ -88,6 +100,7 @@ Pass an optional non-empty `query` string up to 80 characters. The result contai
 | `targetId` | String | Destination ID from `mesh.listTargets` or an event. Supply for a new message. |
 | `replyRef` | String | Reference from `mesh.messageReceived`. Supply for a reply. The last 512 references are kept for the running session. |
 | `mentionAuthor` | Optional boolean | With a channel reply, `true` prepends the original author's mesh node ID. The prefix counts toward 200 bytes. |
+| `reaction` | Optional boolean | With a reply, `true` sends a mesh reaction and `text` contains one emoji. Omit `mentionAuthor` for a reaction. |
 
 Supply exactly one of `targetId` and `replyRef`. Meshex derives the reply destination from the reference, verifies its permissions and rechecks that the selected local channel still matches its saved configuration. A private reply goes to the original sender. A channel reply goes to the original channel and includes the original packet ID.
 

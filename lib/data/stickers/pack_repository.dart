@@ -247,6 +247,43 @@ class StickerPackRepository {
     return File('${_root.path}/packs/$hash/${descriptor.path}');
   }
 
+  Future<({Uint8List bytes, int size, bool animated})?> readMediaChunk(
+    StickerEnvelope envelope,
+    int offset, {
+    required int limit,
+  }) async {
+    await initialize();
+    final pack = _installed[envelope.packSha256];
+    final entry = pack?.manifest.stickers
+        .where((sticker) => sticker.id == envelope.stickerId)
+        .firstOrNull;
+    if (pack == null || entry == null || offset >= entry.media.bytes) {
+      return null;
+    }
+    try {
+      await client.sources.checkSendAllowed(envelope.sourceUrl);
+      await client.sources.checkSendAllowed(pack.preferredSourceUrl);
+      final descriptor = entry.media;
+      final bytes = await _readFile(
+        file(pack.hash, entry).path,
+        descriptor.bytes,
+      );
+      await verifyStickerFile(bytes, descriptor, png: false);
+      final end = offset + limit < bytes.length ? offset + limit : bytes.length;
+      return (
+        bytes: Uint8List.sublistView(bytes, offset, end),
+        size: bytes.length,
+        animated: entry.animated,
+      );
+    } on FormatException {
+      return null;
+    } on FileSystemException {
+      return null;
+    } on StateError {
+      return null;
+    }
+  }
+
   void cancel(String hash) => _cancellations[hash]?.cancel();
   void _emit() {
     if (!_changes.isClosed) _changes.add(installed);

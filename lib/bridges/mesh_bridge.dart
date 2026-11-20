@@ -4,10 +4,12 @@ import 'dart:convert';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/widgets.dart' show StringCharacters;
 
 import '../core/proto/channel_names.dart';
 import '../core/proto/mesh.dart';
 import '../core/radio/send_queue.dart';
+import '../core/stickers/wire_codec.dart';
 import '../data/database.dart';
 import '../data/mentions.dart';
 import '../data/message_sender.dart';
@@ -15,7 +17,14 @@ import '../data/packet_router.dart' show senderTime;
 import 'bridge_config.dart';
 import 'bridge_protocol.dart';
 
-typedef IncomingMeshText = ({int node, MeshPacket packet, String text});
+typedef IncomingMeshMessage = ({
+  int node,
+  MeshPacket packet,
+  String text,
+  StickerEnvelope? sticker,
+});
+typedef BridgeStickerMedia =
+    Future<BridgeJson?> Function(StickerEnvelope, int offset);
 const bridgeSettingsKey = 'bridge.config';
 const _maxCommands = 2048;
 const _commandLifetime = Duration(hours: 24);
@@ -60,6 +69,7 @@ class MeshBridge {
     required this.sender,
     required this.link,
     required this.onDisconnect,
+    this.stickerMedia,
   }) : _commands = _BridgeCommands(settings, config.id),
        _channelIds = {
          for (final fingerprint in config.channels.keys)
@@ -72,9 +82,14 @@ class MeshBridge {
   final MessageSender Function() sender;
   final BridgeLink link;
   final void Function() onDisconnect;
+  final BridgeStickerMedia? stickerMedia;
   final _BridgeCommands _commands;
   final Map<String, String> _channelIds;
-  final _replies = <String, ({String target, int packetId, int author})>{};
+  final _replies =
+      <
+        String,
+        ({String target, int packetId, int author, StickerEnvelope? sticker})
+      >{};
   final _outbound = Queue<({String method, BridgeJson data})>();
   StreamSubscription<void>? _subscription;
   bool _closed = false;
@@ -82,11 +97,11 @@ class MeshBridge {
 
   String get _nodeId => nodeIdString(config.node);
 
-  Future<void> start(Stream<IncomingMeshText> incoming) async {
+  Future<void> start(Stream<IncomingMeshMessage> incoming) async {
     await link.open(_handle, onDisconnect);
     if (_closed) return;
     _subscription = incoming
-        .asyncMap(_onText)
+        .asyncMap(_onMessage)
         .listen((_) {}, onError: (Object _) => onDisconnect());
   }
 
@@ -106,8 +121,11 @@ class MeshBridge {
     return db();
   }
 
-  Future<void> _onText(IncomingMeshText event) async {
-    final (node: node, packet: packet, text: text) = event;
+  Future<void> _onMessage(IncomingMeshMessage event) async {
+    final (node: node, packet: packet, text: text, sticker: sticker) = event;
+    final data = packet.decoded;
+    final reaction = sticker == null && data.emoji != 0;
+    if (reaction && data.replyId == 0) return;
     if (_closed ||
         node != config.node ||
         connectedNode() != node ||
@@ -135,15 +153,28 @@ class MeshBridge {
       final mode = config.channels[channel?.fingerprint];
       if (mode == null) return;
       if (mode == BridgeChannelMode.mentions) {
-        final me = await _node(currentDb, node);
-        if (!NodeMentions.mentions(
-          text,
-          node,
-          longName: me?.longName ?? '',
-          shortName: me?.shortName ?? '',
-          userId: me?.userId ?? '',
-        )) {
-          return;
+        if (reaction || sticker != null) {
+          final original =
+              await (currentDb.select(currentDb.messages)..where(
+                    (m) =>
+                        m.fromNum.equals(node) &
+                        m.toNum.equals(broadcastNum) &
+                        m.channelKey.equals(channelKey(channel!.title)) &
+                        m.packetId.equals(data.replyId),
+                  ))
+                  .getSingleOrNull();
+          if (data.replyId == 0 || original == null) return;
+        } else {
+          final me = await _node(currentDb, node);
+          if (!NodeMentions.mentions(
+            text,
+            node,
+            longName: me?.longName ?? '',
+            shortName: me?.shortName ?? '',
+            userId: me?.userId ?? '',
+          )) {
+            return;
+          }
         }
       }
     }
@@ -152,14 +183,38 @@ class MeshBridge {
     final target = direct
         ? _directTarget(packet.from, _name(author, packet.from))
         : _channelTarget(channel!);
-    final reply = bridgeNonce();
-    if (_replies.length >= 512) _replies.remove(_replies.keys.first);
-    _replies[reply] = (
-      target: target['id'] as String,
-      packetId: packet.id,
-      author: packet.from,
-    );
-    _publish('mesh.messageReceived', {
+    final targetId = target['id'] as String;
+    final originals = data.replyId == 0
+        ? const <String>[]
+        : _replies.entries
+              .where(
+                (entry) =>
+                    entry.value.target == targetId &&
+                    entry.value.packetId == data.replyId,
+              )
+              .map((entry) => entry.key)
+              .take(2)
+              .toList();
+    final originalRef = originals.length == 1 ? originals.single : null;
+    final String? reply;
+    if (reaction) {
+      reply = null;
+    } else {
+      reply = bridgeNonce();
+      if (_replies.length >= 512) _replies.remove(_replies.keys.first);
+      _replies[reply] = (
+        target: targetId,
+        packetId: packet.id,
+        author: packet.from,
+        sticker: sticker,
+      );
+    }
+    final method = reaction
+        ? 'mesh.reactionReceived'
+        : sticker != null
+        ? 'mesh.stickerReceived'
+        : 'mesh.messageReceived';
+    _publish(method, {
       'nodeId': _nodeId,
       'messageId': '${nodeIdString(packet.from)}:${packet.id}',
       'author': {
@@ -167,8 +222,11 @@ class MeshBridge {
         'name': _name(author, packet.from),
       },
       'target': target,
-      'replyRef': reply,
-      'text': text,
+      'replyRef': ?reply,
+      'originalRef': ?originalRef,
+      if (reaction) 'emoji': text,
+      if (sticker != null) 'sticker': sticker.toJson(),
+      if (!reaction && sticker == null) 'text': text,
       'receivedAt': received.toIso8601String(),
       'radio': _radioMetadata(packet),
       'packet': {
@@ -220,8 +278,29 @@ class MeshBridge {
     return switch (method) {
       'mesh.listTargets' => _targets(params),
       'mesh.sendMessage' => _send(params),
+      'mesh.getStickerMedia' => _getStickerMedia(params),
       _ => throw const BridgeError(-32601, 'Unknown method'),
     };
+  }
+
+  Future<BridgeJson> _getStickerMedia(BridgeJson params) async {
+    _connectedDb();
+    final ref = bridgeString(params, 'replyRef', max: 80);
+    final offset = params['offset'] ?? 0;
+    if (offset is! int || offset < 0 || offset > 5 * 1024 * 1024) {
+      throw const BridgeError(-32602, 'Invalid sticker media offset');
+    }
+    final sticker = _replies[ref]?.sticker;
+    final read = stickerMedia;
+    if (sticker == null || read == null) {
+      throw const BridgeError(-32003, 'Sticker is no longer available');
+    }
+    final result = await read(sticker, offset);
+    _connectedDb();
+    if (result == null) {
+      throw const BridgeError(-32003, 'Sticker media is not installed');
+    }
+    return result;
   }
 
   Future<BridgeJson> _targets(BridgeJson params) async {
@@ -278,6 +357,17 @@ class MeshBridge {
       isReply ? 'replyRef' : 'targetId',
       max: 80,
     );
+    final reaction = params['reaction'] ?? false;
+    if (reaction is! bool ||
+        (reaction &&
+            (!isReply ||
+                params['mentionAuthor'] == true ||
+                !_isReactionEmoji(text)))) {
+      throw const BridgeError(
+        -32602,
+        'Reaction requires a reply and a short emoji',
+      );
+    }
     final mention = params.containsKey('mentionAuthor');
     if (mention && (!isReply || params['mentionAuthor'] is! bool)) {
       throw const BridgeError(-32602, 'mentionAuthor requires replyRef');
@@ -290,6 +380,7 @@ class MeshBridge {
           key,
           params['mentionAuthor'] == true,
           text,
+          if (reaction) true,
         ]),
       ),
     );
@@ -307,6 +398,7 @@ class MeshBridge {
         key,
         isReply,
         params['mentionAuthor'] == true,
+        reaction,
       );
     } catch (error) {
       final failure = error is BridgeError
@@ -323,12 +415,35 @@ class MeshBridge {
     return result;
   }
 
+  static bool _isReactionEmoji(String text) =>
+      messageBytes(text) <= 64 &&
+      text.characters.length == 1 &&
+      text.runes.any(
+        (point) => switch (point) {
+          0x00a9 ||
+          0x00ae ||
+          0x203c ||
+          0x2049 ||
+          0x20e3 ||
+          0x2122 ||
+          0x2139 ||
+          0x3030 ||
+          0x303d ||
+          0x3297 ||
+          0x3299 => true,
+          >= 0x2194 && <= 0x2bff => true,
+          >= 0x1f000 && <= 0x1faff => true,
+          _ => false,
+        },
+      );
+
   Future<BridgeJson> _dispatch(
     String command,
     String text,
     String key,
     bool isReply,
     bool mentionAuthor,
+    bool reaction,
   ) async {
     _connectedDb();
     final reply = isReply ? _replies[key] : null;
@@ -390,6 +505,7 @@ class MeshBridge {
         to: peer!,
         text: text,
         replyId: reply?.packetId,
+        emoji: reaction,
         onQueued: queued,
         onDelivery: delivery,
         validateTarget: validate,
@@ -417,6 +533,7 @@ class MeshBridge {
         channelKey: channelKey(channel.title),
         text: text,
         replyId: reply?.packetId,
+        emoji: reaction,
         onQueued: queued,
         onDelivery: delivery,
         validateTarget: () async {

@@ -9,6 +9,7 @@ import 'package:meshex/bridges/bridge_protocol.dart';
 import 'package:meshex/bridges/mesh_bridge.dart';
 import 'package:meshex/core/proto/mesh.dart' hide User;
 import 'package:meshex/core/radio/send_queue.dart';
+import 'package:meshex/core/stickers/wire_codec.dart';
 import 'package:meshex/data/database.dart';
 import 'package:meshex/data/message_sender.dart';
 import 'package:meshex/data/packet_router.dart';
@@ -19,7 +20,7 @@ void main() {
   late AppDatabase db;
   late AppDatabase settings;
   late _Link link;
-  late StreamController<IncomingMeshText> incoming;
+  late StreamController<IncomingMeshMessage> incoming;
   late MeshBridge bridge;
   late List<MeshPacket> sent;
   late int? connected;
@@ -75,6 +76,9 @@ void main() {
       ),
       link: link,
       onDisconnect: () => fail('Unexpected bridge disconnect'),
+      stickerMedia: (sticker, offset) async => offset == 0
+          ? {'size': 3, 'animated': false, 'dataBase64': 'AAEC'}
+          : null,
     );
     await bridge.start(incoming.stream);
   });
@@ -96,6 +100,7 @@ void main() {
       node: own,
       packet: packet ?? MeshPacket(from: from, to: to, id: 77, channel: 1),
       text: text,
+      sticker: null,
     ));
     return link.events.stream
         .firstWhere((event) => event['method'] == 'mesh.messageReceived')
@@ -278,8 +283,13 @@ void main() {
     () async {
       final router = PacketRouter(
         db,
-        onIncomingText: (packet, text) {
-          incoming.add((node: own, packet: packet, text: text));
+        onIncomingMessage: (packet, text, sticker) {
+          incoming.add((
+            node: own,
+            packet: packet,
+            text: text,
+            sticker: sticker,
+          ));
         },
       );
       final seen = <BridgeJson>[];
@@ -307,6 +317,118 @@ void main() {
       await pumpEventQueue();
       expect(seen, hasLength(1));
       expect(seen.single['params'], containsPair('text', '!aabbccdd selected'));
+    },
+  );
+
+  test(
+    'links an incoming reaction and sends a mesh reaction on reply',
+    () async {
+      final original = await receive(to: own);
+      final received = link.events.stream.firstWhere(
+        (event) => event['method'] == 'mesh.reactionReceived',
+      );
+      final router = PacketRouter(
+        db,
+        onIncomingMessage: (packet, text, sticker) {
+          incoming.add((
+            node: own,
+            packet: packet,
+            text: text,
+            sticker: sticker,
+          ));
+        },
+      );
+      await router.handle(
+        FromRadio(
+          packet: MeshPacket(
+            from: peer,
+            to: own,
+            id: 89,
+            decoded: Data(
+              portnum: PortNum.TEXT_MESSAGE_APP,
+              payload: utf8.encode('👍'),
+              replyId: 77,
+              emoji: 1,
+            ),
+          ),
+        ),
+      );
+      final reaction = (await received)['params'] as BridgeJson;
+      expect(reaction['emoji'], '👍');
+      expect(reaction['originalRef'], original['replyRef']);
+
+      await link.request('mesh.sendMessage', {
+        ...command(original),
+        'text': '👍',
+        'reaction': true,
+      });
+      expect(sent.single.decoded.emoji, 1);
+      expect(sent.single.decoded.replyId, 77);
+      await expectLater(
+        link.request('mesh.sendMessage', {
+          ...command(original),
+          'commandId': 'invalid-reaction',
+          'text': 'reply',
+          'reaction': true,
+        }),
+        throwsA(
+          isA<BridgeError>().having((error) => error.code, 'code', -32602),
+        ),
+      );
+    },
+  );
+
+  test(
+    'publishes validated sticker identity and scopes media reads to its reference',
+    () async {
+      final sticker = StickerEnvelope(
+        sourceUrl: 'https://stickers.example.org/source.json',
+        packSha256: 'a' * 64,
+        stickerId: 'example',
+      );
+      final received = link.events.stream.firstWhere(
+        (event) => event['method'] == 'mesh.stickerReceived',
+      );
+      final router = PacketRouter(
+        db,
+        onIncomingMessage: (packet, text, sticker) {
+          incoming.add((
+            node: own,
+            packet: packet,
+            text: text,
+            sticker: sticker,
+          ));
+        },
+      );
+      await router.handle(
+        FromRadio(
+          packet: MeshPacket(
+            from: peer,
+            to: own,
+            id: 89,
+            decoded: Data(
+              portnum: StickerWireCodec.port,
+              payload: StickerWireCodec.encode(sticker),
+            ),
+          ),
+        ),
+      );
+      final event = (await received)['params'] as BridgeJson;
+      expect(event['sticker'], sticker.toJson());
+      expect(
+        await link.request('mesh.getStickerMedia', {
+          'replyRef': event['replyRef'],
+          'offset': 0,
+        }),
+        {'size': 3, 'animated': false, 'dataBase64': 'AAEC'},
+      );
+      final text = await receive(to: own);
+      await expectLater(
+        link.request('mesh.getStickerMedia', {'replyRef': text['replyRef']}),
+        throwsA(
+          isA<BridgeError>().having((error) => error.code, 'code', -32003),
+        ),
+      );
     },
   );
 

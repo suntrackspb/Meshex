@@ -218,13 +218,12 @@ final journalProvider = ChangeNotifierProvider<Journal>((ref) {
   return Journal()..sink = file.add;
 });
 
-final radioTextEventsProvider = Provider<StreamController<IncomingMeshText>>((
-  ref,
-) {
-  final events = StreamController<IncomingMeshText>.broadcast();
-  ref.onDispose(events.close);
-  return events;
-});
+final radioMessageEventsProvider =
+    Provider<StreamController<IncomingMeshMessage>>((ref) {
+      final events = StreamController<IncomingMeshMessage>.broadcast();
+      ref.onDispose(events.close);
+      return events;
+    });
 
 /// Соединение с нодой. Пакеты сразу уходят в БД через [PacketRouter].
 final radioProvider = ChangeNotifierProvider<RadioSession>((ref) {
@@ -242,15 +241,20 @@ final radioProvider = ChangeNotifierProvider<RadioSession>((ref) {
     if (router?.db != db) {
       final node = ref.read(activeNodeDbProvider);
       final events = bridgesSupported
-          ? ref.read(radioTextEventsProvider)
+          ? ref.read(radioMessageEventsProvider)
           : null;
       router = PacketRouter(
         db,
-        onIncomingText: events == null
+        onIncomingMessage: events == null
             ? null
-            : (packet, text) {
+            : (packet, text, sticker) {
                 if (!events.isClosed && events.hasListener) {
-                  events.add((node: node, packet: packet, text: text));
+                  events.add((
+                    node: node,
+                    packet: packet,
+                    text: text,
+                    sticker: sticker,
+                  ));
                 }
               },
       );

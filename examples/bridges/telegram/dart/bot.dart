@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'protocol.dart';
 
@@ -43,6 +44,7 @@ class TelegramBot {
   TelegramOwner? _owner;
   TelegramOwner? candidate;
   String? _username;
+  BridgeRequest? _request;
   bool _closed = false;
 
   String? get username => _username;
@@ -74,6 +76,7 @@ class TelegramBot {
     }
     if (_closed) return;
     _username = username;
+    _request = request;
     // Ignore old commands accumulated while Meshex was stopped.
     final startedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     unawaited(_poll(request, onDisconnect, startedAt));
@@ -179,7 +182,8 @@ class TelegramBot {
           'Reply to a mesh message to answer it.\n'
           '/targets [search] lists destinations\n'
           '/send <number> <text> starts a new message\n'
-          '/mention <text> mentions the author when replying in a channel',
+          '/mention <text> mentions the author when replying in a channel\n'
+          '/react <emoji> reacts to the mesh message you reply to',
         );
         return;
       }
@@ -241,7 +245,9 @@ class TelegramBot {
             ? _replies[parent['message_id']]
             : null;
         if (reply == null ||
-            (command.startsWith('/') && command != '/mention')) {
+            (command.startsWith('/') &&
+                command != '/mention' &&
+                command != '/react')) {
           await _sendText(
             candidateOwner.chat,
             'Reply to a recent mesh message or open /help.',
@@ -258,8 +264,9 @@ class TelegramBot {
         params.addAll({
           'nodeId': reply.nodeId,
           'replyRef': reply.ref,
-          'text': command == '/mention' ? args : text,
+          'text': command == '/mention' || command == '/react' ? args : text,
           if (command == '/mention') 'mentionAuthor': true,
+          if (command == '/react') 'reaction': true,
         });
       }
       final result = await request('mesh.sendMessage', params);
@@ -275,22 +282,72 @@ class TelegramBot {
   Future<void> publish(String method, BridgeJson params) async {
     final owner = _owner;
     if (_closed || owner == null) return;
-    if (method == 'mesh.messageReceived') {
+    if (const {
+      'mesh.messageReceived',
+      'mesh.reactionReceived',
+      'mesh.stickerReceived',
+    }.contains(method)) {
       final author = bridgeObject(params['author']);
       final target = bridgeObject(params['target']);
       final channel = target['kind'] == 'channel';
       final label = channel ? '#${target['name']}' : 'DM';
-      final id = await _sendText(
-        owner.chat,
-        '$label · ${author['name']} (${author['id']})\n${params['text']}',
-      );
-      if (_closed) return;
-      if (_replies.length >= 512) _replies.remove(_replies.keys.first);
-      _replies[id] = (
-        nodeId: params['nodeId'] as String,
-        ref: params['replyRef'] as String,
-        channel: channel,
-      );
+      final sender = '$label · ${author['name']} (${author['id']})';
+      if (method == 'mesh.reactionReceived') {
+        final original = params['originalRef'];
+        final parent = _replies.entries
+            .where((e) => e.value.ref == original)
+            .lastOrNull
+            ?.key;
+        final packet = (params['radio'] as BridgeJson?)?['replyId'];
+        final reaction = 'Reaction ${params['emoji']}';
+        await _sendText(
+          owner.chat,
+          '$sender\n$reaction${parent == null ? ' to packet $packet' : ''}',
+          replyTo: parent,
+        );
+        return;
+      }
+
+      void remember(int id) {
+        if (_closed) return;
+        if (_replies.length >= 512) _replies.remove(_replies.keys.first);
+        _replies[id] = (
+          nodeId: params['nodeId'] as String,
+          ref: params['replyRef'] as String,
+          channel: channel,
+        );
+      }
+
+      if (method == 'mesh.stickerReceived') {
+        final sticker = bridgeObject(params['sticker']);
+        final pack = sticker['pack_sha256'] as String;
+        final identity = '${pack.substring(0, 12)}/${sticker['sticker_id']}';
+        ({Uint8List bytes, bool animated})? media;
+        try {
+          media = await _stickerMedia(params['replyRef'] as String);
+        } on BridgeError {
+          // Sticker identity still helps identify an unavailable pack.
+        } on FormatException {
+          // An incomplete media transfer is handled the same way.
+        }
+        final suffix = media == null ? ' · media unavailable' : '';
+        final header = await _sendText(
+          owner.chat,
+          '$sender\nSticker $identity$suffix',
+        );
+        remember(header);
+        if (media == null || _closed) return;
+        final file = await _sendSticker(
+          owner.chat,
+          media.bytes,
+          animated: media.animated,
+          replyTo: header,
+        );
+        remember(file);
+      } else {
+        final id = await _sendText(owner.chat, '$sender\n${params['text']}');
+        remember(id);
+      }
     } else if (method == 'mesh.deliveryChanged') {
       final status = params['status'];
       final text = switch (status) {
@@ -307,22 +364,100 @@ class TelegramBot {
     }
   }
 
+  Future<({Uint8List bytes, bool animated})?> _stickerMedia(
+    String reference,
+  ) async {
+    final request = _request;
+    if (request == null) return null;
+    final bytes = BytesBuilder(copy: false);
+    int? size;
+    var animated = false;
+    while (size == null || bytes.length < size) {
+      final result = await request('mesh.getStickerMedia', {
+        'replyRef': reference,
+        'offset': bytes.length,
+      });
+      final length = result['size'];
+      final encoded = result['dataBase64'];
+      if (length is! int ||
+          length < 1 ||
+          length > 5 * 1024 * 1024 ||
+          encoded is! String ||
+          (size != null && length != size)) {
+        throw const FormatException('Invalid sticker media');
+      }
+      size ??= length;
+      animated = result['animated'] == true;
+      final chunk = base64Decode(encoded);
+      if (chunk.isEmpty || bytes.length + chunk.length > size) {
+        throw const FormatException('Invalid sticker media chunk');
+      }
+      bytes.add(chunk);
+    }
+    return (bytes: bytes.takeBytes(), animated: animated);
+  }
+
+  Future<int> _sendSticker(
+    int chat,
+    Uint8List bytes, {
+    required bool animated,
+    required int replyTo,
+  }) => _queueWrite(() async {
+    final params = <String, dynamic>{
+      'chat_id': chat,
+      'reply_parameters': {
+        'message_id': replyTo,
+        'allow_sending_without_reply': true,
+      },
+    };
+    if (!animated) {
+      try {
+        final result = bridgeObject(
+          await _api(
+            'sendSticker',
+            params,
+            upload: (field: 'sticker', bytes: bytes),
+          ),
+        );
+        return result['message_id'] as int;
+      } on TelegramError catch (error) {
+        if (error.code != 400) rethrow;
+      }
+    }
+    final result = bridgeObject(
+      await _api(
+        'sendDocument',
+        params,
+        upload: (field: 'document', bytes: bytes),
+      ),
+    );
+    return result['message_id'] as int;
+  });
+
   // Serialize writes to the bot chat, including the few sent during pairing.
   Future<void> _writeTail = Future.value();
 
-  Future<int> _sendText(int chat, String text) {
-    final send = _writeTail.then((_) => _sendTextNow(chat, text));
+  Future<int> _sendText(int chat, String text, {int? replyTo}) =>
+      _queueWrite(() => _sendTextNow(chat, text, replyTo));
+
+  Future<int> _queueWrite(Future<int> Function() sendMessage) {
+    final send = _writeTail.then((_) => sendMessage());
     _writeTail = send.then<void>((_) {}, onError: (Object _) {});
     return send;
   }
 
-  Future<int> _sendTextNow(int chat, String text) async {
+  Future<int> _sendTextNow(int chat, String text, int? replyTo) async {
     for (var attempt = 0; ; attempt++) {
       try {
         final result = bridgeObject(
           await _api('sendMessage', {
             'chat_id': chat,
             'text': text,
+            if (replyTo != null)
+              'reply_parameters': {
+                'message_id': replyTo,
+                'allow_sending_without_reply': true,
+              },
             'link_preview_options': {'is_disabled': true},
           }),
         );
@@ -339,6 +474,7 @@ class TelegramBot {
     String method,
     BridgeJson params, {
     Duration timeout = const Duration(seconds: 10),
+    ({String field, Uint8List bytes})? upload,
   }) async {
     if (_closed) throw const TelegramError(0);
     try {
@@ -348,8 +484,40 @@ class TelegramBot {
           .postUrl(Uri.https('api.telegram.org', '/bot$token/$method'))
           .timeout(timeout);
       request.followRedirects = false;
-      request.headers.contentType = ContentType.json;
-      final data = utf8.encode(jsonEncode(params));
+      final List<int> data;
+      if (upload == null) {
+        request.headers.contentType = ContentType.json;
+        data = utf8.encode(jsonEncode(params));
+      } else {
+        final boundary = _newPairCode();
+        request.headers.contentType = ContentType(
+          'multipart',
+          'form-data',
+          parameters: {'boundary': boundary},
+        );
+        final body = BytesBuilder(copy: false);
+        for (final entry in params.entries) {
+          final value = entry.value is String
+              ? entry.value
+              : jsonEncode(entry.value);
+          body.add(
+            utf8.encode(
+              '--$boundary\r\nContent-Disposition: form-data; '
+              'name="${entry.key}"\r\n\r\n$value\r\n',
+            ),
+          );
+        }
+        body.add(
+          utf8.encode(
+            '--$boundary\r\nContent-Disposition: form-data; '
+            'name="${upload.field}"; filename="sticker.webp"\r\n'
+            'Content-Type: image/webp\r\n\r\n',
+          ),
+        );
+        body.add(upload.bytes);
+        body.add(utf8.encode('\r\n--$boundary--\r\n'));
+        data = body.takeBytes();
+      }
       request.contentLength = data.length;
       request.add(data);
       final response = await request.close().timeout(timeout);

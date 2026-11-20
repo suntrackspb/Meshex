@@ -67,6 +67,29 @@ void main() {
   );
 
   test(
+    'bridge reads verified local sticker chunks and respects blocked sources',
+    () async {
+      await store.install(testSourceUrl, testPackHash);
+      final entry = store.installed.single.manifest.stickers.first;
+      final envelope = await store.envelopeFor(testPackHash, entry.id);
+      final file = store.file(testPackHash, entry);
+      final media = await file.readAsBytes();
+      final requests = http.calls.length;
+      final chunk = await store.readMediaChunk(envelope, 2, limit: 4);
+      expect(chunk?.bytes, media.sublist(2, 6));
+      expect(chunk?.size, media.length);
+      expect(chunk?.animated, entry.animated);
+      expect(http.calls.length, requests);
+
+      await file.writeAsBytes([...media]..[5] ^= 1);
+      expect(await store.readMediaChunk(envelope, 2, limit: 4), isNull);
+      await file.writeAsBytes(media);
+      await sources.setBlocked(testSourceUrl, true);
+      expect(await store.readMediaChunk(envelope, 2, limit: 4), isNull);
+    },
+  );
+
+  test(
     'same hash at two origins is one install with confirmed origins',
     () async {
       const other = 'https://other.example/source.json';

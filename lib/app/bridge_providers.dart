@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../bridges/external_bridge.dart';
 import '../bridges/mesh_bridge.dart';
 import '../core/radio/radio_session.dart';
 import 'providers.dart';
+import 'sticker_providers.dart';
 
 final bridgeConfigProvider = StreamProvider<BridgeConfig>(
   (ref) => ref
@@ -114,7 +116,7 @@ class BridgeController extends ChangeNotifier {
     try {
       final store = _ref.read(appDatabaseProvider);
       final radio = _ref.read(radioProvider);
-      final incoming = _ref.read(radioTextEventsProvider).stream;
+      final incoming = _ref.read(radioMessageEventsProvider).stream;
       final secret = config.transport == BridgeTransport.process
           ? null
           : await _secrets.read(key: _secretKey(config.id));
@@ -148,6 +150,18 @@ class BridgeController extends ChangeNotifier {
             ? radio.myNodeNum
             : null,
         sender: () => _ref.read(messageSenderProvider),
+        stickerMedia: (sticker, offset) async {
+          final chunk = await _ref
+              .read(stickerPackRepositoryProvider)
+              .readMediaChunk(sticker, offset, limit: 128 * 1024);
+          return chunk == null
+              ? null
+              : {
+                  'dataBase64': base64Encode(chunk.bytes),
+                  'size': chunk.size,
+                  'animated': chunk.animated,
+                };
+        },
         link: link,
         onDisconnect: () {
           if (_isCurrent(generation)) _fail('Connection to the module closed');

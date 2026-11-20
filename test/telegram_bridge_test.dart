@@ -12,6 +12,7 @@ void main() {
       final batches = StreamController<List<BridgeJson>>();
       final updates = StreamIterator(batches.stream);
       final posts = <BridgeJson>[];
+      final mediaCalls = <String>[];
       Future<Object?> requestApi(
         String method,
         BridgeJson params,
@@ -21,7 +22,8 @@ void main() {
           'getMe' => {'username': 'test_bot'},
           'getWebhookInfo' => {'url': ''},
           'getUpdates' => await updates.moveNext() ? updates.current : [],
-          'sendMessage' => () {
+          'sendMessage' || 'sendSticker' => () {
+            if (method == 'sendSticker') mediaCalls.add(method);
             posts.add(params);
             return {'message_id': posts.length};
           }(),
@@ -45,6 +47,10 @@ void main() {
         await updates.cancel();
       });
       await module.open((method, params) async {
+        if (method == 'mesh.getStickerMedia') {
+          expect(params, {'replyRef': 'sticker-1', 'offset': 0});
+          return {'size': 3, 'animated': false, 'dataBase64': 'AAEC'};
+        }
         expect(method, 'mesh.sendMessage');
         sent.add(params);
         return {'status': 'queued', 'packetId': 7};
@@ -99,6 +105,35 @@ void main() {
         'replyRef': 'original',
         'text': 'OK',
         'mentionAuthor': true,
+      });
+
+      const context = {
+        'nodeId': '!11223344',
+        'target': {'kind': 'channel', 'name': 'Local'},
+        'author': {'name': 'Mesh user', 'id': '!55667788'},
+      };
+      await module.publish('mesh.reactionReceived', {
+        ...context,
+        'originalRef': 'original',
+        'emoji': '👍',
+      });
+      expect(posts.last['text'], contains('Reaction 👍'));
+      expect(posts.last['reply_parameters'], containsPair('message_id', 2));
+      await module.publish('mesh.stickerReceived', {
+        ...context,
+        'replyRef': 'sticker-1',
+        'sticker': {'pack_sha256': 'a' * 64, 'sticker_id': 'blue'},
+      });
+      expect(mediaCalls, ['sendSticker']);
+      expect(posts.last['reply_parameters'], containsPair('message_id', 5));
+      batches.add([update(6, 42, 42, '/react 🫶', reply: 6)]);
+      await pumpEventQueue();
+      expect(sent.last, {
+        'commandId': 'telegram:6',
+        'nodeId': '!11223344',
+        'replyRef': 'sticker-1',
+        'text': '🫶',
+        'reaction': true,
       });
     },
   );

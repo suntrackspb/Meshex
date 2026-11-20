@@ -2,6 +2,7 @@
 """Standalone Telegram adapter for Meshex Bridge API v1."""
 
 import argparse
+import base64
 from collections import OrderedDict
 from concurrent.futures import Future, TimeoutError
 import getpass
@@ -44,11 +45,31 @@ class Telegram:
         self.token = token
         self.send_lock = Lock()
 
-    def call(self, method, params=None, timeout=10):
+    def call(self, method, params=None, timeout=10, upload=None):
+        params = params or {}
+        if upload is None:
+            body = json.dumps(params).encode("utf-8")
+            content_type = "application/json"
+        else:
+            field, media = upload
+            boundary = secrets.token_hex(24)
+            parts = []
+            for name, value in params.items():
+                value = str(value) if isinstance(value, (str, int)) else json.dumps(value)
+                parts.append(
+                    f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"'
+                    f"\r\n\r\n{value}\r\n".encode("utf-8")
+                )
+            parts.extend((
+                f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"; '
+                'filename="sticker.webp"\r\nContent-Type: image/webp\r\n\r\n'.encode("ascii"),
+                media, f"\r\n--{boundary}--\r\n".encode("ascii"),
+            ))
+            body = b"".join(parts)
+            content_type = f"multipart/form-data; boundary={boundary}"
         request = Request(
-            f"https://api.telegram.org/bot{self.token}/{method}",
-            json.dumps(params or {}).encode("utf-8"),
-            {"Content-Type": "application/json"},
+            f"https://api.telegram.org/bot{self.token}/{method}", body,
+            {"Content-Type": content_type},
         )
         try:
             with urlopen(request, timeout=timeout) as response:
@@ -74,19 +95,34 @@ class Telegram:
             timeout=timeout + 8,
         )
 
-    def send(self, chat, text):
+    def send(self, chat, text, *, reply_to=None):
         with self.send_lock:
             for attempt in range(3):
                 try:
-                    return self.call("sendMessage", {
-                        "chat_id": chat,
-                        "text": text[:4096],
-                        "link_preview_options": {"is_disabled": True},
-                    })["message_id"]
+                    params = {"chat_id": chat, "text": text[:4096],
+                              "link_preview_options": {"is_disabled": True}}
+                    if reply_to is not None:
+                        params["reply_parameters"] = {"message_id": reply_to,
+                                                      "allow_sending_without_reply": True}
+                    return self.call("sendMessage", params)["message_id"]
                 except TelegramError as error:
                     if attempt == 2 or error.retry_after is None:
                         raise
                     time.sleep(error.retry_after)
+
+
+    def send_sticker(self, chat, media, *, animated, reply_to):
+        params = {"chat_id": chat, "reply_parameters": {
+            "message_id": reply_to, "allow_sending_without_reply": True,
+        }}
+        with self.send_lock:
+            if not animated:
+                try:
+                    return self.call("sendSticker", params, upload=("sticker", media))["message_id"]
+                except TelegramError as error:
+                    if error.code != 400:
+                        raise
+            return self.call("sendDocument", params, upload=("document", media))["message_id"]
 
 
 def private_sender(message):
@@ -182,6 +218,7 @@ class Meshex:
         self.closed = Event()
         self.events = Queue(maxsize=128)
         self.condition = Condition()
+        self.request_lock = Lock()
         self.pending = None
 
     def receive(self, frame):
@@ -199,7 +236,8 @@ class Meshex:
             return reply
         if not self.ready.is_set():
             raise BridgeError("Сначала Meshex должен выполнить bridge.initialize.")
-        if method in ("mesh.messageReceived", "mesh.deliveryChanged") and rpc_id is None:
+        if method in ("mesh.messageReceived", "mesh.deliveryChanged",
+                      "mesh.reactionReceived", "mesh.stickerReceived") and rpc_id is None:
             params = frame.get("params")
             if not isinstance(params, dict):
                 raise BridgeError("Некорректные параметры уведомления.")
@@ -221,6 +259,10 @@ class Meshex:
         return None
 
     def request(self, method, params):
+        with self.request_lock:
+            return self._request(method, params)
+
+    def _request(self, method, params):
         frame = {
             "jsonrpc": "2.0", "id": secrets.token_hex(12),
             "method": method, "params": params,
@@ -291,7 +333,8 @@ class Bot:
             return ("Ответь на сообщение бота, чтобы написать в тот же mesh-чат.\n"
                     "/targets [поиск] — список адресатов\n"
                     "/send <номер> <текст> — новое сообщение\n"
-                    "/mention <текст> — ответ с упоминанием автора в канале")
+                    "/mention <текст> — ответ с упоминанием автора в канале\n"
+                    "/react <эмодзи> — реакция на сообщение")
         if command == "/targets":
             result = self.meshex.request("mesh.listTargets", {"query": args} if args else {})
             lines = []
@@ -321,7 +364,7 @@ class Bot:
             parent = message.get("reply_to_message") or {}
             with self.lock:
                 reply = self.replies.get(parent.get("message_id"))
-            if reply is None or (command.startswith("/") and command != "/mention"):
+            if reply is None or (command.startswith("/") and command not in ("/mention", "/react")):
                 return "Ответь на недавнее сообщение бота или вызови /help."
             node, reference, channel = reply
             if command == "/mention" and not channel:
@@ -329,6 +372,8 @@ class Bot:
             params.update(nodeId=node, replyRef=reference, text=text)
             if command == "/mention":
                 params.update(text=args, mentionAuthor=True)
+            elif command == "/react":
+                params.update(text=args, reaction=True)
         if not params["text"].strip():
             return "Введи текст сообщения."
         result = self.meshex.request("mesh.sendMessage", params)
@@ -367,12 +412,61 @@ class Bot:
         target, author = event["target"], event["author"]
         is_channel = target["kind"] == "channel"
         label = f"#{target['name']}" if is_channel else "Личка"
-        message = f"{label} · {author['name']} ({author['id']})\n{event['text']}"
-        with self.lock:
-            message_id = self.telegram.send(self.owner[1], message)
-            self.replies[message_id] = event["nodeId"], event["replyRef"], is_channel
-            if len(self.replies) > 512:
-                self.replies.popitem(last=False)
+        sender = f"{label} · {author['name']} ({author['id']})"
+        if method == "mesh.reactionReceived":
+            original = event.get("originalRef")
+            with self.lock:
+                parent = next((mid for mid, value in reversed(self.replies.items())
+                               if value[1] == original), None)
+            if parent is None:
+                packet = event.get("radio", {}).get("replyId")
+                self.telegram.send(self.owner[1], f"{sender}\nРеакция {event['emoji']} на пакет {packet}")
+            else:
+                self.telegram.send(self.owner[1], f"{sender}\nРеакция {event['emoji']}", reply_to=parent)
+            return
+        if method == "mesh.stickerReceived":
+            sticker = event["sticker"]
+            identity = f"{sticker['pack_sha256'][:12]}/{sticker['sticker_id']}"
+            try:
+                media, animated = self.sticker_media(event["replyRef"])
+            except (BridgeError, ValueError, KeyError, TypeError):
+                media = None
+            with self.lock:
+                suffix = f"Стикер {identity}" if media else f"Стикер {identity} · медиа недоступно"
+                header = self.telegram.send(self.owner[1], f"{sender}\n{suffix}")
+                self.remember(header, event, is_channel)
+                if media:
+                    message_id = self.telegram.send_sticker(
+                        self.owner[1], media, animated=animated, reply_to=header,
+                    )
+                    self.remember(message_id, event, is_channel)
+        else:
+            with self.lock:
+                message_id = self.telegram.send(self.owner[1], f"{sender}\n{event['text']}")
+                self.remember(message_id, event, is_channel)
+
+    def remember(self, message_id, event, is_channel):
+        self.replies[message_id] = event["nodeId"], event["replyRef"], is_channel
+        if len(self.replies) > 512:
+            self.replies.popitem(last=False)
+
+    def sticker_media(self, reference):
+        media = bytearray()
+        size = None
+        animated = False
+        while size is None or len(media) < size:
+            result = self.meshex.request(
+                "mesh.getStickerMedia", {"replyRef": reference, "offset": len(media)},
+            )
+            if size is None:
+                size = result["size"]
+                animated = result["animated"]
+            chunk = base64.b64decode(result["dataBase64"], validate=True)
+            if (type(size) is not int or not 1 <= size <= 5 * 1024 * 1024 or
+                    result["size"] != size or not chunk or len(media) + len(chunk) > size):
+                raise ValueError("Invalid sticker media")
+            media.extend(chunk)
+        return bytes(media), animated
 
     def poll(self):
         self.meshex.ready.wait()

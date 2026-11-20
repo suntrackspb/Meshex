@@ -16,9 +16,10 @@ import 'settings/node_text.dart';
 /// Раскладывает FromRadio по таблицам. UI читает только из БД,
 /// поэтому эфир, зеркало и история после перезапуска выглядят одинаково.
 class PacketRouter {
-  PacketRouter(this.db, {this.onIncomingText});
+  PacketRouter(this.db, {this.onIncomingMessage});
 
-  final void Function(MeshPacket packet, String text)? onIncomingText;
+  final void Function(MeshPacket packet, String text, StickerEnvelope? sticker)?
+  onIncomingMessage;
 
   final AppDatabase db;
 
@@ -195,12 +196,13 @@ class PacketRouter {
       case PortNum.TEXT_MESSAGE_APP:
         final text = utf8.decode(d.payload, allowMalformed: true);
         final first = await _insertMessage(p, text);
-        if (first && d.emoji == 0) onIncomingText?.call(p, text);
+        if (first) onIncomingMessage?.call(p, text, null);
       case StickerWireCodec.port:
       case StickerWireCodec.legacyPort:
         final sticker = StickerWireCodec.decode(d.payload);
         if (sticker != null) {
-          await _insertMessage(p, '[Sticker]', sticker: sticker);
+          final first = await _insertMessage(p, '[Sticker]', sticker: sticker);
+          if (first) onIncomingMessage?.call(p, '[Sticker]', sticker);
         }
       case PortNum.POSITION_APP:
         await _onPosition(p.from, Position.fromBuffer(d.payload), _rxTime(p));

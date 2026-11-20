@@ -5298,4 +5298,125 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get stickerRecentEmpty =>
       'Здесь появятся последние 20 использованных стикеров.';
+
+  @override
+  String get bridgesTitle => 'Мосты';
+
+  @override
+  String get bridgeStopped => 'Мост остановлен';
+
+  @override
+  String get bridgeConnecting => 'Подключаем мост…';
+
+  @override
+  String get bridgeConnected => 'Мост подключён';
+
+  @override
+  String get bridgeDisconnected => 'Связь с мостом прервана';
+
+  @override
+  String get bridgeWaitingForNode => 'Мост ждёт свою ноду';
+
+  @override
+  String get bridgeStart => 'Запустить';
+
+  @override
+  String get bridgeStop => 'Остановить';
+
+  @override
+  String get bridgeSave => 'Сохранить настройки';
+
+  @override
+  String get bridgeConnection => 'Подключение';
+
+  @override
+  String get bridgeType => 'Тип подключения';
+
+  @override
+  String get bridgeProcess => 'Внешний процесс';
+
+  @override
+  String get bridgeHttp => 'Локальный HTTP';
+
+  @override
+  String get bridgeExecutable => 'Исполняемый файл';
+
+  @override
+  String get bridgeAddress => 'Локальный адрес и порт';
+
+  @override
+  String get bridgeArguments => 'Аргументы, по одному на строку';
+
+  @override
+  String get bridgeHttpToken => 'Токен подключения';
+
+  @override
+  String get bridgeTokenSaved => 'Токен сохранён';
+
+  @override
+  String get bridgeTokenRequired => 'Введите токен подключения.';
+
+  @override
+  String get bridgeInvalidAddress =>
+      'Укажите HTTP-адрес 127.0.0.1 или [::1] с портом.';
+
+  @override
+  String get bridgeInvalidExecutable =>
+      'Укажите полный путь к исполняемому файлу.';
+
+  @override
+  String get bridgeSaveFailed =>
+      'Не удалось выполнить действие. Проверьте настройки моста.';
+
+  @override
+  String get bridgeMeshAccess => 'Доступ к mesh-чатам';
+
+  @override
+  String get bridgeNoNode => 'Выберите ноду для моста';
+
+  @override
+  String bridgeNode(String id) {
+    return 'Нода $id';
+  }
+
+  @override
+  String get bridgeNodeHelp =>
+      'Мост работает через выбранную ноду. Подключитесь к ней, чтобы выбрать каналы.';
+
+  @override
+  String bridgeSelectNode(String id) {
+    return 'Выбрать $id';
+  }
+
+  @override
+  String get bridgeReceiveDirect => 'Пересылать входящую личку';
+
+  @override
+  String get bridgeSendDirect => 'Разрешить отправлять в личку';
+
+  @override
+  String get bridgeSendChannels => 'Разрешить писать в выбранные каналы';
+
+  @override
+  String get bridgeChannelOff => 'Выключено';
+
+  @override
+  String get bridgeChannelMentions => 'Упоминания';
+
+  @override
+  String get bridgeChannelAll => 'Все сообщения';
+
+  @override
+  String get bridgeNoChannels => 'У ноды пока нет доступных каналов.';
+
+  @override
+  String get bridgeModuleClosed => 'Проверьте, что модуль запущен и отвечает.';
+
+  @override
+  String get bridgeIncompatible =>
+      'Модуль использует несовместимую версию API.';
+
+  @override
+  String get bridgeModuleConnectionFailed =>
+      'Проверьте параметры подключения и версию API модуля.';
 }

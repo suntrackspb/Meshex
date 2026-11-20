@@ -907,6 +907,10 @@ class AppDatabase extends _$AppDatabase {
         AppSettingsCompanion.insert(key: key, value: value),
       );
 
+  Future<void> deleteSetting(String key) =>
+      settings?.deleteSetting(key) ??
+      (delete(appSettings)..where((s) => s.key.equals(key))).go();
+
   /// Mirror preferences belong to this database, bypassing shared settings.
   /// Snapshot the shared defaults once, so later edits cannot affect other nodes.
   Stream<MirrorConfig> watchMirrorConfig() async* {

@@ -31,6 +31,10 @@ DirectBlock? directBlock(Node? n) {
   return null;
 }
 
+typedef MessageTargetValidator = Future<void> Function();
+typedef MessageQueued = void Function(int packetId);
+typedef MessageDelivered = void Function(int packetId, DeliveryResult result);
+
 /// Отправка текстовых сообщений: запись в БД сразу (статус «ждём»),
 /// затем статус по итогу очереди отправки.
 class MessageSender {
@@ -42,6 +46,7 @@ class MessageSender {
     this.prepareDirect,
     this.prepareSticker,
     this.stickerPayloadBudget,
+    this.sendGuarded,
   });
 
   final Future<void> Function(int)? prepareDirect;
@@ -53,6 +58,8 @@ class MessageSender {
 
   final AppDatabase db;
   final Future<DeliveryResult> Function(MeshPacket p) _send;
+  final Future<DeliveryResult> Function(MeshPacket, MessageTargetValidator)?
+  sendGuarded;
   final int? Function() _myNum;
   final int Function() _nextId;
 
@@ -64,6 +71,9 @@ class MessageSender {
     required String text,
     int? replyId,
     bool emoji = false,
+    MessageQueued? onQueued,
+    MessageDelivered? onDelivery,
+    MessageTargetValidator? validateTarget,
   }) => _new(
     to: broadcastNum,
     channel: channel,
@@ -71,6 +81,9 @@ class MessageSender {
     text: text,
     replyId: replyId,
     emoji: emoji,
+    onQueued: onQueued,
+    onDelivery: onDelivery,
+    validateTarget: validateTarget,
   );
 
   /// Личное сообщение ноде [to]: шифруется её публичным ключом (PKI).
@@ -79,7 +92,19 @@ class MessageSender {
     required String text,
     int? replyId,
     bool emoji = false,
-  }) => _new(to: to, channel: 0, text: text, replyId: replyId, emoji: emoji);
+    MessageQueued? onQueued,
+    MessageDelivered? onDelivery,
+    MessageTargetValidator? validateTarget,
+  }) => _new(
+    to: to,
+    channel: 0,
+    text: text,
+    replyId: replyId,
+    emoji: emoji,
+    onQueued: onQueued,
+    onDelivery: onDelivery,
+    validateTarget: validateTarget,
+  );
 
   Future<void> sendStickerToChannel({
     required int channel,
@@ -122,6 +147,9 @@ class MessageSender {
     required bool emoji,
     StickerEnvelope? sticker,
     int payloadBudget = maxMessageBytes,
+    MessageQueued? onQueued,
+    MessageDelivered? onDelivery,
+    MessageTargetValidator? validateTarget,
   }) async {
     final me = _myNum();
     if (me == null) throw StateError('нет соединения с нодой');
@@ -143,6 +171,7 @@ class MessageSender {
     final key = to == broadcastNum ? null : await _publicKey(to);
     if (_myNum() != me) throw StateError('соединение с нодой изменилось');
     if (sticker != null) await prepareSticker?.call(sticker);
+    if (validateTarget != null) await validateTarget();
     if (_myNum() != me) throw StateError('соединение с нодой изменилось');
     final id = _nextId();
     await db
@@ -168,7 +197,32 @@ class MessageSender {
             ackState: const Value(AckState.pending),
           ),
         );
-    await _transmit(id, to, channel, key, payload, port, replyId, emoji);
+    if (validateTarget != null) {
+      try {
+        await validateTarget();
+        if (_myNum() != me) throw StateError('соединение с нодой изменилось');
+      } catch (_) {
+        await (db.delete(db.messages)..where(
+              (m) =>
+                  m.packetId.equals(id) & m.fromNum.equals(me) & m.isOutgoing,
+            ))
+            .go();
+        rethrow;
+      }
+    }
+    onQueued?.call(id);
+    final result = await _transmit(
+      id,
+      to,
+      channel,
+      key,
+      payload,
+      port,
+      replyId,
+      emoji,
+      validateTarget: validateTarget,
+    );
+    onDelivery?.call(id, result);
   }
 
   /// Повторить неотправленное/неподтверждённое: новый id пакета, та же запись.
@@ -241,7 +295,7 @@ class MessageSender {
     }
   }
 
-  Future<void> _transmit(
+  Future<DeliveryResult> _transmit(
     int id,
     int to,
     int channel,
@@ -249,24 +303,27 @@ class MessageSender {
     Uint8List payload,
     PortNum port,
     int? replyId,
-    bool emoji,
-  ) async {
-    final r = await _send(
-      MeshPacket(
-        id: id,
-        to: to,
-        channel: channel,
-        wantAck: true,
-        pkiEncrypted: publicKey != null,
-        publicKey: publicKey,
-        decoded: Data(
-          portnum: port,
-          payload: payload,
-          replyId: replyId,
-          emoji: emoji ? 1 : 0,
-        ),
+    bool emoji, {
+    MessageTargetValidator? validateTarget,
+  }) async {
+    final packet = MeshPacket(
+      id: id,
+      to: to,
+      channel: channel,
+      wantAck: true,
+      pkiEncrypted: publicKey != null,
+      publicKey: publicKey,
+      decoded: Data(
+        portnum: port,
+        payload: payload,
+        replyId: replyId,
+        emoji: emoji ? 1 : 0,
       ),
     );
+    final guarded = sendGuarded;
+    final r = validateTarget != null && guarded != null
+        ? await guarded(packet, validateTarget)
+        : await _send(packet);
     final (state, error) = switch (r.status) {
       DeliveryStatus.acked => (AckState.acked, null),
       DeliveryStatus.failed => (AckState.failed, r.error?.value),
@@ -283,5 +340,6 @@ class MessageSender {
         ackProof: Value(r.ackProof?.value),
       ),
     );
+    return r;
   }
 }

@@ -16,7 +16,9 @@ import 'settings/node_text.dart';
 /// Раскладывает FromRadio по таблицам. UI читает только из БД,
 /// поэтому эфир, зеркало и история после перезапуска выглядят одинаково.
 class PacketRouter {
-  PacketRouter(this.db);
+  PacketRouter(this.db, {this.onIncomingText});
+
+  final void Function(MeshPacket packet, String text)? onIncomingText;
 
   final AppDatabase db;
 
@@ -191,7 +193,9 @@ class PacketRouter {
     final d = p.decoded;
     switch (d.portnum) {
       case PortNum.TEXT_MESSAGE_APP:
-        await _insertMessage(p, utf8.decode(d.payload, allowMalformed: true));
+        final text = utf8.decode(d.payload, allowMalformed: true);
+        final first = await _insertMessage(p, text);
+        if (first && d.emoji == 0) onIncomingText?.call(p, text);
       case StickerWireCodec.port:
       case StickerWireCodec.legacyPort:
         final sticker = StickerWireCodec.decode(d.payload);
@@ -432,7 +436,7 @@ class PacketRouter {
         );
   }
 
-  Future<void> _insertMessage(
+  Future<bool> _insertMessage(
     MeshPacket p,
     String text, {
     StickerEnvelope? sticker,
@@ -539,6 +543,9 @@ class PacketRouter {
         const NodesCompanion(hasXeddsaSigned: Value(true)),
       );
     }
+    return sameContent &&
+        existing?.isOutgoing != true &&
+        existing?.heardOnRadio != true;
   });
 
   /// Имя канала по индексу на своей ноде; безымянный основной — имя пресета.

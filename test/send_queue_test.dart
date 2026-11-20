@@ -75,6 +75,33 @@ void main() {
     },
   );
 
+  test('checks the bridge target when its packet reaches the radio', () {
+    fakeAsync((fa) {
+      final written = <ToRadio>[];
+      final queue = SendQueue((packet) async => written.add(packet));
+      var allowed = true;
+      DeliveryResult? guarded;
+      queue.enqueue(_pkt(wantAck: false));
+      queue
+          .enqueue(
+            _pkt(),
+            beforeWrite: () async {
+              if (!allowed) throw StateError('Channel changed');
+            },
+          )
+          .then((result) => guarded = result);
+      fa.flushMicrotasks();
+      expect(written, hasLength(1));
+      allowed = false;
+      queue.onQueueStatus(
+        QueueStatus(res: 0, meshPacketId: written.single.packet.id),
+      );
+      fa.flushMicrotasks();
+      expect(written, hasLength(1));
+      expect(guarded?.status, DeliveryStatus.rejected);
+    });
+  });
+
   test('reset() завершает всё как disconnected', () {
     fakeAsync((fa) {
       final q = SendQueue((m) async {});

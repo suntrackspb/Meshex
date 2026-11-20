@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/diagnostics_providers.dart';
 import '../../app/providers.dart';
+import '../../bridges/bridge_config.dart';
 import '../../ui/kit/kit.dart';
 import '../../ui/meshex_wordmark.dart';
 import 'about_section.dart';
@@ -92,6 +93,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/stickers'),
                 ),
+                if (bridgesSupported)
+                  MeshTile(
+                    title: context.l10n.bridgesTitle,
+                    leading: const Icon(Icons.cable_outlined),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go('/settings/bridges'),
+                  ),
                 MeshTile(
                   title: context.l10n.mirror_66ace6,
                   leading: const Icon(Icons.public),

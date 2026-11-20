@@ -9323,6 +9323,228 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Здесь появятся последние 20 использованных стикеров.'**
   String get stickerRecentEmpty;
+
+  /// No description provided for @bridgesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мосты'**
+  String get bridgesTitle;
+
+  /// No description provided for @bridgeStopped.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мост остановлен'**
+  String get bridgeStopped;
+
+  /// No description provided for @bridgeConnecting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключаем мост…'**
+  String get bridgeConnecting;
+
+  /// No description provided for @bridgeConnected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мост подключён'**
+  String get bridgeConnected;
+
+  /// No description provided for @bridgeDisconnected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Связь с мостом прервана'**
+  String get bridgeDisconnected;
+
+  /// No description provided for @bridgeWaitingForNode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мост ждёт свою ноду'**
+  String get bridgeWaitingForNode;
+
+  /// No description provided for @bridgeStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запустить'**
+  String get bridgeStart;
+
+  /// No description provided for @bridgeStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить'**
+  String get bridgeStop;
+
+  /// No description provided for @bridgeSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить настройки'**
+  String get bridgeSave;
+
+  /// No description provided for @bridgeConnection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключение'**
+  String get bridgeConnection;
+
+  /// No description provided for @bridgeType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип подключения'**
+  String get bridgeType;
+
+  /// No description provided for @bridgeProcess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Внешний процесс'**
+  String get bridgeProcess;
+
+  /// No description provided for @bridgeHttp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Локальный HTTP'**
+  String get bridgeHttp;
+
+  /// No description provided for @bridgeExecutable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Исполняемый файл'**
+  String get bridgeExecutable;
+
+  /// No description provided for @bridgeAddress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Локальный адрес и порт'**
+  String get bridgeAddress;
+
+  /// No description provided for @bridgeArguments.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аргументы, по одному на строку'**
+  String get bridgeArguments;
+
+  /// No description provided for @bridgeHttpToken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Токен подключения'**
+  String get bridgeHttpToken;
+
+  /// No description provided for @bridgeTokenSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Токен сохранён'**
+  String get bridgeTokenSaved;
+
+  /// No description provided for @bridgeTokenRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите токен подключения.'**
+  String get bridgeTokenRequired;
+
+  /// No description provided for @bridgeInvalidAddress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите HTTP-адрес 127.0.0.1 или [::1] с портом.'**
+  String get bridgeInvalidAddress;
+
+  /// No description provided for @bridgeInvalidExecutable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите полный путь к исполняемому файлу.'**
+  String get bridgeInvalidExecutable;
+
+  /// No description provided for @bridgeSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выполнить действие. Проверьте настройки моста.'**
+  String get bridgeSaveFailed;
+
+  /// No description provided for @bridgeMeshAccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступ к mesh-чатам'**
+  String get bridgeMeshAccess;
+
+  /// No description provided for @bridgeNoNode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите ноду для моста'**
+  String get bridgeNoNode;
+
+  /// No description provided for @bridgeNode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нода {id}'**
+  String bridgeNode(String id);
+
+  /// No description provided for @bridgeNodeHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мост работает через выбранную ноду. Подключитесь к ней, чтобы выбрать каналы.'**
+  String get bridgeNodeHelp;
+
+  /// No description provided for @bridgeSelectNode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать {id}'**
+  String bridgeSelectNode(String id);
+
+  /// No description provided for @bridgeReceiveDirect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пересылать входящую личку'**
+  String get bridgeReceiveDirect;
+
+  /// No description provided for @bridgeSendDirect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешить отправлять в личку'**
+  String get bridgeSendDirect;
+
+  /// No description provided for @bridgeSendChannels.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешить писать в выбранные каналы'**
+  String get bridgeSendChannels;
+
+  /// No description provided for @bridgeChannelOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключено'**
+  String get bridgeChannelOff;
+
+  /// No description provided for @bridgeChannelMentions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Упоминания'**
+  String get bridgeChannelMentions;
+
+  /// No description provided for @bridgeChannelAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все сообщения'**
+  String get bridgeChannelAll;
+
+  /// No description provided for @bridgeNoChannels.
+  ///
+  /// In ru, this message translates to:
+  /// **'У ноды пока нет доступных каналов.'**
+  String get bridgeNoChannels;
+
+  /// No description provided for @bridgeModuleClosed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте, что модуль запущен и отвечает.'**
+  String get bridgeModuleClosed;
+
+  /// No description provided for @bridgeIncompatible.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модуль использует несовместимую версию API.'**
+  String get bridgeIncompatible;
+
+  /// No description provided for @bridgeModuleConnectionFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте параметры подключения и версию API модуля.'**
+  String get bridgeModuleConnectionFailed;
 }
 
 class _AppLocalizationsDelegate

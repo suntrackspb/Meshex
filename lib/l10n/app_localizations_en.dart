@@ -5297,4 +5297,126 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get stickerRecentEmpty =>
       'Your last 20 used stickers will appear here.';
+
+  @override
+  String get bridgesTitle => 'Bridges';
+
+  @override
+  String get bridgeStopped => 'Bridge stopped';
+
+  @override
+  String get bridgeConnecting => 'Connecting bridge…';
+
+  @override
+  String get bridgeConnected => 'Bridge connected';
+
+  @override
+  String get bridgeDisconnected => 'Bridge disconnected';
+
+  @override
+  String get bridgeWaitingForNode => 'Bridge waiting for its mesh node';
+
+  @override
+  String get bridgeStart => 'Start';
+
+  @override
+  String get bridgeStop => 'Stop';
+
+  @override
+  String get bridgeSave => 'Save settings';
+
+  @override
+  String get bridgeConnection => 'Connection';
+
+  @override
+  String get bridgeType => 'Connection type';
+
+  @override
+  String get bridgeProcess => 'External process';
+
+  @override
+  String get bridgeHttp => 'Local HTTP';
+
+  @override
+  String get bridgeExecutable => 'Executable';
+
+  @override
+  String get bridgeAddress => 'Local address and port';
+
+  @override
+  String get bridgeArguments => 'Arguments, one per line';
+
+  @override
+  String get bridgeHttpToken => 'Connection token';
+
+  @override
+  String get bridgeTokenSaved => 'Token saved';
+
+  @override
+  String get bridgeTokenRequired => 'Enter a connection token.';
+
+  @override
+  String get bridgeInvalidAddress =>
+      'Enter an HTTP address on 127.0.0.1 or [::1] with a port.';
+
+  @override
+  String get bridgeInvalidExecutable =>
+      'Enter the full path to the executable.';
+
+  @override
+  String get bridgeSaveFailed =>
+      'The action failed. Check your bridge settings.';
+
+  @override
+  String get bridgeMeshAccess => 'Mesh chat access';
+
+  @override
+  String get bridgeNoNode => 'Choose a mesh node for the bridge';
+
+  @override
+  String bridgeNode(String id) {
+    return 'Node $id';
+  }
+
+  @override
+  String get bridgeNodeHelp =>
+      'The bridge uses the selected node. Connect to it to choose channels.';
+
+  @override
+  String bridgeSelectNode(String id) {
+    return 'Use $id';
+  }
+
+  @override
+  String get bridgeReceiveDirect => 'Forward incoming direct messages';
+
+  @override
+  String get bridgeSendDirect => 'Allow sending direct messages';
+
+  @override
+  String get bridgeSendChannels => 'Allow sending to selected channels';
+
+  @override
+  String get bridgeChannelOff => 'Off';
+
+  @override
+  String get bridgeChannelMentions => 'Mentions';
+
+  @override
+  String get bridgeChannelAll => 'All messages';
+
+  @override
+  String get bridgeNoChannels => 'This node has no available channels yet.';
+
+  @override
+  String get bridgeModuleClosed =>
+      'Check that the module is running and responding.';
+
+  @override
+  String get bridgeIncompatible =>
+      'The module uses an incompatible API version.';
+
+  @override
+  String get bridgeModuleConnectionFailed =>
+      'Check the connection settings and module API version.';
 }

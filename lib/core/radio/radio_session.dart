@@ -181,11 +181,14 @@ class RadioSession extends ChangeNotifier {
   }
 
   /// Отправить MeshPacket через очередь; результат — по ACK/NAK.
-  Future<DeliveryResult> sendPacket(MeshPacket p) {
+  Future<DeliveryResult> sendPacket(
+    MeshPacket p, {
+    Future<void> Function()? beforeWrite,
+  }) {
     if (_t == null) {
       return Future.value(const DeliveryResult(DeliveryStatus.disconnected));
     }
-    return queue.enqueue(p);
+    return queue.enqueue(p, beforeWrite: beforeWrite);
   }
 
   Future<void> _sendHeartbeat() async {

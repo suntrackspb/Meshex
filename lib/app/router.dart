@@ -18,6 +18,8 @@ import '../features/settings/app_settings_page.dart';
 import '../features/settings/app_colors_page.dart';
 import '../features/settings/area_picker_page.dart';
 import '../features/settings/mirror_settings_page.dart';
+import '../features/settings/bridges_page.dart';
+import '../bridges/bridge_config.dart';
 import '../features/settings/radio/administration_page.dart';
 import '../features/settings/radio/backup_page.dart';
 import '../features/settings/radio/channel_share_page.dart';
@@ -171,6 +173,8 @@ final appRouter = GoRouter(
                 _route('admin', (_) => const AdministrationPage()),
                 _route('backup', (_) => const BackupPage()),
                 _route('data', (_) => const DataSettingsPage()),
+                if (bridgesSupported)
+                  _route('bridges', (_) => const BridgesPage()),
                 _route('mirror', (_) => const MirrorSettingsPage()),
                 _route('message-filter', (_) => const MessageFilterPage()),
                 _route('report', (_) => const ReportPage()),

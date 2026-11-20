@@ -8086,5 +8086,56 @@
   "applyChanges": "Применить",
   "purgeStalePending": "Изменения вступят в силу после нажатия «Применить».",
 "stickerRecent": "Недавние",
-"stickerRecentEmpty": "Здесь появятся последние 20 использованных стикеров."
+"stickerRecentEmpty": "Здесь появятся последние 20 использованных стикеров.",
+  "bridgesTitle": "Мосты",
+  "bridgeStopped": "Мост остановлен",
+  "bridgeConnecting": "Подключаем мост…",
+  "bridgeConnected": "Мост подключён",
+  "bridgeDisconnected": "Связь с мостом прервана",
+  "bridgeWaitingForNode": "Мост ждёт свою ноду",
+  "bridgeStart": "Запустить",
+  "bridgeStop": "Остановить",
+  "bridgeSave": "Сохранить настройки",
+  "bridgeConnection": "Подключение",
+  "bridgeType": "Тип подключения",
+  "bridgeProcess": "Внешний процесс",
+  "bridgeHttp": "Локальный HTTP",
+  "bridgeExecutable": "Исполняемый файл",
+  "bridgeAddress": "Локальный адрес и порт",
+  "bridgeArguments": "Аргументы, по одному на строку",
+  "bridgeHttpToken": "Токен подключения",
+  "bridgeTokenSaved": "Токен сохранён",
+  "bridgeTokenRequired": "Введите токен подключения.",
+  "bridgeInvalidAddress": "Укажите HTTP-адрес 127.0.0.1 или [::1] с портом.",
+  "bridgeInvalidExecutable": "Укажите полный путь к исполняемому файлу.",
+  "bridgeSaveFailed": "Не удалось выполнить действие. Проверьте настройки моста.",
+  "bridgeMeshAccess": "Доступ к mesh-чатам",
+  "bridgeNoNode": "Выберите ноду для моста",
+  "bridgeNode": "Нода {id}",
+  "@bridgeNode": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "bridgeNodeHelp": "Мост работает через выбранную ноду. Подключитесь к ней, чтобы выбрать каналы.",
+  "bridgeSelectNode": "Выбрать {id}",
+  "@bridgeSelectNode": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "bridgeReceiveDirect": "Пересылать входящую личку",
+  "bridgeSendDirect": "Разрешить отправлять в личку",
+  "bridgeSendChannels": "Разрешить писать в выбранные каналы",
+  "bridgeChannelOff": "Выключено",
+  "bridgeChannelMentions": "Упоминания",
+  "bridgeChannelAll": "Все сообщения",
+  "bridgeNoChannels": "У ноды пока нет доступных каналов.",
+  "bridgeModuleClosed": "Проверьте, что модуль запущен и отвечает.",
+  "bridgeIncompatible": "Модуль использует несовместимую версию API.",
+  "bridgeModuleConnectionFailed": "Проверьте параметры подключения и версию API модуля."
 }

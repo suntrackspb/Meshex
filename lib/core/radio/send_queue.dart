@@ -76,9 +76,12 @@ class SendQueue {
 
   /// Поставить пакет в очередь. Если `id == 0` — будет назначен.
   /// Результат завершается по ACK/NAK; без `want_ack` — сразу после приёма нодой.
-  Future<DeliveryResult> enqueue(MeshPacket p) {
+  Future<DeliveryResult> enqueue(
+    MeshPacket p, {
+    Future<void> Function()? beforeWrite,
+  }) {
     if (p.id == 0) p.id = nextId();
-    final item = _Pending(p);
+    final item = _Pending(p, beforeWrite);
     _waiting.add(item);
     _pump();
     return item.done.future;
@@ -132,12 +135,26 @@ class SendQueue {
       while (_waiting.isNotEmpty) {
         final item = _waiting.removeFirst();
         _current = item;
+        final guard = item.beforeWrite;
+        if (guard != null) {
+          try {
+            await guard();
+          } catch (_) {
+            item.finish(const DeliveryResult(DeliveryStatus.rejected));
+          }
+          if (item.isDone) {
+            _current = null;
+            continue;
+          }
+        }
         final accepted = Completer<bool>();
         _queueAck = accepted;
         try {
           await _write(ToRadio(packet: item.packet));
         } catch (_) {
           item.finish(const DeliveryResult(DeliveryStatus.disconnected));
+          _current = null;
+          _queueAck = null;
           continue;
         }
         final ok = await accepted.future.timeout(
@@ -167,8 +184,9 @@ class SendQueue {
 }
 
 class _Pending {
-  _Pending(this.packet);
+  _Pending(this.packet, this.beforeWrite);
   final MeshPacket packet;
+  final Future<void> Function()? beforeWrite;
   final done = Completer<DeliveryResult>();
   Timer? timer;
 

@@ -1,6 +1,5 @@
-import '../data/stickers/source_repository.dart';
+import 'dart:async';
 import 'dart:convert';
-import '../data/mirror_node_key.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -12,6 +11,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_ble/universal_ble.dart';
 
+import '../bridges/bridge_config.dart';
+import '../bridges/mesh_bridge.dart';
 import '../core/store_build.dart';
 import '../core/client_version.dart';
 import '../core/diagnostics/journal_file.dart';
@@ -41,9 +42,11 @@ import '../data/node_filter.dart';
 import '../data/node_layout.dart';
 import '../data/position_sharer.dart';
 import '../data/mirror_ingest.dart';
+import '../data/mirror_node_key.dart';
 import '../data/node_db_store.dart';
 import '../data/node_dbs.dart';
 import '../data/packet_router.dart';
+import '../data/stickers/source_repository.dart';
 import '../mirror/mirror_capabilities.dart';
 import '../mirror/avatar_frames.dart';
 import '../mirror/mirror_api.dart';
@@ -215,6 +218,14 @@ final journalProvider = ChangeNotifierProvider<Journal>((ref) {
   return Journal()..sink = file.add;
 });
 
+final radioTextEventsProvider = Provider<StreamController<IncomingMeshText>>((
+  ref,
+) {
+  final events = StreamController<IncomingMeshText>.broadcast();
+  ref.onDispose(events.close);
+  return events;
+});
+
 /// Соединение с нодой. Пакеты сразу уходят в БД через [PacketRouter].
 final radioProvider = ChangeNotifierProvider<RadioSession>((ref) {
   final session = RadioSession(ref.read(journalProvider));
@@ -228,7 +239,22 @@ final radioProvider = ChangeNotifierProvider<RadioSession>((ref) {
   Future<void> handle(FromRadio f) async {
     if (f.hasMyInfo()) await switchNodeDb(ref, f.myInfo.myNodeNum);
     final db = ref.read(databaseProvider);
-    if (router?.db != db) router = PacketRouter(db);
+    if (router?.db != db) {
+      final node = ref.read(activeNodeDbProvider);
+      final events = bridgesSupported
+          ? ref.read(radioTextEventsProvider)
+          : null;
+      router = PacketRouter(
+        db,
+        onIncomingText: events == null
+            ? null
+            : (packet, text) {
+                if (!events.isClosed && events.hasListener) {
+                  events.add((node: node, packet: packet, text: text));
+                }
+              },
+      );
+    }
     await router!.handle(f);
   }
 
@@ -765,6 +791,8 @@ final messageSenderProvider = Provider<MessageSender>((ref) {
     radio.sendPacket,
     () => radio.state == RadioState.ready ? radio.myNodeNum : null,
     radio.queue.nextId,
+    sendGuarded: (packet, validate) =>
+        radio.sendPacket(packet, beforeWrite: validate),
     prepareSticker: (sticker) => StickerSourceRepository(
       ref.read(appDatabaseProvider),
     ).checkSendAllowed(sticker.sourceUrl),

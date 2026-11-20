@@ -2,6 +2,7 @@ import 'package:meshex/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../bridges/bridge_config.dart';
 import '../../data/settings_search.dart';
 import '../../ui/app_display_scale.dart';
 import '../../ui/kit/kit.dart';
@@ -123,6 +124,8 @@ class SettingsSearchResults extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = context.l10n;
     final localized = [
+      if (bridgesSupported)
+        SettingsEntry(title: strings.bridgesTitle, route: 'bridges'),
       if (supportsAppDisplayScale)
         for (final title in [strings.interfaceScale, strings.textSize])
           SettingsEntry(

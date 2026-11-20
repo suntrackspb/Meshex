@@ -287,6 +287,8 @@ class Messages extends Table {
   /// Canonical validated envelope JSON; body remains a display fallback.
   TextColumn get stickerContent => text().nullable()();
   DateTimeColumn get rxTime => dateTime()();
+
+  /// Запись создана локальной отправкой и может иметь статус доставки.
   BoolColumn get isOutgoing => boolean().withDefault(const Constant(false))();
   IntColumn get replyId => integer().nullable()();
   IntColumn get emoji => integer().withDefault(const Constant(0))();
@@ -706,21 +708,11 @@ class AppDatabase extends _$AppDatabase {
 
   /// Личная переписка с [peer], свежие первыми.
   Stream<List<Message>> watchDirectMessages(int peer, {int limit = 500}) =>
-      (select(messages)
-            ..where(
-              (m) =>
-                  _direct(m) & (m.fromNum.equals(peer) | m.toNum.equals(peer)),
-            )
-            ..orderBy([(m) => OrderingTerm.desc(m.rxTime)])
-            ..limit(limit))
-          .watch();
+      _directFeed(peer: peer, limit: limit).watch();
 
   /// Удалить всю личную переписку с [peer] (только у себя).
   Future<int> deleteDirectChat(int peer) =>
-      (delete(messages)..where(
-            (m) => _direct(m) & (m.fromNum.equals(peer) | m.toNum.equals(peer)),
-          ))
-          .go();
+      (delete(messages)..where((m) => _direct(m, peer: peer))).go();
 
   /// Непрочитанные личные от [peer] новее [since] (null — все).
   Stream<int> watchDirectUnread(int peer, DateTime? since) {
@@ -728,9 +720,9 @@ class AppDatabase extends _$AppDatabase {
     final q = selectOnly(messages)
       ..addColumns([count])
       ..where(
-        _direct(messages) &
+        _direct(messages, peer: peer) &
             messages.fromNum.equals(peer) &
-            messages.isOutgoing.not() &
+            _directOutgoing(messages).not() &
             (since == null
                 ? const Constant(true)
                 : messages.rxTime.isBiggerThanValue(since)),
@@ -739,11 +731,30 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Все личные сообщения, свежие первыми (для списка диалогов).
-  Stream<List<Message>> watchAllDirect() =>
-      (select(messages)
-            ..where((m) => _direct(m))
-            ..orderBy([(m) => OrderingTerm.desc(m.rxTime)]))
-          .watch();
+  Stream<List<Message>> watchAllDirect() => _directFeed().watch();
+
+  Selectable<Message> _directFeed({
+    int? peer,
+    int? limit,
+    bool excludeReactions = false,
+  }) {
+    final outgoing = _directOutgoing(messages);
+    final query = select(messages).join([])
+      ..addColumns([outgoing])
+      ..where(_direct(messages, peer: peer))
+      ..orderBy([OrderingTerm.desc(messages.rxTime)]);
+    if (excludeReactions) query.where(messages.emoji.equals(0));
+    if (limit != null) query.limit(limit);
+
+    // Второй клиент может получить пакет от той же ноды. Для ленты
+    // определяем направление по отправителю, сохраняя в БД статус отправки.
+    return query.map((row) {
+      final message = row.readTable(messages);
+      return !message.isOutgoing && row.read(outgoing) == true
+          ? message.copyWith(isOutgoing: true)
+          : message;
+    });
+  }
 
   /// Без зеркала видно услышанное в эфире и своё исходящее.
   /// Условие ленты: канал [channelKey] или личка с [peer].
@@ -753,7 +764,7 @@ class AppDatabase extends _$AppDatabase {
     int? peer,
     bool includeMirror = false,
   }) => peer != null
-      ? _direct(m) & (m.fromNum.equals(peer) | m.toNum.equals(peer))
+      ? _direct(m, peer: peer)
       : m.channelKey.equals(channelKey!) &
             m.toNum.equals(0xffffffff) &
             _visible(m, includeMirror);
@@ -765,21 +776,24 @@ class AppDatabase extends _$AppDatabase {
     int? peer,
     bool includeMirror = false,
     int limit = 5000,
-  }) =>
-      (select(messages)
-            ..where(
-              (m) =>
-                  _feed(
-                    m,
-                    channelKey: channelKey,
-                    peer: peer,
-                    includeMirror: includeMirror,
-                  ) &
-                  m.emoji.equals(0),
-            )
-            ..orderBy([(m) => OrderingTerm.desc(m.rxTime)])
-            ..limit(limit))
-          .get();
+  }) {
+    if (peer != null) {
+      return _directFeed(
+        peer: peer,
+        limit: limit,
+        excludeReactions: true,
+      ).get();
+    }
+    return (select(messages)
+          ..where(
+            (m) =>
+                _feed(m, channelKey: channelKey, includeMirror: includeMirror) &
+                m.emoji.equals(0),
+          )
+          ..orderBy([(m) => OrderingTerm.desc(m.rxTime)])
+          ..limit(limit))
+        .get();
+  }
 
   /// Сколько сообщений ленты не старше [since] — до какого лимита
   /// подгрузить ленту, чтобы в ней оказалось найденное.
@@ -804,15 +818,31 @@ class AppDatabase extends _$AppDatabase {
     return (await q.getSingle()).read(count) ?? 0;
   }
 
-  /// Личное — не широковещательное и своё: от своей ноды или ей. Зеркало
-  /// отдаёт и чужие личные (to — другая нода), в «Личные» им нельзя. Своя
-  /// нода ещё неизвестна — не отсекаем.
-  Expression<bool> _direct($MessagesTable m) {
-    final me = subqueryExpression<int>(
-      selectOnly(myNode)..addColumns([myNode.myNodeNum]),
-    );
-    return m.toNum.equals(0xffffffff).not() &
-        (me.isNull() | m.fromNum.equalsExp(me) | m.toNum.equalsExp(me));
+  Expression<int> _myNodeNum() => subqueryExpression<int>(
+    selectOnly(myNode)..addColumns([myNode.myNodeNum]),
+  );
+
+  Expression<bool> _directOutgoing($MessagesTable m) =>
+      m.isOutgoing | m.fromNum.equalsExp(_myNodeNum()).isValue(true);
+
+  /// Личное — пакет между своей нодой и собеседником. Пока номер своей
+  /// ноды неизвестен, фильтруем только по номеру собеседника.
+  Expression<bool> _direct($MessagesTable m, {int? peer}) {
+    final me = _myNodeNum();
+    final outgoing = m.fromNum.equalsExp(me);
+    final incoming = m.toNum.equalsExp(me);
+    final Expression<bool> matches;
+    if (peer == null) {
+      matches = me.isNull() | outgoing | incoming;
+    } else {
+      final fromPeer = m.fromNum.equals(peer);
+      final toPeer = m.toNum.equals(peer);
+      matches =
+          (outgoing & toPeer) |
+          (incoming & fromPeer) |
+          (me.isNull() & (fromPeer | toPeer));
+    }
+    return m.toNum.equals(0xffffffff).not() & matches;
   }
 
   static Expression<bool> _visible($MessagesTable m, bool includeMirror) =>

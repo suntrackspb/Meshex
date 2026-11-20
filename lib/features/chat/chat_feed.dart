@@ -1267,7 +1267,7 @@ class _Bubble extends StatelessWidget {
                 ] else
                   const SizedBox(width: Tokens.s12),
                 Text(time, style: text.labelSmall?.copyWith(color: infoColor)),
-                if (out) ...[
+                if (out && message.ackState != AckState.none) ...[
                   const SizedBox(width: Tokens.s4),
                   _AckIcon(message),
                 ],

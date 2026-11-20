@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import '../examples/bridges/telegram/bot.dart';
-import '../examples/bridges/telegram/protocol.dart';
+import '../examples/bridges/telegram/dart/bot.dart';
+import '../examples/bridges/telegram/dart/protocol.dart';
 
 void main() {
   test(

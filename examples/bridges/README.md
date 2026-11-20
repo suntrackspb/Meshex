@@ -113,4 +113,4 @@ MESHEX_BRIDGE_TOKEN='your-random-token' python3 examples/bridges/mesh_bot.py --h
 
 Connect Meshex to `http://127.0.0.1:8765` with that token. From another mesh node send `/meshping` to the configured channel. The example replies to that packet in the same channel. A weather bot can use the same event and request when it handles its own command.
 
-The [standalone Telegram module](telegram/README.md) uses the same public API. It handles its own bot token and account pairing.
+The [Telegram adapters](telegram/README.md) use the same public API and handle their own bot token and account pairing.

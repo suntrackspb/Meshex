@@ -9545,6 +9545,264 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проверьте параметры подключения и версию API модуля.'**
   String get bridgeModuleConnectionFailed;
+
+  /// No description provided for @tmeshUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключите ноду с поддержкой настроек TMesh.'**
+  String get tmeshUnavailable;
+
+  /// No description provided for @tmeshReadAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прочитать настройки'**
+  String get tmeshReadAgain;
+
+  /// No description provided for @tmeshLegacyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Используются прежние настройки'**
+  String get tmeshLegacyTitle;
+
+  /// No description provided for @tmeshLegacyDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создайте отдельную конфигурацию TMesh, чтобы задать параметры здесь.'**
+  String get tmeshLegacyDescription;
+
+  /// No description provided for @tmeshCreate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать конфигурацию TMesh'**
+  String get tmeshCreate;
+
+  /// No description provided for @tmeshCreateDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая конфигурация начнётся со стандартных значений. Прежние параметры в имени ноды и настройках модуля можно убрать вручную.'**
+  String get tmeshCreateDescription;
+
+  /// No description provided for @tmeshClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить конфигурацию TMesh'**
+  String get tmeshClear;
+
+  /// No description provided for @tmeshClearTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить конфигурацию TMesh?'**
+  String get tmeshClearTitle;
+
+  /// No description provided for @tmeshClearDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Если прежние параметры остались в настройках, прошивка снова будет их использовать.'**
+  String get tmeshClearDescription;
+
+  /// No description provided for @tmeshRouting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Маршрутизация'**
+  String get tmeshRouting;
+
+  /// No description provided for @tmeshRestrictedRouting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешённые типы пакетов'**
+  String get tmeshRestrictedRouting;
+
+  /// No description provided for @tmeshStandardPorts.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стандартный набор'**
+  String get tmeshStandardPorts;
+
+  /// No description provided for @tmeshTextAdmin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст и админ-команды'**
+  String get tmeshTextAdmin;
+
+  /// No description provided for @tmeshTextAdminRouting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст, админ-команды и маршрутизация'**
+  String get tmeshTextAdminRouting;
+
+  /// No description provided for @tmeshTextAdminRoutingTrace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст, админ-команды, маршрутизация и трассировка'**
+  String get tmeshTextAdminRoutingTrace;
+
+  /// No description provided for @tmeshTextNodeInfoAdminRouting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст, данные нод, админ-команды и маршрутизация'**
+  String get tmeshTextNodeInfoAdminRouting;
+
+  /// No description provided for @tmeshTextNodeInfoAdminRoutingTrace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст, данные нод, админ-команды, маршрутизация и трассировка'**
+  String get tmeshTextNodeInfoAdminRoutingTrace;
+
+  /// No description provided for @tmeshBlockPrivateText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Блокировать личные текстовые сообщения'**
+  String get tmeshBlockPrivateText;
+
+  /// No description provided for @tmeshHopDecrement.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уменьшение лимита переходов'**
+  String get tmeshHopDecrement;
+
+  /// No description provided for @tmeshStandard.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стандартное поведение'**
+  String get tmeshStandard;
+
+  /// No description provided for @tmeshPreserveAfterFavorite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранять после любого избранного ретранслятора'**
+  String get tmeshPreserveAfterFavorite;
+
+  /// No description provided for @tmeshDecrementFirstHop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уменьшать только на первом переходе'**
+  String get tmeshDecrementFirstHop;
+
+  /// No description provided for @tmeshForceNextHop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Принудительный следующий переход'**
+  String get tmeshForceNextHop;
+
+  /// No description provided for @tmeshMode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Режим'**
+  String get tmeshMode;
+
+  /// No description provided for @tmeshDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключен'**
+  String get tmeshDisabled;
+
+  /// No description provided for @tmeshLocalWithFlooding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свои пакеты, с резервной рассылкой'**
+  String get tmeshLocalWithFlooding;
+
+  /// No description provided for @tmeshLocalAndRelayedWithFlooding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свои и ретранслируемые пакеты, с резервной рассылкой'**
+  String get tmeshLocalAndRelayedWithFlooding;
+
+  /// No description provided for @tmeshAllWithoutFlooding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все пакеты, без принудительной резервной рассылки'**
+  String get tmeshAllWithoutFlooding;
+
+  /// No description provided for @tmeshFavoriteRouter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избранный маршрутизатор'**
+  String get tmeshFavoriteRouter;
+
+  /// No description provided for @tmeshPreserveHops.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранять лимит переходов'**
+  String get tmeshPreserveHops;
+
+  /// No description provided for @tmeshPreserveHopsAndRelay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранять лимит переходов и ретранслировать'**
+  String get tmeshPreserveHopsAndRelay;
+
+  /// No description provided for @tmeshRelay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Байт ретранслятора'**
+  String get tmeshRelay;
+
+  /// No description provided for @tmeshRelayDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для каждого ретранслятора укажите последний байт номера ноды. Можно ввести десятичное число или hex с префиксом 0x.'**
+  String get tmeshRelayDescription;
+
+  /// No description provided for @tmeshRelayRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для включённого режима введите число от 1 до 255.'**
+  String get tmeshRelayRequired;
+
+  /// No description provided for @tmeshRelayRange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите число от 0 до 255.'**
+  String get tmeshRelayRange;
+
+  /// No description provided for @tmeshConnectionChanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключение к ноде изменилось. Проверьте настройки после переподключения.'**
+  String get tmeshConnectionChanged;
+
+  /// No description provided for @tmeshNoResponse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нода не ответила на запрос TMesh.'**
+  String get tmeshNoResponse;
+
+  /// No description provided for @tmeshSendRejected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось отправить запрос TMesh.'**
+  String get tmeshSendRejected;
+
+  /// No description provided for @tmeshInvalidConfig.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эта конфигурация TMesh недопустима.'**
+  String get tmeshInvalidConfig;
+
+  /// No description provided for @tmeshStorageError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нода сообщила об ошибке хранилища TMesh.'**
+  String get tmeshStorageError;
+
+  /// No description provided for @tmeshConfigChanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'На ноде изменилось состояние конфигурации TMesh. Прочитайте настройки заново.'**
+  String get tmeshConfigChanged;
+
+  /// No description provided for @tmeshUnverified.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось подтвердить запись. Прочитайте настройки перед новой попыткой.'**
+  String get tmeshUnverified;
+
+  /// No description provided for @tmeshWriteInProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предыдущая запись настроек TMesh ещё выполняется.'**
+  String get tmeshWriteInProgress;
 }
 
 class _AppLocalizationsDelegate

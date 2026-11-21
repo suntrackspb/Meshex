@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/proto/mesh.dart';
 import '../core/radio/radio_session.dart';
+import '../core/radio/tmesh_settings.dart';
 import '../data/database.dart';
 import '../data/settings/admin_settings.dart';
 import '../data/settings/key_backup.dart';
@@ -16,6 +17,25 @@ final adminSettingsProvider = Provider<AdminSettings>((ref) {
     () => radio.state == RadioState.ready ? radio.myNodeNum : null,
     radio.queue.nextId,
   );
+});
+
+/// Probe the wire protocol once per ready connection while settings observe it.
+final tmeshProbeProvider = FutureProvider<TmeshSettings?>((ref) async {
+  final connection = ref.watch(
+    radioProvider.select(
+      (radio) => radio.state == RadioState.ready
+          ? (radio.myNodeNum, radio.connectedSince)
+          : (null, null),
+    ),
+  );
+  final (nodeNum, connectedSince) = connection;
+  if (nodeNum == null || connectedSince == null) return null;
+  final client = TmeshSettings(
+    ref.read(radioProvider),
+    nodeNum,
+    connectedSince,
+  );
+  return await client.probe() ? client : null;
 });
 
 /// Своя нода (строка nodes).

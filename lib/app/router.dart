@@ -26,6 +26,7 @@ import '../features/settings/radio/channel_share_page.dart';
 import '../features/settings/radio/channels_page.dart';
 import '../features/settings/radio/config_section_page.dart';
 import '../features/settings/radio/config_sections.dart';
+import '../features/settings/radio/tmesh_settings_page.dart';
 import '../features/settings/radio/user_config_page.dart';
 import '../features/settings/message_filter_page.dart';
 import '../features/settings/settings_page.dart';
@@ -109,6 +110,7 @@ final appRouter = GoRouter(
                 ),
                 _route('user', (_) => const UserConfigPage()),
                 _route('lora', (_) => ConfigSectionPage(loraSpec)),
+                _route('tmesh', (_) => const TmeshSettingsPage()),
                 _route(
                   'channels',
                   (_) => const ChannelsPage(),

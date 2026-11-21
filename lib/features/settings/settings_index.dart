@@ -117,13 +117,20 @@ List<SettingsEntry> settingsIndex() => _cache ??= [
 
 /// Результаты поиска по настройкам.
 class SettingsSearchResults extends StatelessWidget {
-  const SettingsSearchResults(this.query, {super.key});
+  const SettingsSearchResults(this.query, {super.key, this.hasTmesh = false});
   final String query;
+  final bool hasTmesh;
 
   @override
   Widget build(BuildContext context) {
     final strings = context.l10n;
     final localized = [
+      if (hasTmesh)
+        SettingsEntry(
+          title: 'TMesh',
+          route: 'tmesh',
+          section: strings.radioConfiguration_dbf9ae,
+        ),
       if (bridgesSupported)
         SettingsEntry(title: strings.bridgesTitle, route: 'bridges'),
       if (supportsAppDisplayScale)

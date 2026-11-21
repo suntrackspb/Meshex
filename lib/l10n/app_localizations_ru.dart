@@ -5419,4 +5419,149 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get bridgeModuleConnectionFailed =>
       'Проверьте параметры подключения и версию API модуля.';
+
+  @override
+  String get tmeshUnavailable => 'Подключите ноду с поддержкой настроек TMesh.';
+
+  @override
+  String get tmeshReadAgain => 'Прочитать настройки';
+
+  @override
+  String get tmeshLegacyTitle => 'Используются прежние настройки';
+
+  @override
+  String get tmeshLegacyDescription =>
+      'Создайте отдельную конфигурацию TMesh, чтобы задать параметры здесь.';
+
+  @override
+  String get tmeshCreate => 'Создать конфигурацию TMesh';
+
+  @override
+  String get tmeshCreateDescription =>
+      'Новая конфигурация начнётся со стандартных значений. Прежние параметры в имени ноды и настройках модуля можно убрать вручную.';
+
+  @override
+  String get tmeshClear => 'Удалить конфигурацию TMesh';
+
+  @override
+  String get tmeshClearTitle => 'Удалить конфигурацию TMesh?';
+
+  @override
+  String get tmeshClearDescription =>
+      'Если прежние параметры остались в настройках, прошивка снова будет их использовать.';
+
+  @override
+  String get tmeshRouting => 'Маршрутизация';
+
+  @override
+  String get tmeshRestrictedRouting => 'Разрешённые типы пакетов';
+
+  @override
+  String get tmeshStandardPorts => 'Стандартный набор';
+
+  @override
+  String get tmeshTextAdmin => 'Текст и админ-команды';
+
+  @override
+  String get tmeshTextAdminRouting => 'Текст, админ-команды и маршрутизация';
+
+  @override
+  String get tmeshTextAdminRoutingTrace =>
+      'Текст, админ-команды, маршрутизация и трассировка';
+
+  @override
+  String get tmeshTextNodeInfoAdminRouting =>
+      'Текст, данные нод, админ-команды и маршрутизация';
+
+  @override
+  String get tmeshTextNodeInfoAdminRoutingTrace =>
+      'Текст, данные нод, админ-команды, маршрутизация и трассировка';
+
+  @override
+  String get tmeshBlockPrivateText => 'Блокировать личные текстовые сообщения';
+
+  @override
+  String get tmeshHopDecrement => 'Уменьшение лимита переходов';
+
+  @override
+  String get tmeshStandard => 'Стандартное поведение';
+
+  @override
+  String get tmeshPreserveAfterFavorite =>
+      'Сохранять после любого избранного ретранслятора';
+
+  @override
+  String get tmeshDecrementFirstHop => 'Уменьшать только на первом переходе';
+
+  @override
+  String get tmeshForceNextHop => 'Принудительный следующий переход';
+
+  @override
+  String get tmeshMode => 'Режим';
+
+  @override
+  String get tmeshDisabled => 'Выключен';
+
+  @override
+  String get tmeshLocalWithFlooding => 'Свои пакеты, с резервной рассылкой';
+
+  @override
+  String get tmeshLocalAndRelayedWithFlooding =>
+      'Свои и ретранслируемые пакеты, с резервной рассылкой';
+
+  @override
+  String get tmeshAllWithoutFlooding =>
+      'Все пакеты, без принудительной резервной рассылки';
+
+  @override
+  String get tmeshFavoriteRouter => 'Избранный маршрутизатор';
+
+  @override
+  String get tmeshPreserveHops => 'Сохранять лимит переходов';
+
+  @override
+  String get tmeshPreserveHopsAndRelay =>
+      'Сохранять лимит переходов и ретранслировать';
+
+  @override
+  String get tmeshRelay => 'Байт ретранслятора';
+
+  @override
+  String get tmeshRelayDescription =>
+      'Для каждого ретранслятора укажите последний байт номера ноды. Можно ввести десятичное число или hex с префиксом 0x.';
+
+  @override
+  String get tmeshRelayRequired =>
+      'Для включённого режима введите число от 1 до 255.';
+
+  @override
+  String get tmeshRelayRange => 'Введите число от 0 до 255.';
+
+  @override
+  String get tmeshConnectionChanged =>
+      'Подключение к ноде изменилось. Проверьте настройки после переподключения.';
+
+  @override
+  String get tmeshNoResponse => 'Нода не ответила на запрос TMesh.';
+
+  @override
+  String get tmeshSendRejected => 'Не удалось отправить запрос TMesh.';
+
+  @override
+  String get tmeshInvalidConfig => 'Эта конфигурация TMesh недопустима.';
+
+  @override
+  String get tmeshStorageError => 'Нода сообщила об ошибке хранилища TMesh.';
+
+  @override
+  String get tmeshConfigChanged =>
+      'На ноде изменилось состояние конфигурации TMesh. Прочитайте настройки заново.';
+
+  @override
+  String get tmeshUnverified =>
+      'Не удалось подтвердить запись. Прочитайте настройки перед новой попыткой.';
+
+  @override
+  String get tmeshWriteInProgress =>
+      'Предыдущая запись настроек TMesh ещё выполняется.';
 }

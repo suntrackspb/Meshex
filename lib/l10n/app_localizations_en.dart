@@ -5419,4 +5419,147 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get bridgeModuleConnectionFailed =>
       'Check the connection settings and module API version.';
+
+  @override
+  String get tmeshUnavailable => 'Connect a node that supports TMesh settings.';
+
+  @override
+  String get tmeshReadAgain => 'Read settings';
+
+  @override
+  String get tmeshLegacyTitle => 'Legacy settings are active';
+
+  @override
+  String get tmeshLegacyDescription =>
+      'Create a TMesh configuration to manage these settings here.';
+
+  @override
+  String get tmeshCreate => 'Create TMesh configuration';
+
+  @override
+  String get tmeshCreateDescription =>
+      'The new configuration starts with defaults. You can remove old parameters from the node name and module settings manually.';
+
+  @override
+  String get tmeshClear => 'Delete TMesh configuration';
+
+  @override
+  String get tmeshClearTitle => 'Delete TMesh configuration?';
+
+  @override
+  String get tmeshClearDescription =>
+      'If legacy parameters are still configured, the firmware will use them again.';
+
+  @override
+  String get tmeshRouting => 'Routing';
+
+  @override
+  String get tmeshRestrictedRouting => 'Allowed packet types';
+
+  @override
+  String get tmeshStandardPorts => 'Standard ports';
+
+  @override
+  String get tmeshTextAdmin => 'Text and admin';
+
+  @override
+  String get tmeshTextAdminRouting => 'Text, admin, and routing';
+
+  @override
+  String get tmeshTextAdminRoutingTrace =>
+      'Text, admin, routing, and traceroute';
+
+  @override
+  String get tmeshTextNodeInfoAdminRouting =>
+      'Text, node info, admin, and routing';
+
+  @override
+  String get tmeshTextNodeInfoAdminRoutingTrace =>
+      'Text, node info, admin, routing, and traceroute';
+
+  @override
+  String get tmeshBlockPrivateText => 'Block private text messages';
+
+  @override
+  String get tmeshHopDecrement => 'Hop limit decrement';
+
+  @override
+  String get tmeshStandard => 'Standard behavior';
+
+  @override
+  String get tmeshPreserveAfterFavorite => 'Preserve after any favorite relay';
+
+  @override
+  String get tmeshDecrementFirstHop => 'Decrement on the first hop only';
+
+  @override
+  String get tmeshForceNextHop => 'Forced next hop';
+
+  @override
+  String get tmeshMode => 'Mode';
+
+  @override
+  String get tmeshDisabled => 'Disabled';
+
+  @override
+  String get tmeshLocalWithFlooding => 'Local packets, with flooding fallback';
+
+  @override
+  String get tmeshLocalAndRelayedWithFlooding =>
+      'Local and relayed packets, with flooding fallback';
+
+  @override
+  String get tmeshAllWithoutFlooding =>
+      'All packets, without forced flooding fallback';
+
+  @override
+  String get tmeshFavoriteRouter => 'Favorite router';
+
+  @override
+  String get tmeshPreserveHops => 'Preserve hop limit';
+
+  @override
+  String get tmeshPreserveHopsAndRelay => 'Preserve hop limit and relay';
+
+  @override
+  String get tmeshRelay => 'Relay byte';
+
+  @override
+  String get tmeshRelayDescription =>
+      'Enter the last byte of each relay’s node number in decimal or with a 0x hex prefix.';
+
+  @override
+  String get tmeshRelayRequired =>
+      'Enter a value from 1 to 255 when the mode is enabled.';
+
+  @override
+  String get tmeshRelayRange => 'Enter a value from 0 to 255.';
+
+  @override
+  String get tmeshConnectionChanged =>
+      'The node connection changed. Check the settings after reconnecting.';
+
+  @override
+  String get tmeshNoResponse => 'The node did not reply to the TMesh request.';
+
+  @override
+  String get tmeshSendRejected => 'Could not send the TMesh request.';
+
+  @override
+  String get tmeshInvalidConfig => 'This TMesh configuration is invalid.';
+
+  @override
+  String get tmeshStorageError => 'The node reported a TMesh storage error.';
+
+  @override
+  String get tmeshConfigChanged =>
+      'The TMesh configuration state changed on the node. Read the settings again.';
+
+  @override
+  String get tmeshUnverified =>
+      'Could not verify the write. Read the settings before trying again.';
+
+  @override
+  String get tmeshWriteInProgress =>
+      'The previous TMesh write is still in progress.';
 }

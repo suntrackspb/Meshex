@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/diagnostics_providers.dart';
 import '../../app/providers.dart';
+import '../../app/settings_providers.dart';
 import '../../bridges/bridge_config.dart';
 import '../../ui/kit/kit.dart';
 import '../../ui/meshex_wordmark.dart';
@@ -34,6 +35,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final query = _search.text.trim();
     final mirror = ref.watch(mirrorConfigProvider).value;
+    final hasTmesh = ref.watch(tmeshProbeProvider).asData?.value != null;
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.configuration_7f17c7),
@@ -60,7 +62,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ),
           if (query.isNotEmpty)
-            SettingsSearchResults(query)
+            SettingsSearchResults(query, hasTmesh: hasTmesh)
           else ...[
             const Padding(
               padding: EdgeInsets.only(top: Tokens.s8, bottom: Tokens.s24),
@@ -133,6 +135,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.go('/settings/security'),
                 ),
+                if (hasTmesh)
+                  MeshTile(
+                    title: 'TMesh',
+                    leading: const Icon(Icons.alt_route),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go('/settings/tmesh'),
+                  ),
               ],
             ),
             SectionCard(

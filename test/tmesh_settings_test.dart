@@ -3,16 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meshex/app/link_badge.dart';
 import 'package:meshex/app/providers.dart';
+import 'package:meshex/app/settings_providers.dart';
+import 'package:meshex/app/toasts.dart';
 import 'package:meshex/core/proto/mesh.dart';
 import 'package:meshex/core/proto/tmesh/feature_flags.pb.dart' as tmesh;
 import 'package:meshex/core/radio/journal.dart';
 import 'package:meshex/core/radio/radio_session.dart';
 import 'package:meshex/core/radio/tmesh_settings.dart';
+import 'package:meshex/data/database.dart';
 import 'package:meshex/features/settings/radio/tmesh_settings_page.dart';
 
 import 'support/fake_transport.dart';
 
 const _nodeNum = 0x1234abcd;
+const _tmeshVersion = '2.8.2.tmshe9fab87';
 
 void main() {
   late FakeTransport transport;
@@ -102,7 +106,7 @@ void main() {
       await expectLater(client.read(), throwsA(TmeshError.storage));
     });
 
-    test('creation is explicit and SET and CLEAR are read back', () async {
+    test('first save uses defaults and SET is read back', () async {
       tmesh.FeatureFlagsConfig? stored;
       final operations = <tmesh.Request_Operation>[];
       transport.onSend = (message) {
@@ -120,7 +124,6 @@ void main() {
               forceNextHopRelay: request.config.forceNextHopRelay,
             );
           case tmesh.Request_Operation.CLEAR:
-            stored = null;
           case tmesh.Request_Operation.GET:
           case tmesh.Request_Operation.UNSPECIFIED:
             break;
@@ -130,13 +133,13 @@ void main() {
 
       expect(await client.read(), isNull);
       await expectLater(
-        client.save(initialize: false, edit: (_) {}),
+        client.save(hadConfig: true, edit: (_) {}),
         throwsA(TmeshError.configChanged),
       );
       expect(operations, everyElement(tmesh.Request_Operation.GET));
 
       final created = await client.save(
-        initialize: true,
+        hadConfig: false,
         edit: (config) => config
           ..forceNextHopRelay = 0xab
           ..restrictedRoutingDisallowsPrivateText = false,
@@ -153,7 +156,7 @@ void main() {
 
       await expectLater(
         client.save(
-          initialize: false,
+          hadConfig: true,
           edit: (config) => config.favoriteRouterMode =
               tmesh.FeatureFlagsConfig_FavoriteRouterMode.PRESERVE_HOPS_ONLY,
         ),
@@ -162,18 +165,11 @@ void main() {
 
       await expectLater(
         client.save(
-          initialize: false,
+          hadConfig: true,
           edit: (config) => config.restrictedRoutingDisallowsPrivateText = true,
         ),
         throwsA(TmeshError.unverified),
       );
-
-      await client.clear();
-      expect(operations.sublist(operations.length - 2), [
-        tmesh.Request_Operation.CLEAR,
-        tmesh.Request_Operation.GET,
-      ]);
-      expect(stored, isNull);
     });
 
     test('lost SET reply is verified without sending a second SET', () async {
@@ -194,10 +190,13 @@ void main() {
       };
 
       final write = client.save(
-        initialize: false,
+        hadConfig: true,
         edit: (config) => config.forceNextHopRelay = 0xab,
       );
-      await expectLater(client.clear(), throwsA(TmeshError.writeInProgress));
+      await expectLater(
+        client.save(hadConfig: true, edit: (_) {}),
+        throwsA(TmeshError.writeInProgress),
+      );
       final verified = await write;
       expect(writes, 1);
       expect(verified.forceNextHopRelay, 0xab);
@@ -216,63 +215,245 @@ void main() {
     });
   });
 
-  testWidgets('legacy settings stay active while opening the create form', (
-    tester,
-  ) async {
-    final transport = FakeTransport();
-    final radio = await _connect(transport);
-    await tester.pump();
-    expect(radio.state, RadioState.ready);
-
-    final operations = <tmesh.Request_Operation>[];
-    transport.onSend = (message) {
-      final packet = message.packet;
-      final request = tmesh.Envelope.fromBuffer(packet.decoded.payload).request;
-      operations.add(request.operation);
-      _ack(transport, packet);
-      _reply(transport, packet.id, tmesh.Response_Status.OK);
-    };
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          radioProvider.overrideWith((_) => radio),
-          mirrorRealtimeProvider.overrideWith((_) => null),
-          linkNodeProvider.overrideWith((_) => Stream.value(null)),
-        ],
-        child: const MaterialApp(home: TmeshSettingsPage()),
-      ),
+  for (final version in [
+    null,
+    '',
+    '2.8.2',
+    '2.8.2.e9fab87',
+    '2.8.2.notmsh123',
+  ]) {
+    test(
+      'TMesh probe is skipped for firmware ${version ?? '<missing>'}',
+      () async {
+        final transport = FakeTransport();
+        final radio = await _connect(transport, firmwareVersion: version);
+        await pumpEventQueue();
+        expect(radio.state, RadioState.ready);
+        transport.onSend = (message) {
+          if (!message.hasPacket()) return;
+          _ack(transport, message.packet);
+          _reply(transport, message.packet.id, tmesh.Response_Status.OK);
+        };
+        final container = ProviderContainer.test(
+          overrides: [radioProvider.overrideWith((_) => radio)],
+        );
+        expect(await container.read(tmeshProbeProvider.future), isNull);
+        expect(transport.sent.where((msg) => msg.hasPacket()), isEmpty);
+        // ProviderContainer owns the overridden radio.
+        await radio.disconnect();
+      },
     );
-    // Let the probe resolve and build the editor, then load its settings.
-    await tester.runAsync(() => pumpEventQueue());
-    await tester.pump();
-    await tester.runAsync(() => pumpEventQueue());
-    await tester.pump();
-    expect(find.text('Используются прежние настройки'), findsOneWidget);
+  }
 
-    await tester.tap(find.text('Создать конфигурацию TMesh'));
-    await tester.pumpAndSettle();
-    expect(find.text('Разрешённые типы пакетов'), findsOneWidget);
-    expect(operations, [
-      tmesh.Request_Operation.GET,
-      tmesh.Request_Operation.GET,
-    ]);
-    expect(tester.takeException(), isNull);
+  test('TMesh probe waits for fresh metadata after reconnect', () async {
+    final first = FakeTransport();
+    final second = FakeTransport();
+    _handshake(first, _tmeshVersion);
+    _handshake(second, null);
+    for (final transport in [first, second]) {
+      final handshake = transport.onSend!;
+      transport.onSend = (message) {
+        if (!message.hasPacket()) {
+          handshake(message);
+          return;
+        }
+        _ack(transport, message.packet);
+        _reply(transport, message.packet.id, tmesh.Response_Status.OK);
+      };
+    }
+    final transports = [first, second].iterator;
+    final radio = RadioSession(Journal())..autoReconnect = false;
+    final container = ProviderContainer.test(
+      overrides: [radioProvider.overrideWith((_) => radio)],
+    );
+    container.listen(tmeshProbeProvider, (_, _) {});
+    await radio.connect(
+      RadioTarget('TMesh', (_) {
+        expect(transports.moveNext(), isTrue);
+        return transports.current;
+      }),
+    );
+    await pumpEventQueue();
+    expect(await container.read(tmeshProbeProvider.future), isNotNull);
 
-    transport.onSend = null;
-    await tester.pumpWidget(const SizedBox.shrink());
+    first.drop('test reconnect');
+    await pumpEventQueue();
+    await radio.reconnect();
+    await pumpEventQueue();
+    expect(radio.state, RadioState.ready);
+    expect(await container.read(tmeshProbeProvider.future), isNull);
+    expect(second.sent.where((msg) => msg.hasPacket()), isEmpty);
+
+    second.reply(
+      FromRadio(metadata: DeviceMetadata(firmwareVersion: _tmeshVersion)),
+    );
+    await pumpEventQueue();
+    expect(await container.read(tmeshProbeProvider.future), isNotNull);
+    expect(second.sent.where((msg) => msg.hasPacket()), hasLength(1));
+    await radio.disconnect();
   });
+
+  testWidgets(
+    'defaults open read-only until edits and both relay inputs use hex',
+    (tester) async {
+      final transport = FakeTransport();
+      final radio = await _connect(transport);
+      await tester.pump();
+      expect(radio.state, RadioState.ready);
+
+      final operations = <tmesh.Request_Operation>[];
+      tmesh.FeatureFlagsConfig? stored;
+      transport.onSend = (message) {
+        final packet = message.packet;
+        final request = tmesh.Envelope.fromBuffer(
+          packet.decoded.payload,
+        ).request;
+        operations.add(request.operation);
+        _ack(transport, packet);
+        if (request.operation == tmesh.Request_Operation.SET) {
+          stored = request.config;
+        }
+        _reply(transport, packet.id, tmesh.Response_Status.OK, config: stored);
+      };
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            radioProvider.overrideWith((_) => radio),
+            mirrorRealtimeProvider.overrideWith((_) => null),
+            linkNodeProvider.overrideWith((_) => Stream.value(null)),
+            nodesProvider.overrideWith(
+              (_) => Stream.value([
+                _node(0x123456ab, 'Sun relay'),
+                _node(0x654321ab, 'Moon relay'),
+              ]),
+            ),
+          ],
+          child: toastsHost(const MaterialApp(home: TmeshSettingsPage())),
+        ),
+      );
+      // Let the probe resolve and build the editor, then load its settings.
+      await tester.runAsync(() => pumpEventQueue());
+      await tester.pump();
+      await tester.runAsync(() => pumpEventQueue());
+      await tester.pump();
+      expect(find.text('Разрешённые типы пакетов'), findsOneWidget);
+      expect(find.text('Уменьшение лимита хопов'), findsOneWidget);
+      expect(operations, [
+        tmesh.Request_Operation.GET,
+        tmesh.Request_Operation.GET,
+      ]);
+
+      final save = find.widgetWithText(FilledButton, 'Сохранить');
+      await tester.scrollUntilVisible(
+        save,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(tester.widget<FilledButton>(save).onPressed, isNull);
+
+      final forceRelay = find.byType(TextFormField).first;
+      await tester.ensureVisible(forceRelay);
+      expect(tester.widget<TextFormField>(forceRelay).controller!.text, '0x00');
+      final pick = find.descendant(
+        of: forceRelay,
+        matching: find.byTooltip('Выбрать ноду'),
+      );
+      await tester.tap(pick);
+      await tester.pumpAndSettle();
+      final search = find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(search, '!123456ab');
+      await tester.pumpAndSettle();
+      expect(find.text('Moon relay'), findsNothing);
+      await tester.tap(find.text('Sun relay'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextFormField>(forceRelay).controller!.text, '0xAB');
+      expect(
+        find.text('Этот байт совпадает у нескольких известных нод.'),
+        findsOneWidget,
+      );
+
+      final favoriteRelay = find.byType(TextFormField).last;
+      await tester.ensureVisible(favoriteRelay);
+      await tester.enterText(favoriteRelay, '42');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextFormField>(favoriteRelay).controller!.text,
+        '0x2A',
+      );
+
+      await tester.scrollUntilVisible(
+        save,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(save);
+      for (var frame = 0; frame < 3; frame++) {
+        await tester.runAsync(() => pumpEventQueue());
+        await tester.pump();
+      }
+      expect(operations, [
+        tmesh.Request_Operation.GET,
+        tmesh.Request_Operation.GET,
+        tmesh.Request_Operation.GET,
+        tmesh.Request_Operation.SET,
+        tmesh.Request_Operation.GET,
+      ]);
+      expect(stored!.forceNextHopRelay, 0xab);
+      expect(stored!.favoriteRouterRelay, 42);
+      expect(tester.widget<FilledButton>(save).onPressed, isNull);
+      expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      transport.onSend = null;
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 }
 
-Future<RadioSession> _connect(FakeTransport transport) async {
+Node _node(int num, String name) => Node(
+  num: num,
+  userId: '',
+  longName: name,
+  shortName: '',
+  hwModel: 0,
+  role: 0,
+  isUnmessagable: false,
+  hasXeddsaSigned: false,
+  viaMqtt: false,
+  isFavorite: false,
+  isIgnored: false,
+  mirrorCorrected: false,
+  onRadio: true,
+  onMirror: false,
+);
+
+void _handshake(FakeTransport transport, String? firmwareVersion) {
   transport.onSend = (message) {
     if (!message.hasWantConfigId()) return;
     if (message.wantConfigId == RadioSession.configNonce) {
       transport.reply(FromRadio(myInfo: MyNodeInfo(myNodeNum: _nodeNum)));
+      if (firmwareVersion != null) {
+        transport.reply(
+          FromRadio(metadata: DeviceMetadata(firmwareVersion: firmwareVersion)),
+        );
+      }
     }
     transport.reply(FromRadio(configCompleteId: message.wantConfigId));
   };
+}
+
+Future<RadioSession> _connect(
+  FakeTransport transport, {
+  String? firmwareVersion = _tmeshVersion,
+}) async {
+  _handshake(transport, firmwareVersion);
   final radio = RadioSession(Journal())..autoReconnect = false;
   await radio.connect(RadioTarget('TMesh', (_) => transport));
   return radio;

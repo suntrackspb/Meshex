@@ -4,10 +4,13 @@ import 'package:meshex/l10n/l10n.dart';
 import 'package:protobuf/protobuf.dart' show ProtobufEnum;
 
 import '../../../app/link_badge.dart';
+import '../../../app/providers.dart';
 import '../../../app/settings_providers.dart';
 import '../../../app/toasts.dart';
 import '../../../core/proto/tmesh/feature_flags.pb.dart' as tmesh;
 import '../../../core/radio/tmesh_settings.dart';
+import '../../../data/database.dart';
+import '../../../data/mentions.dart';
 import '../../../ui/kit/kit.dart';
 
 class TmeshSettingsPage extends ConsumerWidget {
@@ -33,20 +36,20 @@ class TmeshSettingsPage extends ConsumerWidget {
   }
 }
 
-class _Editor extends StatefulWidget {
+class _Editor extends ConsumerStatefulWidget {
   const _Editor({super.key, required this.client});
 
   final TmeshSettings client;
 
   @override
-  State<_Editor> createState() => _EditorState();
+  ConsumerState<_Editor> createState() => _EditorState();
 }
 
-class _EditorState extends State<_Editor> {
+class _EditorState extends ConsumerState<_Editor> {
   tmesh.FeatureFlagsConfig? _saved;
   tmesh.FeatureFlagsConfig? _draft;
-  String _forceRelay = '0';
-  String _favoriteRelay = '0';
+  final _forceRelay = TextEditingController();
+  final _favoriteRelay = TextEditingController();
   int _formVersion = 0;
   bool _busy = true;
   TmeshError? _error;
@@ -57,16 +60,22 @@ class _EditorState extends State<_Editor> {
     _load();
   }
 
-  void _setDraft(tmesh.FeatureFlagsConfig? config) {
-    _draft = config?.deepCopy();
-    _forceRelay = (config?.forceNextHopRelay ?? 0).toString();
-    _favoriteRelay = (config?.favoriteRouterRelay ?? 0).toString();
-    _formVersion++;
+  @override
+  void dispose() {
+    _forceRelay.dispose();
+    _favoriteRelay.dispose();
+    super.dispose();
   }
+
+  tmesh.FeatureFlagsConfig get _baseline =>
+      _saved ?? tmesh.FeatureFlagsConfig.getDefault();
 
   void _apply(tmesh.FeatureFlagsConfig? config) {
     _saved = config;
-    _setDraft(config);
+    _draft = _baseline.deepCopy();
+    _forceRelay.text = _relayHex(_baseline.forceNextHopRelay);
+    _favoriteRelay.text = _relayHex(_baseline.favoriteRouterRelay);
+    _formVersion++;
   }
 
   Future<void> _load() => _run(widget.client.read);
@@ -95,43 +104,15 @@ class _EditorState extends State<_Editor> {
 
   Future<void> _save(tmesh.FeatureFlagsConfig edited) async {
     if (_busy || _error != null) return;
-    final saved = _saved;
+    final baseline = _baseline;
+    final hadConfig = _saved != null;
     await _run(
       () => widget.client.save(
-        initialize: saved == null,
-        edit: (fresh) => _mergeEdits(fresh, saved, edited),
+        hadConfig: hadConfig,
+        edit: (fresh) => _mergeEdits(fresh, baseline, edited),
       ),
       write: true,
     );
-  }
-
-  Future<void> _clear() async {
-    final strings = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(strings.tmeshClearTitle),
-        content: Text(strings.tmeshClearDescription),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(strings.cancel_0ec753),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(strings.tmeshClear),
-          ),
-        ],
-      ),
-    );
-    if (!mounted || confirmed != true || _busy || _error != null) return;
-    await _run(() async {
-      await widget.client.clear();
-      return null;
-    }, write: true);
   }
 
   @override
@@ -140,9 +121,13 @@ class _EditorState extends State<_Editor> {
     final draft = _draft;
     final error = _error;
     final editable = !_busy && error == null;
-    final forceRelay = _relayValue(_forceRelay, draft?.forceNextHopMode.value);
+    final nodes = ref.watch(nodesProvider).value ?? const <Node>[];
+    final forceRelay = _relayValue(
+      _forceRelay.text,
+      draft?.forceNextHopMode.value,
+    );
     final favoriteRelay = _relayValue(
-      _favoriteRelay,
+      _favoriteRelay.text,
       draft?.favoriteRouterMode.value,
     );
     final edited = draft == null || forceRelay == null || favoriteRelay == null
@@ -151,9 +136,7 @@ class _EditorState extends State<_Editor> {
             ..forceNextHopRelay = forceRelay
             ..favoriteRouterRelay = favoriteRelay);
     final canSave =
-        editable &&
-        edited != null &&
-        (_saved == null || edited.values != _saved?.values);
+        editable && edited != null && edited.values != _baseline.values;
     return ListView(
       padding: pagePadding(context),
       children: [
@@ -165,47 +148,25 @@ class _EditorState extends State<_Editor> {
             child: Text(strings.tmeshReadAgain),
           ),
         ],
-        if (draft == null && editable)
-          SectionCard(
-            footer: strings.tmeshLegacyDescription,
-            children: [
-              MeshTile(
-                title: strings.tmeshLegacyTitle,
-                leading: const Icon(Icons.history),
-              ),
-              MeshTile(
-                title: strings.tmeshCreate,
-                leading: const Icon(Icons.add),
-                onTap: () =>
-                    setState(() => _setDraft(tmesh.FeatureFlagsConfig())),
-              ),
-            ],
-          ),
         if (draft != null) ...[
           KeyedSubtree(
             key: ValueKey(_formVersion),
-            child: _fields(strings, draft, editable, forceRelay, favoriteRelay),
+            child: _fields(
+              strings,
+              draft,
+              editable,
+              nodes,
+              forceRelay,
+              favoriteRelay,
+            ),
           ),
-          if (_saved == null) WarningNote(strings.tmeshCreateDescription),
           Padding(
             padding: const EdgeInsets.all(Tokens.s16),
             child: FilledButton(
               onPressed: canSave ? () => _save(edited) : null,
-              child: Text(
-                _saved == null ? strings.tmeshCreate : strings.save_486405,
-              ),
+              child: Text(strings.save_486405),
             ),
           ),
-          if (_saved != null)
-            Center(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-                onPressed: editable ? _clear : null,
-                child: Text(strings.tmeshClear),
-              ),
-            ),
         ],
       ],
     );
@@ -215,12 +176,14 @@ class _EditorState extends State<_Editor> {
     AppLocalizations strings,
     tmesh.FeatureFlagsConfig draft,
     bool editable,
+    List<Node> nodes,
     int? forceRelay,
     int? favoriteRelay,
   ) => Column(
     children: [
       SectionCard(
         title: strings.tmeshRouting,
+        footer: strings.tmeshRoutingHelp,
         children: [
           _choice<tmesh.FeatureFlagsConfig_RestrictedRoutingMode>(
             label: strings.tmeshRestrictedRouting,
@@ -240,6 +203,7 @@ class _EditorState extends State<_Editor> {
           ),
           SwitchListTile(
             title: Text(strings.tmeshBlockPrivateText),
+            subtitle: Text(strings.tmeshPrivateTextHelp),
             value: draft.restrictedRoutingDisallowsPrivateText,
             onChanged: editable
                 ? (value) => setState(
@@ -247,9 +211,19 @@ class _EditorState extends State<_Editor> {
                   )
                 : null,
           ),
+        ],
+      ),
+      SectionCard(
+        title: strings.tmeshHopsSection,
+        children: [
           _choice<tmesh.FeatureFlagsConfig_HopDecrementMode>(
             label: strings.tmeshHopDecrement,
             value: draft.hopDecrementMode,
+            help: [
+              strings.tmeshHopStandardHelp,
+              strings.tmeshHopFavoriteHelp,
+              strings.tmeshHopFirstHelp,
+            ][draft.hopDecrementMode.value],
             values: tmesh.FeatureFlagsConfig_HopDecrementMode.values,
             labels: [
               strings.tmeshStandard,
@@ -268,6 +242,12 @@ class _EditorState extends State<_Editor> {
           _choice<tmesh.FeatureFlagsConfig_ForceNextHopMode>(
             label: strings.tmeshMode,
             value: draft.forceNextHopMode,
+            help: [
+              strings.tmeshForceDisabledHelp,
+              strings.tmeshForceLocalHelp,
+              strings.tmeshForceRelayedHelp,
+              strings.tmeshForceStrictHelp,
+            ][draft.forceNextHopMode.value],
             values: tmesh.FeatureFlagsConfig_ForceNextHopMode.values,
             labels: [
               strings.tmeshDisabled,
@@ -280,21 +260,25 @@ class _EditorState extends State<_Editor> {
                 : null,
           ),
           _relayField(
-            value: _forceRelay,
-            valid: forceRelay != null,
+            controller: _forceRelay,
+            relay: forceRelay,
+            nodes: nodes,
             requiredByte: draft.forceNextHopMode.value != 0,
             enabled: editable,
-            onChanged: (value) => setState(() => _forceRelay = value),
           ),
         ],
       ),
       SectionCard(
         title: strings.tmeshFavoriteRouter,
-        footer: strings.tmeshRelayDescription,
         children: [
           _choice<tmesh.FeatureFlagsConfig_FavoriteRouterMode>(
             label: strings.tmeshMode,
             value: draft.favoriteRouterMode,
+            help: [
+              strings.tmeshFavoriteDisabledHelp,
+              strings.tmeshFavoriteHopsHelp,
+              strings.tmeshFavoriteRelayHelp,
+            ][draft.favoriteRouterMode.value],
             values: tmesh.FeatureFlagsConfig_FavoriteRouterMode.values,
             labels: [
               strings.tmeshDisabled,
@@ -306,11 +290,11 @@ class _EditorState extends State<_Editor> {
                 : null,
           ),
           _relayField(
-            value: _favoriteRelay,
-            valid: favoriteRelay != null,
+            controller: _favoriteRelay,
+            relay: favoriteRelay,
+            nodes: nodes,
             requiredByte: draft.favoriteRouterMode.value != 0,
             enabled: editable,
-            onChanged: (value) => setState(() => _favoriteRelay = value),
           ),
         ],
       ),
@@ -318,31 +302,76 @@ class _EditorState extends State<_Editor> {
   );
 
   Widget _relayField({
-    required String value,
-    required bool valid,
+    required TextEditingController controller,
+    required int? relay,
+    required List<Node> nodes,
     required bool requiredByte,
     required bool enabled,
-    required ValueChanged<String> onChanged,
   }) {
     final strings = context.l10n;
+    final multipleMatches =
+        relay != null &&
+        relay != 0 &&
+        nodes.where((node) => _relayByte(node) == relay).take(2).length > 1;
     return Padding(
       padding: const EdgeInsets.all(Tokens.s16),
-      child: TextFormField(
-        initialValue: value,
-        enabled: enabled,
-        autocorrect: false,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: strings.tmeshRelay,
-          errorMaxLines: 2,
-          errorText: valid
-              ? null
-              : requiredByte
-              ? strings.tmeshRelayRequired
-              : strings.tmeshRelayRange,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Focus(
+            onFocusChange: (focused) {
+              if (focused || !mounted) return;
+              final value = _relayValue(controller.text, 0);
+              if (value != null && controller.text != _relayHex(value)) {
+                controller.text = _relayHex(value);
+              }
+            },
+            child: TextFormField(
+              controller: controller,
+              enabled: enabled,
+              autocorrect: false,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: strings.tmeshRelay,
+                helperText: strings.tmeshRelayDescription,
+                helperMaxLines: 3,
+                errorMaxLines: 2,
+                errorText: relay != null
+                    ? null
+                    : requiredByte
+                    ? strings.tmeshRelayRequired
+                    : strings.tmeshRelayRange,
+                suffixIcon: IconButton(
+                  tooltip: strings.tmeshSelectNode,
+                  icon: const Icon(Icons.search),
+                  onPressed: enabled
+                      ? () => _pickRelay(controller, nodes)
+                      : null,
+                ),
+              ),
+            ),
+          ),
+          if (multipleMatches) WarningNote(strings.tmeshRelayCollision),
+        ],
       ),
     );
+  }
+
+  Future<void> _pickRelay(
+    TextEditingController controller,
+    List<Node> nodes,
+  ) async {
+    final candidates = nodes.where(
+      (node) => node.num != widget.client.nodeNum && _relayByte(node) != 0,
+    );
+    final relay = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _RelayPicker(nodes: candidates),
+    );
+    if (!mounted || relay == null || _busy || _error != null) return;
+    setState(() => controller.text = _relayHex(relay));
   }
 
   Widget _choice<T extends ProtobufEnum>({
@@ -351,32 +380,121 @@ class _EditorState extends State<_Editor> {
     required List<T> values,
     required List<String> labels,
     required ValueChanged<T>? onChanged,
+    String? help,
   }) => Padding(
     padding: const EdgeInsets.all(Tokens.s16),
-    child: DropdownButtonFormField<T>(
-      initialValue: value,
-      decoration: InputDecoration(labelText: label),
-      isExpanded: true,
-      itemHeight: null,
-      items: [
-        for (var i = 0; i < values.length; i++)
-          DropdownMenuItem(
-            value: values[i],
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: kMinInteractiveDimension,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<T>(
+          initialValue: value,
+          decoration: InputDecoration(labelText: label),
+          isExpanded: true,
+          itemHeight: null,
+          items: [
+            for (var i = 0; i < values.length; i++)
+              DropdownMenuItem(
+                value: values[i],
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: kMinInteractiveDimension,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(labels[i]),
+                  ),
+                ),
               ),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(labels[i]),
+          ],
+          onChanged: onChanged == null ? null : (value) => onChanged(value!),
+        ),
+        if (help != null)
+          Padding(
+            padding: const EdgeInsets.only(top: Tokens.s8),
+            child: Text(
+              help,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
       ],
-      onChanged: onChanged == null ? null : (value) => onChanged(value!),
     ),
   );
 }
+
+class _RelayPicker extends StatefulWidget {
+  const _RelayPicker({required this.nodes});
+
+  final Iterable<Node> nodes;
+
+  @override
+  State<_RelayPicker> createState() => _RelayPickerState();
+}
+
+class _RelayPickerState extends State<_RelayPicker> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = context.l10n;
+    final nodes = NodeMentions.candidates(widget.nodes, _query);
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: FractionallySizedBox(
+        heightFactor: 0.75,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(Tokens.s16),
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: strings.tmeshSelectNode,
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                  onChanged: (query) =>
+                      setState(() => _query = query.trim().toLowerCase()),
+                ),
+              ),
+              Expanded(
+                child: nodes.isEmpty
+                    ? Center(child: Text(strings.noResultsFound_1e1b70))
+                    : ListView.builder(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        itemCount: nodes.length,
+                        itemBuilder: (context, index) {
+                          final node = nodes[index];
+                          final id = NodeMentions.nodeId(node.num);
+                          final shortName = node.shortName.trim();
+                          return ListTile(
+                            title: Text(
+                              NodeMentions.insertion(node, 'longName'),
+                            ),
+                            subtitle: Text(
+                              shortName.isEmpty ? id : '$shortName · $id',
+                            ),
+                            trailing: Text(_relayHex(_relayByte(node))),
+                            onTap: () =>
+                                Navigator.pop(context, _relayByte(node)),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+int _relayByte(Node node) => node.num & 0xff;
+
+String _relayHex(int relay) =>
+    '0x${relay.toRadixString(16).padLeft(2, '0').toUpperCase()}';
 
 int? _relayValue(String text, int? mode) {
   final value = int.tryParse(text.trim());
@@ -386,30 +504,30 @@ int? _relayValue(String text, int? mode) {
 
 void _mergeEdits(
   tmesh.FeatureFlagsConfig fresh,
-  tmesh.FeatureFlagsConfig? saved,
+  tmesh.FeatureFlagsConfig saved,
   tmesh.FeatureFlagsConfig edited,
 ) {
-  if (saved?.restrictedRoutingMode != edited.restrictedRoutingMode) {
+  if (saved.restrictedRoutingMode != edited.restrictedRoutingMode) {
     fresh.restrictedRoutingMode = edited.restrictedRoutingMode;
   }
-  if (saved?.restrictedRoutingDisallowsPrivateText !=
+  if (saved.restrictedRoutingDisallowsPrivateText !=
       edited.restrictedRoutingDisallowsPrivateText) {
     fresh.restrictedRoutingDisallowsPrivateText =
         edited.restrictedRoutingDisallowsPrivateText;
   }
-  if (saved?.hopDecrementMode != edited.hopDecrementMode) {
+  if (saved.hopDecrementMode != edited.hopDecrementMode) {
     fresh.hopDecrementMode = edited.hopDecrementMode;
   }
-  if (saved?.forceNextHopMode != edited.forceNextHopMode) {
+  if (saved.forceNextHopMode != edited.forceNextHopMode) {
     fresh.forceNextHopMode = edited.forceNextHopMode;
   }
-  if (saved?.forceNextHopRelay != edited.forceNextHopRelay) {
+  if (saved.forceNextHopRelay != edited.forceNextHopRelay) {
     fresh.forceNextHopRelay = edited.forceNextHopRelay;
   }
-  if (saved?.favoriteRouterMode != edited.favoriteRouterMode) {
+  if (saved.favoriteRouterMode != edited.favoriteRouterMode) {
     fresh.favoriteRouterMode = edited.favoriteRouterMode;
   }
-  if (saved?.favoriteRouterRelay != edited.favoriteRouterRelay) {
+  if (saved.favoriteRouterRelay != edited.favoriteRouterRelay) {
     fresh.favoriteRouterRelay = edited.favoriteRouterRelay;
   }
 }

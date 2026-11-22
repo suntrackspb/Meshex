@@ -5427,31 +5427,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tmeshReadAgain => 'Прочитать настройки';
 
   @override
-  String get tmeshLegacyTitle => 'Используются прежние настройки';
-
-  @override
-  String get tmeshLegacyDescription =>
-      'Создайте отдельную конфигурацию TMesh, чтобы задать параметры здесь.';
-
-  @override
-  String get tmeshCreate => 'Создать конфигурацию TMesh';
-
-  @override
-  String get tmeshCreateDescription =>
-      'Новая конфигурация начнётся со стандартных значений. Прежние параметры в имени ноды и настройках модуля можно убрать вручную.';
-
-  @override
-  String get tmeshClear => 'Удалить конфигурацию TMesh';
-
-  @override
-  String get tmeshClearTitle => 'Удалить конфигурацию TMesh?';
-
-  @override
-  String get tmeshClearDescription =>
-      'Если прежние параметры остались в настройках, прошивка снова будет их использовать.';
-
-  @override
-  String get tmeshRouting => 'Маршрутизация';
+  String get tmeshRouting => 'Ограничения CORE_PORTNUMS_ONLY';
 
   @override
   String get tmeshRestrictedRouting => 'Разрешённые типы пакетов';
@@ -5463,38 +5439,39 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tmeshTextAdmin => 'Текст и админ-команды';
 
   @override
-  String get tmeshTextAdminRouting => 'Текст, админ-команды и маршрутизация';
+  String get tmeshTextAdminRouting => 'Текст, админ-команды и подтверждения';
 
   @override
   String get tmeshTextAdminRoutingTrace =>
-      'Текст, админ-команды, маршрутизация и трассировка';
+      'Текст, админ-команды, подтверждения и трассировка';
 
   @override
   String get tmeshTextNodeInfoAdminRouting =>
-      'Текст, данные нод, админ-команды и маршрутизация';
+      'Текст, админ-команды, подтверждения и сведения о нодах';
 
   @override
   String get tmeshTextNodeInfoAdminRoutingTrace =>
-      'Текст, данные нод, админ-команды, маршрутизация и трассировка';
+      'Текст, админ-команды, подтверждения, сведения о нодах и трассировка';
 
   @override
-  String get tmeshBlockPrivateText => 'Блокировать личные текстовые сообщения';
+  String get tmeshBlockPrivateText =>
+      'Блокировать порт приватного текста (283)';
 
   @override
-  String get tmeshHopDecrement => 'Уменьшение лимита переходов';
+  String get tmeshHopDecrement => 'Уменьшение лимита хопов';
 
   @override
   String get tmeshStandard => 'Стандартное поведение';
 
   @override
   String get tmeshPreserveAfterFavorite =>
-      'Сохранять после любого избранного ретранслятора';
+      'Сохранять хопы после любого избранного ретранслятора';
 
   @override
-  String get tmeshDecrementFirstHop => 'Уменьшать только на первом переходе';
+  String get tmeshDecrementFirstHop => 'Уменьшать только на первом хопе';
 
   @override
-  String get tmeshForceNextHop => 'Принудительный следующий переход';
+  String get tmeshForceNextHop => 'Принудительный следующий хоп';
 
   @override
   String get tmeshMode => 'Режим';
@@ -5517,18 +5494,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tmeshFavoriteRouter => 'Избранный маршрутизатор';
 
   @override
-  String get tmeshPreserveHops => 'Сохранять лимит переходов';
+  String get tmeshPreserveHops => 'Сохранять лимит хопов';
 
   @override
-  String get tmeshPreserveHopsAndRelay =>
-      'Сохранять лимит переходов и ретранслировать';
+  String get tmeshPreserveHopsAndRelay => 'Сохранять хопы и ретранслировать';
 
   @override
   String get tmeshRelay => 'Байт ретранслятора';
 
   @override
   String get tmeshRelayDescription =>
-      'Для каждого ретранслятора укажите последний байт номера ноды. Можно ввести десятичное число или hex с префиксом 0x.';
+      'Последний байт ID ноды. Введите число от 0 до 255 или hex от 0x00 до 0xFF.';
 
   @override
   String get tmeshRelayRequired =>
@@ -5564,4 +5540,62 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get tmeshWriteInProgress =>
       'Предыдущая запись настроек TMesh ещё выполняется.';
+
+  @override
+  String get tmeshRoutingHelp =>
+      'Эти ограничения действуют в режиме ретрансляции CORE_PORTNUMS_ONLY.';
+
+  @override
+  String get tmeshPrivateTextHelp =>
+      'Фильтрует весь трафик порта 283, включая стикеры приложения.';
+
+  @override
+  String get tmeshHopsSection => 'Уменьшение числа хопов';
+
+  @override
+  String get tmeshHopStandardHelp =>
+      'Применяет стандартные правила Meshtastic и выбранный режим избранного маршрутизатора.';
+
+  @override
+  String get tmeshHopFavoriteHelp =>
+      'Сохраняет хопы после ноды из избранного независимо от её роли.';
+
+  @override
+  String get tmeshHopFirstHelp =>
+      'Уменьшает лимит только для пакетов, полученных напрямую от отправителя.';
+
+  @override
+  String get tmeshForceDisabledHelp =>
+      'Нода выбирает следующий хоп по обычным правилам.';
+
+  @override
+  String get tmeshForceLocalHelp =>
+      'Задаёт хоп своим пакетам. Последняя попытка возможна без заданного хопа.';
+
+  @override
+  String get tmeshForceRelayedHelp =>
+      'Задаёт хоп своим и ретранслируемым пакетам. Последняя попытка возможна без заданного хопа.';
+
+  @override
+  String get tmeshForceStrictHelp =>
+      'Задаёт хоп своим и ретранслируемым пакетам на всех попытках.';
+
+  @override
+  String get tmeshFavoriteDisabledHelp =>
+      'Для выбранной ноды действуют обычные правила ретрансляции.';
+
+  @override
+  String get tmeshFavoriteHopsHelp =>
+      'Сохраняет хопы для пакетов через выбранную ноду. Требуется роль Router, RouterLate или ClientBase.';
+
+  @override
+  String get tmeshFavoriteRelayHelp =>
+      'Сохраняет хопы и ретранслирует пакеты, прошедшие через выбранную ноду. Требуется ClientBase.';
+
+  @override
+  String get tmeshSelectNode => 'Выбрать ноду';
+
+  @override
+  String get tmeshRelayCollision =>
+      'Этот байт совпадает у нескольких известных нод.';
 }

@@ -137,6 +137,7 @@ class RadioSession extends ChangeNotifier {
     if (tgt == null) return;
     _reconnect?.cancel();
     attempts++;
+    metadata = null;
     _setState(RadioState.connecting);
 
     final t = tgt.create(_app);
@@ -227,12 +228,17 @@ class RadioSession extends ChangeNotifier {
       myInfo = f.myInfo;
       myNodeNum = f.myInfo.myNodeNum;
     }
-    if (f.hasMetadata()) metadata = f.metadata;
-    if (f.hasNodeInfo() && f.nodeInfo.num == myNodeNum) {
-      final changed = ownUser != f.nodeInfo.user;
+    var identityChanged = false;
+    if (f.hasMetadata()) {
+      identityChanged = metadata?.firmwareVersion != f.metadata.firmwareVersion;
+      metadata = f.metadata;
+    } else if (f.hasNodeInfo() && f.nodeInfo.num == myNodeNum) {
+      identityChanged = ownUser != f.nodeInfo.user;
       ownUser = f.nodeInfo.user;
-      // Сообщить об обновлении данных своей ноды после подключения.
-      if (changed && state == RadioState.ready && !_disposed) notifyListeners();
+    }
+    // Метаданные и данные пользователя могут прийти после ready.
+    if (identityChanged && state == RadioState.ready && !_disposed) {
+      notifyListeners();
     }
     if (f.hasQueueStatus()) queue.onQueueStatus(f.queueStatus);
     if (f.hasPacket() && f.packet.hasDecoded()) {

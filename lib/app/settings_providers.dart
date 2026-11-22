@@ -19,17 +19,25 @@ final adminSettingsProvider = Provider<AdminSettings>((ref) {
   );
 });
 
-/// Probe the wire protocol once per ready connection while settings observe it.
+// TMesh prefixes the build segment, e.g. 2.8.2.tmshe9fab87.
+final _tmeshFirmware = RegExp(r'^\d+\.\d+\.\d+\.tmsh');
+
+/// Probe the wire protocol only on a ready connection marked as TMesh.
 final tmeshProbeProvider = FutureProvider<TmeshSettings?>((ref) async {
   final connection = ref.watch(
     radioProvider.select(
       (radio) => radio.state == RadioState.ready
-          ? (radio.myNodeNum, radio.connectedSince)
-          : (null, null),
+          ? (
+              radio.myNodeNum,
+              radio.connectedSince,
+              radio.metadata?.firmwareVersion,
+            )
+          : (null, null, null),
     ),
   );
-  final (nodeNum, connectedSince) = connection;
+  final (nodeNum, connectedSince, version) = connection;
   if (nodeNum == null || connectedSince == null) return null;
+  if (version == null || !_tmeshFirmware.hasMatch(version)) return null;
   final client = TmeshSettings(
     ref.read(radioProvider),
     nodeNum,

@@ -9558,52 +9558,10 @@ abstract class AppLocalizations {
   /// **'Прочитать настройки'**
   String get tmeshReadAgain;
 
-  /// No description provided for @tmeshLegacyTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Используются прежние настройки'**
-  String get tmeshLegacyTitle;
-
-  /// No description provided for @tmeshLegacyDescription.
-  ///
-  /// In ru, this message translates to:
-  /// **'Создайте отдельную конфигурацию TMesh, чтобы задать параметры здесь.'**
-  String get tmeshLegacyDescription;
-
-  /// No description provided for @tmeshCreate.
-  ///
-  /// In ru, this message translates to:
-  /// **'Создать конфигурацию TMesh'**
-  String get tmeshCreate;
-
-  /// No description provided for @tmeshCreateDescription.
-  ///
-  /// In ru, this message translates to:
-  /// **'Новая конфигурация начнётся со стандартных значений. Прежние параметры в имени ноды и настройках модуля можно убрать вручную.'**
-  String get tmeshCreateDescription;
-
-  /// No description provided for @tmeshClear.
-  ///
-  /// In ru, this message translates to:
-  /// **'Удалить конфигурацию TMesh'**
-  String get tmeshClear;
-
-  /// No description provided for @tmeshClearTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Удалить конфигурацию TMesh?'**
-  String get tmeshClearTitle;
-
-  /// No description provided for @tmeshClearDescription.
-  ///
-  /// In ru, this message translates to:
-  /// **'Если прежние параметры остались в настройках, прошивка снова будет их использовать.'**
-  String get tmeshClearDescription;
-
   /// No description provided for @tmeshRouting.
   ///
   /// In ru, this message translates to:
-  /// **'Маршрутизация'**
+  /// **'Ограничения CORE_PORTNUMS_ONLY'**
   String get tmeshRouting;
 
   /// No description provided for @tmeshRestrictedRouting.
@@ -9627,37 +9585,37 @@ abstract class AppLocalizations {
   /// No description provided for @tmeshTextAdminRouting.
   ///
   /// In ru, this message translates to:
-  /// **'Текст, админ-команды и маршрутизация'**
+  /// **'Текст, админ-команды и подтверждения'**
   String get tmeshTextAdminRouting;
 
   /// No description provided for @tmeshTextAdminRoutingTrace.
   ///
   /// In ru, this message translates to:
-  /// **'Текст, админ-команды, маршрутизация и трассировка'**
+  /// **'Текст, админ-команды, подтверждения и трассировка'**
   String get tmeshTextAdminRoutingTrace;
 
   /// No description provided for @tmeshTextNodeInfoAdminRouting.
   ///
   /// In ru, this message translates to:
-  /// **'Текст, данные нод, админ-команды и маршрутизация'**
+  /// **'Текст, админ-команды, подтверждения и сведения о нодах'**
   String get tmeshTextNodeInfoAdminRouting;
 
   /// No description provided for @tmeshTextNodeInfoAdminRoutingTrace.
   ///
   /// In ru, this message translates to:
-  /// **'Текст, данные нод, админ-команды, маршрутизация и трассировка'**
+  /// **'Текст, админ-команды, подтверждения, сведения о нодах и трассировка'**
   String get tmeshTextNodeInfoAdminRoutingTrace;
 
   /// No description provided for @tmeshBlockPrivateText.
   ///
   /// In ru, this message translates to:
-  /// **'Блокировать личные текстовые сообщения'**
+  /// **'Блокировать порт приватного текста (283)'**
   String get tmeshBlockPrivateText;
 
   /// No description provided for @tmeshHopDecrement.
   ///
   /// In ru, this message translates to:
-  /// **'Уменьшение лимита переходов'**
+  /// **'Уменьшение лимита хопов'**
   String get tmeshHopDecrement;
 
   /// No description provided for @tmeshStandard.
@@ -9669,19 +9627,19 @@ abstract class AppLocalizations {
   /// No description provided for @tmeshPreserveAfterFavorite.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранять после любого избранного ретранслятора'**
+  /// **'Сохранять хопы после любого избранного ретранслятора'**
   String get tmeshPreserveAfterFavorite;
 
   /// No description provided for @tmeshDecrementFirstHop.
   ///
   /// In ru, this message translates to:
-  /// **'Уменьшать только на первом переходе'**
+  /// **'Уменьшать только на первом хопе'**
   String get tmeshDecrementFirstHop;
 
   /// No description provided for @tmeshForceNextHop.
   ///
   /// In ru, this message translates to:
-  /// **'Принудительный следующий переход'**
+  /// **'Принудительный следующий хоп'**
   String get tmeshForceNextHop;
 
   /// No description provided for @tmeshMode.
@@ -9723,13 +9681,13 @@ abstract class AppLocalizations {
   /// No description provided for @tmeshPreserveHops.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранять лимит переходов'**
+  /// **'Сохранять лимит хопов'**
   String get tmeshPreserveHops;
 
   /// No description provided for @tmeshPreserveHopsAndRelay.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранять лимит переходов и ретранслировать'**
+  /// **'Сохранять хопы и ретранслировать'**
   String get tmeshPreserveHopsAndRelay;
 
   /// No description provided for @tmeshRelay.
@@ -9741,7 +9699,7 @@ abstract class AppLocalizations {
   /// No description provided for @tmeshRelayDescription.
   ///
   /// In ru, this message translates to:
-  /// **'Для каждого ретранслятора укажите последний байт номера ноды. Можно ввести десятичное число или hex с префиксом 0x.'**
+  /// **'Последний байт ID ноды. Введите число от 0 до 255 или hex от 0x00 до 0xFF.'**
   String get tmeshRelayDescription;
 
   /// No description provided for @tmeshRelayRequired.
@@ -9803,6 +9761,96 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Предыдущая запись настроек TMesh ещё выполняется.'**
   String get tmeshWriteInProgress;
+
+  /// No description provided for @tmeshRoutingHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эти ограничения действуют в режиме ретрансляции CORE_PORTNUMS_ONLY.'**
+  String get tmeshRoutingHelp;
+
+  /// No description provided for @tmeshPrivateTextHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтрует весь трафик порта 283, включая стикеры приложения.'**
+  String get tmeshPrivateTextHelp;
+
+  /// No description provided for @tmeshHopsSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уменьшение числа хопов'**
+  String get tmeshHopsSection;
+
+  /// No description provided for @tmeshHopStandardHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Применяет стандартные правила Meshtastic и выбранный режим избранного маршрутизатора.'**
+  String get tmeshHopStandardHelp;
+
+  /// No description provided for @tmeshHopFavoriteHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняет хопы после ноды из избранного независимо от её роли.'**
+  String get tmeshHopFavoriteHelp;
+
+  /// No description provided for @tmeshHopFirstHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уменьшает лимит только для пакетов, полученных напрямую от отправителя.'**
+  String get tmeshHopFirstHelp;
+
+  /// No description provided for @tmeshForceDisabledHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нода выбирает следующий хоп по обычным правилам.'**
+  String get tmeshForceDisabledHelp;
+
+  /// No description provided for @tmeshForceLocalHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задаёт хоп своим пакетам. Последняя попытка возможна без заданного хопа.'**
+  String get tmeshForceLocalHelp;
+
+  /// No description provided for @tmeshForceRelayedHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задаёт хоп своим и ретранслируемым пакетам. Последняя попытка возможна без заданного хопа.'**
+  String get tmeshForceRelayedHelp;
+
+  /// No description provided for @tmeshForceStrictHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задаёт хоп своим и ретранслируемым пакетам на всех попытках.'**
+  String get tmeshForceStrictHelp;
+
+  /// No description provided for @tmeshFavoriteDisabledHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для выбранной ноды действуют обычные правила ретрансляции.'**
+  String get tmeshFavoriteDisabledHelp;
+
+  /// No description provided for @tmeshFavoriteHopsHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняет хопы для пакетов через выбранную ноду. Требуется роль Router, RouterLate или ClientBase.'**
+  String get tmeshFavoriteHopsHelp;
+
+  /// No description provided for @tmeshFavoriteRelayHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняет хопы и ретранслирует пакеты, прошедшие через выбранную ноду. Требуется ClientBase.'**
+  String get tmeshFavoriteRelayHelp;
+
+  /// No description provided for @tmeshSelectNode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать ноду'**
+  String get tmeshSelectNode;
+
+  /// No description provided for @tmeshRelayCollision.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот байт совпадает у нескольких известных нод.'**
+  String get tmeshRelayCollision;
 }
 
 class _AppLocalizationsDelegate

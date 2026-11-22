@@ -70,25 +70,21 @@ class TmeshSettings {
     return response.hasConfig() ? response.config : null;
   }
 
-  /// SET replaces the entire config. Apply only the user's edits to a fresh
-  /// copy, and require explicit creation when no custom config exists.
+  /// SET replaces the config. Merge the user's edits into a fresh copy, or
+  /// start with defaults when the editor opened without a stored config.
   Future<tmesh.FeatureFlagsConfig> save({
-    required bool initialize,
+    required bool hadConfig,
     required void Function(tmesh.FeatureFlagsConfig) edit,
   }) => _runWrite(() async {
     final current = await read();
-    if ((current == null) != initialize) throw TmeshError.configChanged;
+    if ((current != null) != hadConfig) throw TmeshError.configChanged;
     final next = current?.deepCopy() ?? tmesh.FeatureFlagsConfig();
     edit(next);
     if (!_validRelay(next.forceNextHopMode.value, next.forceNextHopRelay) ||
         !_validRelay(next.favoriteRouterMode.value, next.favoriteRouterRelay)) {
       throw TmeshError.invalidConfig;
     }
-    return (await _write(tmesh.Request_Operation.SET, next))!;
-  });
-
-  Future<void> clear() => _runWrite(() async {
-    await _write(tmesh.Request_Operation.CLEAR, null);
+    return _write(next);
   });
 
   Future<T> _runWrite<T>(Future<T> Function() operation) async {
@@ -104,12 +100,11 @@ class TmeshSettings {
   static bool _validRelay(int mode, int relay) =>
       relay >= (mode == 0 ? 0 : 1) && relay <= 255;
 
-  Future<tmesh.FeatureFlagsConfig?> _write(
-    tmesh.Request_Operation operation,
-    tmesh.FeatureFlagsConfig? config,
+  Future<tmesh.FeatureFlagsConfig> _write(
+    tmesh.FeatureFlagsConfig config,
   ) async {
     try {
-      _requireOk(await _request(operation, config));
+      _requireOk(await _request(tmesh.Request_Operation.SET, config));
     } on TmeshError catch (error) {
       // A lost reply can mean the write already reached storage. Check with
       // GET before reporting the outcome and never repeat the write here.
@@ -121,7 +116,9 @@ class TmeshSettings {
     } on TmeshError {
       throw TmeshError.unverified;
     }
-    if (checked?.values != config?.values) throw TmeshError.unverified;
+    if (checked == null || checked.values != config.values) {
+      throw TmeshError.unverified;
+    }
     return checked;
   }
 

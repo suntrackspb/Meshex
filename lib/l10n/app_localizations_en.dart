@@ -5427,31 +5427,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tmeshReadAgain => 'Read settings';
 
   @override
-  String get tmeshLegacyTitle => 'Legacy settings are active';
-
-  @override
-  String get tmeshLegacyDescription =>
-      'Create a TMesh configuration to manage these settings here.';
-
-  @override
-  String get tmeshCreate => 'Create TMesh configuration';
-
-  @override
-  String get tmeshCreateDescription =>
-      'The new configuration starts with defaults. You can remove old parameters from the node name and module settings manually.';
-
-  @override
-  String get tmeshClear => 'Delete TMesh configuration';
-
-  @override
-  String get tmeshClearTitle => 'Delete TMesh configuration?';
-
-  @override
-  String get tmeshClearDescription =>
-      'If legacy parameters are still configured, the firmware will use them again.';
-
-  @override
-  String get tmeshRouting => 'Routing';
+  String get tmeshRouting => 'Core Portnums Only restrictions';
 
   @override
   String get tmeshRestrictedRouting => 'Allowed packet types';
@@ -5463,22 +5439,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tmeshTextAdmin => 'Text and admin';
 
   @override
-  String get tmeshTextAdminRouting => 'Text, admin, and routing';
+  String get tmeshTextAdminRouting =>
+      'Text, admin, and delivery acknowledgements';
 
   @override
   String get tmeshTextAdminRoutingTrace =>
-      'Text, admin, routing, and traceroute';
+      'Text, admin, acknowledgements, and traceroute';
 
   @override
   String get tmeshTextNodeInfoAdminRouting =>
-      'Text, node info, admin, and routing';
+      'Text, admin, acknowledgements, and node info';
 
   @override
   String get tmeshTextNodeInfoAdminRoutingTrace =>
-      'Text, node info, admin, routing, and traceroute';
+      'Text, admin, acknowledgements, node info, and traceroute';
 
   @override
-  String get tmeshBlockPrivateText => 'Block private text messages';
+  String get tmeshBlockPrivateText => 'Block private text app port (283)';
 
   @override
   String get tmeshHopDecrement => 'Hop limit decrement';
@@ -5487,7 +5464,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tmeshStandard => 'Standard behavior';
 
   @override
-  String get tmeshPreserveAfterFavorite => 'Preserve after any favorite relay';
+  String get tmeshPreserveAfterFavorite =>
+      'Preserve hops after any favorite relay';
 
   @override
   String get tmeshDecrementFirstHop => 'Decrement on the first hop only';
@@ -5519,14 +5497,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tmeshPreserveHops => 'Preserve hop limit';
 
   @override
-  String get tmeshPreserveHopsAndRelay => 'Preserve hop limit and relay';
+  String get tmeshPreserveHopsAndRelay => 'Preserve hops and relay';
 
   @override
   String get tmeshRelay => 'Relay byte';
 
   @override
   String get tmeshRelayDescription =>
-      'Enter the last byte of each relay’s node number in decimal or with a 0x hex prefix.';
+      'Last byte of the node ID. Enter 0–255 or hex from 0x00 to 0xFF.';
 
   @override
   String get tmeshRelayRequired =>
@@ -5562,4 +5540,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tmeshWriteInProgress =>
       'The previous TMesh write is still in progress.';
+
+  @override
+  String get tmeshRoutingHelp =>
+      'These filters apply in CORE_PORTNUMS_ONLY rebroadcast mode.';
+
+  @override
+  String get tmeshPrivateTextHelp =>
+      'Filters all traffic on port 283, including stickers from this app.';
+
+  @override
+  String get tmeshHopsSection => 'Hops decrement';
+
+  @override
+  String get tmeshHopStandardHelp =>
+      'Uses Meshtastic’s normal hop rules and the selected Favorite Router mode.';
+
+  @override
+  String get tmeshHopFavoriteHelp =>
+      'Preserves hops after a favorite relay regardless of its role.';
+
+  @override
+  String get tmeshHopFirstHelp =>
+      'Decrements the hop limit only for packets received directly from the sender.';
+
+  @override
+  String get tmeshForceDisabledHelp =>
+      'The node uses its usual next-hop rules.';
+
+  @override
+  String get tmeshForceLocalHelp =>
+      'Sets a hop for locally originated packets. The last attempt can use flooding.';
+
+  @override
+  String get tmeshForceRelayedHelp =>
+      'Sets a hop for local and relayed packets. The last attempt can use flooding.';
+
+  @override
+  String get tmeshForceStrictHelp =>
+      'Sets a hop for local and relayed packets on every attempt.';
+
+  @override
+  String get tmeshFavoriteDisabledHelp =>
+      'Normal relay rules apply to the selected node.';
+
+  @override
+  String get tmeshFavoriteHopsHelp =>
+      'Preserves hops for packets through the selected node. Requires Router, RouterLate, or ClientBase.';
+
+  @override
+  String get tmeshFavoriteRelayHelp =>
+      'Preserves hops and relays packets that pass through the selected node. Requires ClientBase.';
+
+  @override
+  String get tmeshSelectNode => 'Select node';
+
+  @override
+  String get tmeshRelayCollision =>
+      'Several known nodes share this relay byte.';
 }

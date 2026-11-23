@@ -116,6 +116,36 @@ abstract class AppLocalizations {
   /// **'Отправить MAP_REPORT'**
   String get sendMapReport;
 
+  /// No description provided for @nodeActionSendNodeInfo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить\nNodeinfo'**
+  String get nodeActionSendNodeInfo;
+
+  /// No description provided for @nodeActionSendPosition.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить\nпозицию'**
+  String get nodeActionSendPosition;
+
+  /// No description provided for @nodeActionSendMapReport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить\nMAP_REPORT'**
+  String get nodeActionSendMapReport;
+
+  /// No description provided for @nodeActionExchangePosition.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обменяться Position'**
+  String get nodeActionExchangePosition;
+
+  /// No description provided for @nodeActionWriteDirect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Написать в личку'**
+  String get nodeActionWriteDirect;
+
   /// No description provided for @mapReportConfirm.
   ///
   /// In ru, this message translates to:

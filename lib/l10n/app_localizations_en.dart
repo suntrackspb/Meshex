@@ -19,6 +19,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendMapReport => 'Send MAP_REPORT';
 
   @override
+  String get nodeActionSendNodeInfo => 'Send\nNodeInfo';
+
+  @override
+  String get nodeActionSendPosition => 'Send\nposition';
+
+  @override
+  String get nodeActionSendMapReport => 'Send\nMAP_REPORT';
+
+  @override
+  String get nodeActionExchangePosition => 'Exchange Position';
+
+  @override
+  String get nodeActionWriteDirect => 'Send a DM';
+
+  @override
   String get mapReportConfirm =>
       'Your node details and approximate location will be sent over LoRa. A nearby gateway may uplink the report to MQTT, where it can be published on a map.';
 

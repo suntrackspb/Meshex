@@ -19,6 +19,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sendMapReport => 'Отправить MAP_REPORT';
 
   @override
+  String get nodeActionSendNodeInfo => 'Отправить\nNodeinfo';
+
+  @override
+  String get nodeActionSendPosition => 'Отправить\nпозицию';
+
+  @override
+  String get nodeActionSendMapReport => 'Отправить\nMAP_REPORT';
+
+  @override
+  String get nodeActionExchangePosition => 'Обменяться Position';
+
+  @override
+  String get nodeActionWriteDirect => 'Написать в личку';
+
+  @override
   String get mapReportConfirm =>
       'По LoRa уйдут данные вашей ноды и её приблизительные координаты. Шлюз поблизости может передать отчёт в MQTT, где он будет доступен для публикации на карте.';
 

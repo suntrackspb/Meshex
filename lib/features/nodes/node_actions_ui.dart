@@ -135,7 +135,11 @@ class NodeActionsCard extends ConsumerWidget {
       children: [
         _ActionRow([
           if (onWrite != null || quick)
-            _Action(Icons.chat_outlined, context.l10n.message_bda589, onWrite),
+            _Action(
+              Icons.chat_outlined,
+              context.l10n.nodeActionWriteDirect,
+              onWrite,
+            ),
           _Action(
             Icons.route,
             context.l10n.traceRoute_c2e3ed,
@@ -156,7 +160,7 @@ class NodeActionsCard extends ConsumerWidget {
           ),
           _Action(
             Icons.share_location,
-            context.l10n.exchangePosition_b039f2,
+            context.l10n.nodeActionExchangePosition,
             own != null && hasPosition(own)
                 ? run(
                     () => a.exchangePosition(n.num),
@@ -395,7 +399,7 @@ class OwnNodeActionsCard extends ConsumerWidget {
           _ActionRow([
             _Action(
               Icons.badge_outlined,
-              context.l10n.sendNodeinfo_79376f,
+              context.l10n.nodeActionSendNodeInfo,
               () => runNodeAction(
                 context,
                 a.broadcastNodeInfo,
@@ -404,7 +408,7 @@ class OwnNodeActionsCard extends ConsumerWidget {
             ),
             _Action(
               Icons.my_location,
-              context.l10n.sendPosition_1a3631,
+              context.l10n.nodeActionSendPosition,
               hasPosition(n)
                   ? () => runNodeAction(
                       context,
@@ -415,7 +419,7 @@ class OwnNodeActionsCard extends ConsumerWidget {
             ),
             _Action(
               Icons.map_outlined,
-              context.l10n.sendMapReport,
+              context.l10n.nodeActionSendMapReport,
               hasPosition(n) && !mapReportBlocked
                   ? () => _sendMapReport(context, ref)
                   : null,

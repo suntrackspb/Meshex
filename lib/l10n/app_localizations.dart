@@ -110,6 +110,42 @@ abstract class AppLocalizations {
   /// **'Эфир'**
   String get journalAir;
 
+  /// No description provided for @sendMapReport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить MAP_REPORT'**
+  String get sendMapReport;
+
+  /// No description provided for @mapReportConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'По LoRa уйдут данные вашей ноды и её приблизительные координаты. Шлюз поблизости может передать отчёт в MQTT, где он будет доступен для публикации на карте.'**
+  String get mapReportConfirm;
+
+  /// No description provided for @mapReportMqttPermission.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включите «ОК для MQTT» в настройках LoRa, чтобы соседние шлюзы могли передать ваш отчёт на карту.'**
+  String get mapReportMqttPermission;
+
+  /// No description provided for @mapReportOpenLoraSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть настройки LoRa'**
+  String get mapReportOpenLoraSettings;
+
+  /// No description provided for @mapReportLoraUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки LoRa ещё не загружены'**
+  String get mapReportLoraUnavailable;
+
+  /// No description provided for @mapReportSentToRadio.
+  ///
+  /// In ru, this message translates to:
+  /// **'MAP_REPORT передан ноде для отправки по LoRa'**
+  String get mapReportSentToRadio;
+
   /// No description provided for @language.
   ///
   /// In ru, this message translates to:

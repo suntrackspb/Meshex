@@ -16,6 +16,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journalAir => 'Radio traffic';
 
   @override
+  String get sendMapReport => 'Send MAP_REPORT';
+
+  @override
+  String get mapReportConfirm =>
+      'Your node details and approximate location will be sent over LoRa. A nearby gateway may uplink the report to MQTT, where it can be published on a map.';
+
+  @override
+  String get mapReportMqttPermission =>
+      'Enable “OK to MQTT” in LoRa settings so nearby gateways can forward your report to a map.';
+
+  @override
+  String get mapReportOpenLoraSettings => 'Open LoRa settings';
+
+  @override
+  String get mapReportLoraUnavailable => 'LoRa settings are not loaded yet';
+
+  @override
+  String get mapReportSentToRadio =>
+      'MAP_REPORT handed to the node for LoRa transmission';
+
+  @override
   String get language => 'Language';
 
   @override

@@ -5,10 +5,13 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
+import 'package:meshex/core/proto/generated/meshtastic/mqtt.pb.dart'
+    show MapReport;
 import 'package:meshex/core/proto/mesh.dart';
 import 'package:meshex/core/radio/send_queue.dart';
 import 'package:meshex/data/database.dart';
 import 'package:meshex/data/node_actions.dart';
+import 'package:meshex/data/settings/admin_settings.dart' show storeConfig;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -47,6 +50,73 @@ void main() {
 
   Future<Node> node(int n) =>
       (db.select(db.nodes)..where((r) => r.num.equals(n))).getSingle();
+
+  test('map report uses LoRa and sends approximate coordinates', () async {
+    await storeConfig(
+      db,
+      'lora',
+      Config(lora: Config_LoRaConfig(configOkToMqtt: true, usePreset: true)),
+    );
+    await db.upsertChannel(
+      Channel(
+        index: 3,
+        role: Channel_Role.PRIMARY,
+        settings: ChannelSettings(psk: [1]),
+      ),
+    );
+    await (db.update(db.nodes)..where((r) => r.num.equals(0xAA))).write(
+      const NodesCompanion(
+        latitude: Value(0.005),
+        longitude: Value(-0.005),
+        firmwareVersion: Value('2.8.1'),
+      ),
+    );
+
+    final a = actions();
+    addTearDown(a.dispose);
+    expect((await a.broadcastMapReport(0xAA)).status, DeliveryStatus.acked);
+    final packet = sent.single;
+    expect(packet.id, isNot(0));
+    expect(packet.to, broadcastNum);
+    expect(packet.channel, 3);
+    expect(packet.hopLimit, 0);
+    expect(packet.wantAck, isFalse);
+    expect(packet.decoded.portnum, PortNum.MAP_REPORT_APP);
+    expect(packet.decoded.hasBitfield(), isFalse);
+    final report = MapReport.fromBuffer(packet.decoded.payload);
+    expect(report.hasOptedReportLocation, isTrue);
+    expect(report.hasDefaultChannel, isTrue);
+    expect(report.positionPrecision, 14);
+    expect(report.latitudeI, 131072);
+    expect(report.longitudeI, -131072);
+    expect(report.firmwareVersion, '2.8.1');
+
+    expect(a.blocked(0xAA, NodeAction.mapReport), isTrue);
+    await expectLater(a.broadcastMapReport(0xAA), throwsStateError);
+    expect(sent, hasLength(1));
+  });
+
+  test('map report cooldown expires after exactly 5 minutes', () {
+    fakeAsync((clock) {
+      final a = actions();
+      // Соединение сменилось, поэтому команда завершится до обращения к БД.
+      expect(a.broadcastMapReport(0x42), throwsStateError);
+      clock.flushMicrotasks();
+      clock.elapse(const Duration(minutes: 4, seconds: 59, milliseconds: 999));
+      expect(a.blocked(0x42, NodeAction.mapReport), isTrue);
+      clock.elapse(const Duration(milliseconds: 1));
+      expect(a.blocked(0x42, NodeAction.mapReport), isFalse);
+      a.dispose();
+    });
+  });
+
+  test('map report respects LoRa opt-out', () async {
+    await storeConfig(db, 'lora', Config(lora: Config_LoRaConfig()));
+    final a = actions();
+    addTearDown(a.dispose);
+    await expectLater(a.broadcastMapReport(0xAA), throwsStateError);
+    expect(sent, isEmpty);
+  });
 
   test('cooldowns isolate nodes/actions and keep pending commands locked', () {
     fakeAsync((clock) {

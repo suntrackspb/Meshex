@@ -16,6 +16,27 @@ class AppLocalizationsRu extends AppLocalizations {
   String get journalAir => 'Эфир';
 
   @override
+  String get sendMapReport => 'Отправить MAP_REPORT';
+
+  @override
+  String get mapReportConfirm =>
+      'По LoRa уйдут данные вашей ноды и её приблизительные координаты. Шлюз поблизости может передать отчёт в MQTT, где он будет доступен для публикации на карте.';
+
+  @override
+  String get mapReportMqttPermission =>
+      'Включите «ОК для MQTT» в настройках LoRa, чтобы соседние шлюзы могли передать ваш отчёт на карту.';
+
+  @override
+  String get mapReportOpenLoraSettings => 'Открыть настройки LoRa';
+
+  @override
+  String get mapReportLoraUnavailable => 'Настройки LoRa ещё не загружены';
+
+  @override
+  String get mapReportSentToRadio =>
+      'MAP_REPORT передан ноде для отправки по LoRa';
+
+  @override
   String get language => 'Язык';
 
   @override

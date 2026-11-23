@@ -8,6 +8,7 @@ import 'package:swipeable_page_route/swipeable_page_route.dart';
 
 import '../../app/toasts.dart';
 import '../../app/providers.dart';
+import '../../app/settings_providers.dart';
 import '../../core/proto/mesh.dart';
 import '../../core/radio/send_queue.dart';
 import '../../data/database.dart';
@@ -366,8 +367,7 @@ Future<void> showContactQr(BuildContext context, Node n, String url) =>
       ),
     );
 
-/// Действия своей ноды: разослать NodeInfo и позицию (если есть координаты),
-/// показать свой QR контакта, открыть «Администрирование».
+/// Действия своей ноды, контакт и «Администрирование».
 class OwnNodeActionsCard extends ConsumerWidget {
   const OwnNodeActionsCard(this.n, {super.key});
 
@@ -377,6 +377,12 @@ class OwnNodeActionsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final canSend = ref.watch(canSendProvider);
     final a = ref.read(nodeActionsProvider);
+    if (canSend) ref.watch(configProvider('lora'));
+    final mapReportBlocked = ref.watch(
+      nodeActionsProvider.select(
+        (actions) => actions.blocked(n.num, NodeAction.mapReport),
+      ),
+    );
     final url = contactUrl(
       n,
       own: true,
@@ -407,6 +413,13 @@ class OwnNodeActionsCard extends ConsumerWidget {
                     )
                   : null,
             ),
+            _Action(
+              Icons.map_outlined,
+              context.l10n.sendMapReport,
+              hasPosition(n) && !mapReportBlocked
+                  ? () => _sendMapReport(context, ref)
+                  : null,
+            ),
           ]),
         if (url != null)
           MeshTile(
@@ -425,6 +438,47 @@ class OwnNodeActionsCard extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _sendMapReport(BuildContext context, WidgetRef ref) async {
+    final strings = context.l10n;
+    final config = ref.read(configProvider('lora')).value;
+    if (config == null) {
+      toasts.show(strings.mapReportLoraUnavailable);
+      return;
+    }
+    final allowed = config.lora.configOkToMqtt;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(strings.sendMapReport),
+        content: Text(
+          allowed ? strings.mapReportConfirm : strings.mapReportMqttPermission,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: Text(strings.cancel_0ec753),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(
+              allowed ? strings.send_76dcf7 : strings.mapReportOpenLoraSettings,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) return;
+    if (!allowed) {
+      context.push('/settings/lora');
+      return;
+    }
+    await runNodeAction(
+      context,
+      () => ref.read(nodeActionsProvider).broadcastMapReport(n.num),
+      strings.mapReportSentToRadio,
     );
   }
 }

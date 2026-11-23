@@ -8,13 +8,14 @@ import 'package:drift/drift.dart';
 import '../core/proto/mesh.dart';
 import '../core/radio/send_queue.dart';
 import 'database.dart';
+import 'map_report.dart';
 import 'message_sender.dart' show directBlock;
+import 'radio_stats.dart';
 import 'telemetry.dart';
 
-enum NodeAction { favorite, ignored, traceroute }
+enum NodeAction { favorite, ignored, traceroute, mapReport }
 
 /// Действия с нодой из карточки — как в официальном iOS-клиенте.
-/// hop_limit не задаём никогда: решает прошивка (масштабирование хопов в 2.8).
 class NodeActions extends ChangeNotifier {
   NodeActions(
     this.db,
@@ -27,6 +28,8 @@ class NodeActions extends ChangeNotifier {
   final _blocked = <(int, NodeAction), Timer>{};
   final _pending = <(int, NodeAction)>{};
   bool _disposed = false;
+
+  static const mapReportCooldown = Duration(minutes: 5);
 
   bool blocked(int num, NodeAction action) =>
       _blocked.containsKey((num, action)) || _pending.contains((num, action));
@@ -42,7 +45,11 @@ class NodeActions extends ChangeNotifier {
     final key = (num, action);
     _pending.add(key);
     _blocked[key] = Timer(
-      Duration(seconds: action == NodeAction.traceroute ? 30 : 3),
+      switch (action) {
+        NodeAction.traceroute => const Duration(seconds: 30),
+        NodeAction.mapReport => mapReportCooldown,
+        _ => const Duration(seconds: 3),
+      },
       () {
         _blocked.remove(key);
         if (!_disposed) notifyListeners();
@@ -314,6 +321,70 @@ class NodeActions extends ChangeNotifier {
         payload: (await _ownPosition()).writeToBuffer(),
       ),
     ),
+  );
+
+  /// Передать отчёт шлюзам, которые слышат ноду напрямую.
+  Future<DeliveryResult> broadcastMapReport(int nodeNum) => _guard(
+    nodeNum,
+    NodeAction.mapReport,
+    () async {
+      if (_disposed || _me() != nodeNum) {
+        throw StateError('соединение с нодой изменилось');
+      }
+      final onlineCount = db.nodes.num.count();
+      final cutoff = DateTime.now().subtract(RadioStats.onlineWindow);
+      final online = db.selectOnly(db.nodes)
+        ..addColumns([onlineCount])
+        ..where(
+          db.nodes.onRadio.equals(true) &
+              db.nodes.viaMqtt.equals(false) &
+              db.nodes.lastHeard.isBiggerOrEqualValue(cutoff),
+        );
+      final (own, config, channels, stats) = await (
+        (db.select(
+          db.nodes,
+        )..where((n) => n.num.equals(nodeNum))).getSingleOrNull(),
+        (db.select(
+          db.configBlobs,
+        )..where((b) => b.key.equals('config.lora'))).getSingleOrNull(),
+        db.select(db.channels).get(),
+        online.getSingle(),
+      ).wait;
+      if (_disposed || _me() != nodeNum) {
+        throw StateError('соединение с нодой изменилось');
+      }
+      final lora = config == null ? null : Config.fromBuffer(config.data).lora;
+      if (lora == null || !lora.configOkToMqtt) {
+        throw StateError('Включите «ОК для MQTT» в настройках LoRa');
+      }
+      if (own == null || !hasPosition(own)) {
+        throw StateError('у своей ноды нет координат');
+      }
+      final primary = channels
+          .where((c) => c.role == Channel_Role.PRIMARY.value)
+          .firstOrNull;
+      if (primary == null) throw StateError('основной канал не загружен');
+
+      final report = buildMapReport(
+        node: own,
+        user: nodeInfoUser(own, _radioUser?.call()),
+        lora: lora,
+        channels: channels,
+        onlineLocalNodes: stats.read(onlineCount) ?? 0,
+      );
+      return _send(
+        MeshPacket(
+          id: _nextId(),
+          to: broadcastNum,
+          channel: primary.index,
+          hopLimit: 0,
+          decoded: Data(
+            portnum: PortNum.MAP_REPORT_APP,
+            payload: report.writeToBuffer(),
+          ),
+        ),
+      );
+    },
   );
 
   /// Отправить свою позицию ноде и попросить её ответную.
